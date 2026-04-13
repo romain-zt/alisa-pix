@@ -1,5 +1,9 @@
-const S3_BASE_PHOTO = 'https://s3.fr-par.scw.cloud/www.vasilisa-photo.com/photo/'
-const S3_BASE_BOUDOIR = 'https://s3.fr-par.scw.cloud/www.vasilisa-photo.com/boudoir/'
+// const S3_BASE_PHOTO = 'https://s3.fr-par.scw.cloud/www.vasilisa-photo.com/photo/'
+// const S3_BASE_BOUDOIR = 'https://s3.fr-par.scw.cloud/www.vasilisa-photo.com/boudoir/'
+
+const S3_BASE_PHOTO = '/assets/images/photo/'
+const S3_BASE_BOUDOIR = '/assets/images/boudoir/'
+
 
 export const heroImages = [
   `${S3_BASE_BOUDOIR}_DSC2188.jpeg`,

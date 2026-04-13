@@ -14,6 +14,9 @@ importers:
       '@react-three/fiber':
         specifier: ^9.1.2
         version: 9.6.0(@types/react@19.2.14)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)(three@0.174.0)
+      animejs:
+        specifier: ^4.3.6
+        version: 4.3.6
       framer-motion:
         specifier: ^12.7.3
         version: 12.38.0(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
@@ -454,6 +457,9 @@ packages:
 
   '@webgpu/types@0.1.69':
     resolution: {integrity: sha512-RPmm6kgRbI8e98zSD3RVACvnuktIja5+yLgDAkTmxLr90BEwdTXRQWNLF3ETTTyH/8mKhznZuN5AveXYFEsMGQ==}
+
+  animejs@4.3.6:
+    resolution: {integrity: sha512-rzZ4bDc8JAtyx6hYwxj7s5M/yWfnM5qqY4hZDnhy1cWFvMb6H5/necHS2sbCY3WQTDbRLuZL10dPXSxSCFOr/w==}
 
   base64-js@1.5.1:
     resolution: {integrity: sha512-AKpaYlHn8t4SVbOHCy+b5+KKgvR4vrsD8vbvrbiQJps7fKDTkjkDry6ji0rUJjC0kzbNePLwzxq8iypo41qeWA==}
@@ -1211,6 +1217,8 @@ snapshots:
       react: 19.2.5
 
   '@webgpu/types@0.1.69': {}
+
+  animejs@4.3.6: {}
 
   base64-js@1.5.1: {}
 
