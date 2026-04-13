@@ -2,7 +2,7 @@
 
 import { motion } from 'framer-motion'
 import { useI18n } from '@/lib/i18n/context'
-import ScrollReveal from '@/components/ScrollReveal'
+import SoftReveal from '@/components/SoftReveal'
 
 export default function ContactPage() {
   const { t } = useI18n()
@@ -33,7 +33,7 @@ export default function ContactPage() {
           {t.contact.subline}
         </motion.p>
 
-        <ScrollReveal className="space-y-8">
+        <SoftReveal className="space-y-8">
           <div>
             <a
               href={`mailto:${t.contact.email}`}
@@ -64,7 +64,7 @@ export default function ContactPage() {
               Instagram
             </a>
           </div>
-        </ScrollReveal>
+        </SoftReveal>
       </motion.div>
 
       <motion.div

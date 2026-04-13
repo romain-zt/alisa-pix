@@ -23,11 +23,12 @@ export default function ParallaxImage({
     offset: ['start end', 'end start'],
   })
 
-  const y = useTransform(scrollYProgress, [0, 1], [`-${speed * 100}%`, `${speed * 100}%`])
-  const scale = useTransform(scrollYProgress, [0, 0.5, 1], [1.1, 1.05, 1.1])
+  const y = useTransform(scrollYProgress, [0, 1], [`-${speed * 80}%`, `${speed * 80}%`])
 
-  // Image "awakens" as it scrolls into view
-  const brightness = useTransform(scrollYProgress, [0, 0.4, 0.6, 1], [0.5, 1, 1, 0.6])
+  // Center focus: zoom in when centered, zoom out when leaving
+  const scale = useTransform(scrollYProgress, [0, 0.35, 0.5, 0.65, 1], [0.95, 1.02, 1.05, 1.02, 0.95])
+
+  const brightness = useTransform(scrollYProgress, [0, 0.3, 0.5, 0.7, 1], [0.4, 0.9, 1, 0.9, 0.4])
   const filterVal = useTransform(brightness, (v) => `brightness(${v})`)
 
   return (

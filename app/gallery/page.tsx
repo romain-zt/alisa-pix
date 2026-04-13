@@ -3,18 +3,12 @@
 import { useState } from 'react'
 import { CinematicGallery } from '@/components/CinematicGallery'
 import type { GalleryImage, GalleryMode } from '@/components/CinematicGallery'
-import { photoImages, boudoirImages } from '@/lib/images'
+import { boudoirImages } from '@/lib/images'
 
-const allImages: GalleryImage[] = [
-  ...photoImages.slice(0, 8).map((src, i) => ({
-    src,
-    alt: `Photo ${i + 1}`,
-  })),
-  ...boudoirImages.slice(0, 7).map((src, i) => ({
-    src,
-    alt: `Boudoir ${i + 1}`,
-  })),
-]
+const allImages: GalleryImage[] = boudoirImages.slice(0, 15).map((src, i) => ({
+  src,
+  alt: `Gallery ${i + 1}`,
+}))
 
 export default function GalleryPage() {
   const [mode, setMode] = useState<GalleryMode>('vertical')

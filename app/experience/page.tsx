@@ -1,84 +1,122 @@
 'use client'
 
-import { motion } from 'framer-motion'
+import { useRef } from 'react'
+import { motion, useScroll, useTransform } from 'framer-motion'
 import { useI18n } from '@/lib/i18n/context'
-import ScrollReveal from '@/components/ScrollReveal'
-import ParallaxImage from '@/components/ParallaxImage'
-import TextReveal from '@/components/TextReveal'
+import ProtectedImage from '@/components/ProtectedImage'
 import { experienceImages } from '@/lib/images'
 
+
 function ExperienceHero() {
+  const ref = useRef<HTMLDivElement>(null)
+  const { scrollYProgress } = useScroll({
+    target: ref,
+    offset: ['start start', 'end start'],
+  })
+
+  const scale = useTransform(scrollYProgress, [0, 1], [1, 1.15])
+  const opacity = useTransform(scrollYProgress, [0, 0.7], [1, 0])
+
   return (
-    <section className="relative h-[100dvh] flex items-center justify-center overflow-hidden">
-      <motion.div className="absolute inset-0">
-        <div className="absolute inset-0 bg-black/60 z-10" />
-        <motion.div
+    <section ref={ref} className="relative h-[100dvh] overflow-hidden">
+      <motion.div className="absolute inset-0" style={{ scale }}>
+        <ProtectedImage
+          src={experienceImages[0]}
+          alt=""
           className="w-full h-full"
-          initial={{ scale: 1.1 }}
-          animate={{ scale: 1 }}
-          transition={{ duration: 3.5, ease: [0.16, 1, 0.3, 1] }}
-        >
-          <ParallaxImage
-            src={experienceImages[0]}
-            className="w-full h-full"
-            speed={0.15}
-          />
-        </motion.div>
+          priority
+        />
+        <div className="absolute inset-0 bg-black/50" />
       </motion.div>
+
+      <motion.div
+        className="relative z-10 h-full"
+        style={{ opacity }}
+      />
     </section>
   )
 }
 
-const sectionRhythm = [
-  { imgSide: 'right' as const, voidBefore: '40vh', delay: 0.1 },
-  { imgSide: 'left' as const, voidBefore: '30vh', delay: 0.2 },
-  { imgSide: 'right' as const, voidBefore: '45vh', delay: 0.15 },
-  { imgSide: 'left' as const, voidBefore: '35vh', delay: 0.25 },
-  { imgSide: 'right' as const, voidBefore: '50vh', delay: 0.1 },
-  { imgSide: 'left' as const, voidBefore: '30vh', delay: 0.2 },
-]
+function ExperienceFrame({
+  src,
+  text,
+  index,
+}: {
+  src: string
+  text: string
+  index: number
+}) {
+  const ref = useRef<HTMLDivElement>(null)
+  const { scrollYProgress } = useScroll({
+    target: ref,
+    offset: ['start end', 'end start'],
+  })
 
-function TextSection({ text, idx, rhythm }: { text: string; idx: number; rhythm: typeof sectionRhythm[number] }) {
-  const hasImage = idx % 2 === 0
-  const isRight = rhythm.imgSide === 'right'
+  const scale = useTransform(
+    scrollYProgress,
+    [0, 0.3, 0.5, 0.7, 1],
+    [0.95, 1.02, 1.05, 1.02, 0.95]
+  )
+  const imgOpacity = useTransform(
+    scrollYProgress,
+    [0, 0.15, 0.4, 0.7, 0.9],
+    [0, 1, 1, 1, 0]
+  )
+  const brightness = useTransform(
+    scrollYProgress,
+    [0, 0.25, 0.5, 0.75, 1],
+    [0.3, 0.8, 1, 0.8, 0.3]
+  )
+  const filterVal = useTransform(brightness, (v) => `brightness(${v})`)
+
+  const textOpacity = useTransform(
+    scrollYProgress,
+    [0.2, 0.35, 0.55, 0.7],
+    [0, 1, 1, 0]
+  )
+  const textY = useTransform(scrollYProgress, [0.2, 0.5, 0.7], [30, 0, -20])
+  const textBlur = useTransform(
+    scrollYProgress,
+    [0.2, 0.35, 0.55, 0.7],
+    ['blur(10px)', 'blur(0px)', 'blur(0px)', 'blur(8px)']
+  )
 
   return (
-    <section className="min-h-[70vh] md:min-h-[80vh] flex items-center justify-center px-6 md:px-12 relative">
-      {hasImage && (
-        <ScrollReveal
-          className={`absolute ${isRight ? 'right-6 md:right-16' : 'left-6 md:left-16'} top-1/2 -translate-y-1/2 w-[35vw] md:w-[25vw] h-[40vh] md:h-[55vh] opacity-15`}
-          blur
-          cinematic
-          delay={rhythm.delay}
-        >
-          <ParallaxImage
-            src={experienceImages[idx % experienceImages.length]}
-            className="w-full h-full rounded-sm"
-            speed={0.15}
-          />
-        </ScrollReveal>
-      )}
-      <TextReveal
-        text={text}
-        className="font-serif text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-light italic text-center max-w-xl leading-relaxed tracking-wide text-off-white/85"
-        tag="h2"
-      />
+    <section
+      ref={ref}
+      className="relative h-[100dvh] overflow-hidden"
+      style={{ marginTop: index === 0 ? 0 : '-8vh' }}
+    >
+      <motion.div
+        className="absolute inset-0"
+        style={{ scale, opacity: imgOpacity, filter: filterVal }}
+      >
+        <ProtectedImage src={src} alt="" className="w-full h-full" />
+        <div className="absolute inset-0 bg-black/50" />
+      </motion.div>
+
+      <motion.div
+        className="absolute inset-0 z-10 flex items-center justify-center px-8 md:px-16"
+        style={{ opacity: textOpacity, y: textY, filter: textBlur }}
+      >
+        <p className="font-serif text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-light italic text-center leading-relaxed tracking-wide text-off-white/85 max-w-xl">
+          {text}
+        </p>
+      </motion.div>
     </section>
   )
 }
 
 function ClosingSection() {
   return (
-    <section className="min-h-[50vh] flex items-center justify-center px-6">
-      <ScrollReveal blur parallax>
-        <motion.div
-          className="w-16 h-px bg-gold/30 mx-auto"
-          initial={{ scaleX: 0 }}
-          whileInView={{ scaleX: 1 }}
-          transition={{ duration: 1.8, delay: 0.4 }}
-          viewport={{ once: true }}
-        />
-      </ScrollReveal>
+    <section className="h-[40vh] flex items-center justify-center">
+      <motion.div
+        className="w-16 h-px bg-gold/20"
+        initial={{ scaleX: 0 }}
+        whileInView={{ scaleX: 1 }}
+        transition={{ duration: 2.4, ease: [0.25, 0.46, 0.45, 0.94] }}
+        viewport={{ once: true }}
+      />
     </section>
   )
 }
@@ -91,20 +129,16 @@ export default function ExperiencePage() {
     <main className="relative">
       <ExperienceHero />
 
-      {lines.map((line, i) => {
-        const rhythm = sectionRhythm[i] || sectionRhythm[0]
-        return (
-          <div key={i}>
-            {/* Breathing space — irregular rhythm prevents monotony */}
-            <div style={{ height: rhythm.voidBefore }} />
-            <TextSection text={line} idx={i} rhythm={rhythm} />
-          </div>
-        )
-      })}
+      {lines.map((line, i) => (
+        <ExperienceFrame
+          key={i}
+          src={experienceImages[i % experienceImages.length]}
+          text={line}
+          index={i}
+        />
+      ))}
 
-      <div style={{ height: '40vh' }} />
       <ClosingSection />
-      <div className="h-[20vh]" />
     </main>
   )
 }

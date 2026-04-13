@@ -27,21 +27,25 @@ export default function GallerySlide({
   // Enter → presence → exit
   const opacity = useTransform(scrollYProgress, [0, 0.25, 0.5, 0.75, 1], [0, 1, 1, 1, 0])
   const scale = useTransform(scrollYProgress, [0, 0.25, 0.75, 1], [1.15, 1.02, 1.02, 1.15])
-  const blur = useTransform(scrollYProgress, [0, 0.2, 0.5, 0.8, 1], [12, 0, 0, 0, 12])
-  const filterBlur = useTransform(blur, (v) => `blur(${v}px)`)
-
   // Ken Burns
   const slowZoom = useTransform(scrollYProgress, [0.2, 0.8], [1, 1.06])
 
   // Micro-rotation — imperfection = life
   const rotate = useTransform(scrollYProgress, [0, 0.5, 1], [-0.8, 0, 0.8])
 
-  // Brightness awakening
-  const brightness = useTransform(scrollYProgress, [0, 0.3, 0.7, 1], [0.5, 1, 1, 0.5])
+  // Brightness awakening — combined into a single scroll-driven filter string
   const combinedFilter = useTransform(
-    [filterBlur, brightness],
-    // @ts-expect-error — framer-motion combine transform typing
-    ([b, br]: [string, number]) => `${b} brightness(${br})`
+    scrollYProgress,
+    [0, 0.2, 0.3, 0.5, 0.7, 0.8, 1],
+    [
+      'blur(12px) brightness(0.5)',
+      'blur(0px) brightness(0.8)',
+      'blur(0px) brightness(1)',
+      'blur(0px) brightness(1)',
+      'blur(0px) brightness(1)',
+      'blur(0px) brightness(0.8)',
+      'blur(12px) brightness(0.5)',
+    ]
   )
 
   useSlideEntrance(isActive, counterRef, captionRef)

@@ -1,84 +1,4 @@
-// const S3_BASE_PHOTO = 'https://s3.fr-par.scw.cloud/www.vasilisa-photo.com/photo/'
-// const S3_BASE_BOUDOIR = 'https://s3.fr-par.scw.cloud/www.vasilisa-photo.com/boudoir/'
-
-const S3_BASE_PHOTO = '/assets/images/photo/'
 const S3_BASE_BOUDOIR = '/assets/images/boudoir/'
-
-
-export const heroImages = [
-  `${S3_BASE_BOUDOIR}_DSC2188.jpeg`,
-  `${S3_BASE_PHOTO}DSC03369.jpeg`,
-  `${S3_BASE_BOUDOIR}IMG_7544.jpeg`,
-  `${S3_BASE_PHOTO}IMG_5739.jpeg`,
-  `${S3_BASE_BOUDOIR}IMG_7095.jpeg`,
-]
-
-export const experienceImages = [
-  `${S3_BASE_PHOTO}DSC03028 2.jpeg`,
-  `${S3_BASE_BOUDOIR}IMG_7355.jpeg`,
-  `${S3_BASE_PHOTO}P1011313.jpeg`,
-  `${S3_BASE_BOUDOIR}IMG_5234.jpeg`,
-  `${S3_BASE_PHOTO}IMG_3069.jpeg`,
-  `${S3_BASE_BOUDOIR}IMG_7820.jpeg`,
-]
-
-export const scrollImages = [
-  `${S3_BASE_PHOTO}IMG_0219.jpeg`,
-  `${S3_BASE_BOUDOIR}IMG_7529.jpeg`,
-  `${S3_BASE_PHOTO}45.jpeg`,
-  `${S3_BASE_BOUDOIR}_DSC5577.jpeg`,
-]
-
-export const photoImages = [
-  '4A599502-BF53-451B-9687-847546A98490.jpeg',
-  '20.jpeg',
-  '28.jpeg',
-  '29.jpeg',
-  '30.jpeg',
-  '31 2.jpeg',
-  '34.jpeg',
-  '38.jpeg',
-  '42.jpeg',
-  '44.jpeg',
-  '45.jpeg',
-  '46.jpeg',
-  '47AC0E6B-E915-494D-9BF0-4870931C0C5C.jpeg',
-  '48.1.jpeg',
-  '50 4.jpeg',
-  '54.jpeg',
-  '63.jpeg',
-  '66.jpeg',
-  '73DD52A4-5415-4AFD-94AC-0B5F8D566E63.jpeg',
-  'A9872DEA-339B-42EC-A794-21A694ED61F1.jpeg',
-  'BC29C98F-A962-4001-A63A-315B9E07A8FD 2.jpeg',
-  'D06ABE10-17B5-4E75-A5BB-A558A5776D0F.jpeg',
-  'DSC03028 2.jpeg',
-  'DSC03033 3.jpeg',
-  'DSC03369.jpeg',
-  'DSC03421.jpeg',
-  'DSC03557.jpeg',
-  'IMG_0219.jpeg',
-  'IMG_0229.jpeg',
-  'IMG_0318.jpeg',
-  'IMG_1208.jpeg',
-  'IMG_3043 2.jpeg',
-  'IMG_3069.jpeg',
-  'IMG_3135 2.jpeg',
-  'IMG_3144.jpeg',
-  'IMG_5727.jpeg',
-  'IMG_5739.jpeg',
-  'IMG_6768.jpeg',
-  'P1001052_1.jpeg',
-  'P1011112.jpeg',
-  'P1011313.jpeg',
-  'P1011489.jpeg',
-  'P1011520.jpeg',
-  'P1011620.jpeg',
-  'IMG_5936.JPG',
-  '4A206609-9E5D-4CCE-ADD1-142B5623210E.JPG',
-  '33A77BCC-0E05-453D-8CF9-9B87D8DDC9DA.JPG',
-  'IMG_4761.JPG',
-].map((f) => `${S3_BASE_PHOTO}${f}`)
 
 export const boudoirImages = [
   '_DSC2188.jpeg',
@@ -116,3 +36,27 @@ export const boudoirImages = [
   'IMG_8228.JPG',
   'IMG_8294.JPG',
 ].map((f) => `${S3_BASE_BOUDOIR}${f}`)
+
+// Curated subsets — intentional repetition builds identity
+
+export const heroImages = [
+  boudoirImages[0],  // _DSC2188
+  boudoirImages[21], // IMG_7544
+  boudoirImages[16], // IMG_7095
+]
+
+export const scrollImages = [
+  boudoirImages[20], // IMG_7529
+  boudoirImages[30], // _DSC5577
+  boudoirImages[17], // IMG_7355
+  boudoirImages[24], // IMG_7820
+]
+
+export const experienceImages = [
+  boudoirImages[11], // IMG_5234
+  boudoirImages[17], // IMG_7355
+  boudoirImages[7],  // IMG_3106
+  boudoirImages[22], // IMG_7549
+  boudoirImages[15], // IMG_6896
+  boudoirImages[26], // IMG_8002
+]

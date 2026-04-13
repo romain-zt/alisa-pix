@@ -8,10 +8,10 @@ export default function LenisProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const lenis = new Lenis({
-      duration: 2.2,
-      // Cubic ease-out — slower, more sensual deceleration
-      easing: (t) => 1 - Math.pow(1 - t, 3),
-      touchMultiplier: 1.5,
+      duration: 3.2,
+      easing: (t) => 1 - Math.pow(1 - t, 4),
+      touchMultiplier: 1.2,
+      wheelMultiplier: 0.7,
     })
 
     lenisRef.current = lenis

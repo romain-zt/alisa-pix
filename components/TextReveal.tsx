@@ -14,19 +14,14 @@ export default function TextReveal({ text, className = '', tag = 'p' }: TextReve
 
   const { scrollYProgress } = useScroll({
     target: ref,
-    offset: ['start 0.9', 'center 0.4'],
+    offset: ['start 0.85', 'center 0.35'],
   })
 
-  // Hesitation → presence → settled
-  const opacity = useTransform(scrollYProgress, [0, 0.3, 0.6, 1], [0, 0.3, 1, 1])
-  const y = useTransform(scrollYProgress, [0, 1], [60, 0])
-  const blur = useTransform(scrollYProgress, [0, 0.4, 1], ['blur(10px)', 'blur(3px)', 'blur(0px)'])
-
-  // Breath: letters compress as text settles
-  const letterSpacing = useTransform(scrollYProgress, [0, 1], ['0.08em', '0.02em'])
-
-  // Micro-scale pulse — organic, not mechanical
-  const scale = useTransform(scrollYProgress, [0, 0.5, 1], [0.98, 1.01, 1])
+  const opacity = useTransform(scrollYProgress, [0, 0.25, 0.55, 1], [0, 0.15, 1, 1])
+  const y = useTransform(scrollYProgress, [0, 1], [50, 0])
+  const blur = useTransform(scrollYProgress, [0, 0.35, 1], ['blur(12px)', 'blur(3px)', 'blur(0px)'])
+  const letterSpacing = useTransform(scrollYProgress, [0, 1], ['0.06em', '0.02em'])
+  const scale = useTransform(scrollYProgress, [0, 0.4, 1], [0.97, 1.005, 1])
 
   const Tag = tag
 

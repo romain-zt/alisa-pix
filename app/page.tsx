@@ -1,172 +1,72 @@
 'use client'
 
-import { useRef } from 'react'
-import { motion, useScroll, useTransform } from 'framer-motion'
+import { motion } from 'framer-motion'
 import Link from 'next/link'
 import { useI18n } from '@/lib/i18n/context'
-import ProtectedImage from '@/components/ProtectedImage'
-import ParallaxImage from '@/components/ParallaxImage'
-import TextReveal from '@/components/TextReveal'
-import ScrollReveal from '@/components/ScrollReveal'
+import CinematicSequence from '@/components/CinematicSequence'
 import { heroImages, scrollImages } from '@/lib/images'
-
-function HeroSection() {
-  const { t } = useI18n()
-  const ref = useRef<HTMLDivElement>(null)
-  const { scrollYProgress } = useScroll({
-    target: ref,
-    offset: ['start start', 'end start'],
-  })
-
-  const scale = useTransform(scrollYProgress, [0, 1], [1, 1.15])
-  const opacity = useTransform(scrollYProgress, [0, 0.8], [1, 0])
-  const textY = useTransform(scrollYProgress, [0, 1], [0, -100])
-
-  return (
-    <section ref={ref} className="relative h-[100dvh] overflow-hidden">
-      <motion.div className="absolute inset-0" style={{ scale }}>
-        <ProtectedImage
-          src={heroImages[0]}
-          alt=""
-          className="w-full h-full"
-          priority
-        />
-        <div className="absolute inset-0 bg-black/50" />
-      </motion.div>
-
-      <motion.div
-        className="relative z-10 flex flex-col items-center justify-center h-full px-6 text-center"
-        style={{ opacity, y: textY }}
-      >
-        <motion.h1
-          className="font-serif text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-light italic tracking-wide text-off-white/90 max-w-3xl leading-relaxed"
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1.8, delay: 0.6, ease: [0.16, 1, 0.3, 1] }}
-        >
-          {t.home.hero}
-        </motion.h1>
-      </motion.div>
-
-      {/* Scroll indicator — delayed entrance builds anticipation */}
-      <motion.div
-        className="absolute bottom-12 left-1/2 -translate-x-1/2 z-10"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 1.2, delay: 2.4 }}
-      >
-        <motion.div
-          className="w-px h-12 bg-off-white/20 mx-auto mb-4"
-          animate={{ scaleY: [0, 1, 0] }}
-          transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
-          style={{ transformOrigin: 'top' }}
-        />
-      </motion.div>
-    </section>
-  )
-}
-
-function ScrollTextSection({
-  text,
-  image,
-  reverse = false,
-  delay = 0,
-}: {
-  text: string
-  image?: string
-  reverse?: boolean
-  delay?: number
-}) {
-  return (
-    <section className="min-h-screen flex items-center justify-center px-6 md:px-12 relative">
-      {image && (
-        <ScrollReveal
-          className={`absolute ${reverse ? 'right-8 md:right-20' : 'left-8 md:left-20'} top-1/2 -translate-y-1/2 w-[40vw] md:w-[30vw] h-[50vh] md:h-[60vh] opacity-20`}
-          blur
-          cinematic
-          delay={delay}
-        >
-          <ParallaxImage src={image} className="w-full h-full rounded-sm" speed={0.2} />
-        </ScrollReveal>
-      )}
-      <TextReveal
-        text={text}
-        className="font-serif text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-light italic text-center max-w-2xl leading-relaxed tracking-wide text-off-white/85"
-        tag="h2"
-      />
-    </section>
-  )
-}
 
 function EnterSection() {
   const { t } = useI18n()
 
   return (
-    <section className="min-h-[60vh] flex flex-col items-center justify-center px-6">
-      <ScrollReveal className="text-center" blur parallax>
-        <Link
-          href="/experience"
-          className="group inline-block"
-        >
+    <section className="h-[60vh] flex flex-col items-center justify-center px-6">
+      <motion.div
+        className="text-center"
+        initial={{ opacity: 0 }}
+        whileInView={{ opacity: 1 }}
+        transition={{ duration: 3, ease: [0.25, 0.46, 0.45, 0.94] }}
+        viewport={{ once: true, margin: '-10%' }}
+      >
+        <Link href="/experience" className="group inline-block">
           <motion.span
-            className="font-serif text-xl md:text-2xl tracking-[0.3em] uppercase text-gold/70 group-hover:text-gold transition-colors duration-1000 block"
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            transition={{ duration: 1.8, delay: 0.6 }}
+            className="font-serif text-xl md:text-2xl tracking-[0.3em] uppercase text-gold/60 group-hover:text-gold transition-colors duration-[2000ms] block"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{
+              duration: 2.4,
+              delay: 0.4,
+              ease: [0.25, 0.46, 0.45, 0.94],
+            }}
             viewport={{ once: true }}
           >
             {t.home.enter}
           </motion.span>
           <motion.div
-            className="mt-4 mx-auto w-12 h-px bg-gold/30 group-hover:w-20 group-hover:bg-gold/60 transition-all duration-1000"
+            className="mt-6 mx-auto w-10 h-px bg-gold/20 group-hover:w-20 group-hover:bg-gold/50 transition-all duration-[2000ms]"
             initial={{ scaleX: 0 }}
             whileInView={{ scaleX: 1 }}
-            transition={{ duration: 1.4, delay: 1 }}
+            transition={{ duration: 2, delay: 0.8 }}
             viewport={{ once: true }}
           />
         </Link>
-      </ScrollReveal>
+      </motion.div>
     </section>
   )
-}
-
-/** Breathing space between narrative acts */
-function Breath({ height = '40vh' }: { height?: string }) {
-  return <div style={{ height }} />
 }
 
 export default function HomePage() {
   const { t } = useI18n()
 
+  const scenes = [
+    { src: heroImages[0], text: t.home.hero },
+    { src: scrollImages[0], text: t.home.s1 },
+    { src: heroImages[1] },
+    { src: scrollImages[1], text: t.home.s2 },
+    { src: heroImages[2] },
+    { src: scrollImages[2], text: t.home.s3 },
+    { src: scrollImages[3], text: t.home.s4 },
+  ]
+
   return (
     <main className="relative">
-      {/* ACT 1 — Tension: the first impression */}
-      <HeroSection />
+      <CinematicSequence scenes={scenes} />
 
-      <Breath />
+      <div className="h-[15vh]" aria-hidden />
 
-      {/* ACT 2 — Unfolding: the narrative builds */}
-      <ScrollTextSection text={t.home.s1} image={scrollImages[0]} delay={0.1} />
-
-      <Breath height="30vh" />
-
-      <ScrollTextSection text={t.home.s2} image={scrollImages[1]} reverse delay={0.2} />
-
-      <Breath height="45vh" />
-
-      {/* ACT 3 — Deepening: rhythm shifts */}
-      <ScrollTextSection text={t.home.s3} image={scrollImages[2]} delay={0.15} />
-
-      <Breath height="35vh" />
-
-      <ScrollTextSection text={t.home.s4} image={scrollImages[3]} reverse delay={0.25} />
-
-      <Breath height="50vh" />
-
-      {/* EPILOGUE — Invitation */}
       <EnterSection />
 
-      <Breath height="25vh" />
+      <div className="h-[15vh]" aria-hidden />
     </main>
   )
 }
