@@ -1,7 +1,12 @@
 'use client'
 
 import { useRef } from 'react'
-import { motion, useScroll, useTransform, MotionValue } from 'framer-motion'
+import {
+  motion,
+  useScroll,
+  useTransform,
+  useMotionValueEvent,
+} from 'framer-motion'
 import ProtectedImage from '@/components/ProtectedImage'
 
 interface Scene {
@@ -16,8 +21,17 @@ interface CinematicSequenceProps {
 const SCENE_HEIGHT = '150vh'
 const EASE_EMERGE: [number, number, number, number] = [0.16, 1, 0.3, 1]
 
-function useFilterString(progress: MotionValue<number>, input: number[], blurValues: number[]) {
-  return useTransform(progress, input, blurValues.map((v) => `blur(${v}px)`))
+type Stops = readonly (readonly [number, number])[]
+
+function interpolate(stops: Stops, t: number) {
+  if (t <= stops[0][0]) return stops[0][1]
+  if (t >= stops[stops.length - 1][0]) return stops[stops.length - 1][1]
+  for (let i = 0; i < stops.length - 1; i++) {
+    const [x0, y0] = stops[i]
+    const [x1, y1] = stops[i + 1]
+    if (t >= x0 && t <= x1) return y0 + ((t - x0) / (x1 - x0)) * (y1 - y0)
+  }
+  return stops[stops.length - 1][1]
 }
 
 function CinematicScene({ scene, index }: { scene: Scene; index: number }) {
@@ -44,24 +58,19 @@ function CinematicScene({ scene, index }: { scene: Scene; index: number }) {
     [1.12, 1.0, 1.02, 1.0, 1.06]
   )
 
-  const imgBlur = useBlur(
-    scrollYProgress,
-    [0, 0.12, 0.2, 0.7, 0.88, 1],
-    [14, 6, 0, 0, 6, 10]
-  )
+  const imgLayerRef = useRef<HTMLDivElement>(null)
+  const BLUR_STOPS: Stops = [[0, 14], [0.12, 6], [0.2, 0], [0.7, 0], [0.88, 6], [1, 10]]
+  const BRIGHT_STOPS: Stops = [[0, 0.2], [0.2, 0.9], [0.45, 1], [0.7, 0.9], [1, 0.2]]
 
-  const imgBrightness = useTransform(
-    scrollYProgress,
-    [0, 0.2, 0.45, 0.7, 1],
-    [0.2, 0.9, 1, 0.9, 0.2]
-  )
+  const imgFilterValue = useTransform(scrollYProgress, (p) => {
+    const blur = interpolate(BLUR_STOPS, p)
+    const brightness = interpolate(BRIGHT_STOPS, p)
+    return `blur(${blur}px) brightness(${brightness})`
+  })
 
-  const imgFilter = useTransform(
-    ([imgBlur, imgBrightness] as MotionValue[]) as MotionValue<string>[],
-    // @ts-expect-error -- framer-motion overload typing
-    ([blur, brightness]: [string, number]) =>
-      `${blur} brightness(${brightness})`
-  )
+  useMotionValueEvent(imgFilterValue, 'change', (v) => {
+    if (imgLayerRef.current) imgLayerRef.current.style.filter = v
+  })
 
   // Subtle horizontal drift — alternates direction per scene
   const driftDirection = index % 2 === 0 ? 1 : -1
@@ -98,11 +107,15 @@ function CinematicScene({ scene, index }: { scene: Scene; index: number }) {
     [40, 0, 0, -30]
   )
 
-  const textBlur = useBlur(
-    scrollYProgress,
-    [0.25, 0.35, 0.38, 0.6, 0.65],
-    [12, 4, 0, 0, 10]
-  )
+  const textLayerRef = useRef<HTMLDivElement>(null)
+  const textFilterValue = useTransform(scrollYProgress, (p) => {
+    const stops: Stops = [[0.25, 12], [0.35, 4], [0.38, 0], [0.6, 0], [0.65, 10]]
+    return `blur(${interpolate(stops, p)}px)`
+  })
+
+  useMotionValueEvent(textFilterValue, 'change', (v) => {
+    if (textLayerRef.current) textLayerRef.current.style.filter = v
+  })
 
   const textScale = useTransform(
     scrollYProgress,
@@ -129,11 +142,11 @@ function CinematicScene({ scene, index }: { scene: Scene; index: number }) {
       <div className="sticky top-0 h-[100dvh] overflow-hidden">
         {/* Image layer */}
         <motion.div
+          ref={imgLayerRef}
           className="absolute inset-0 will-change-transform"
           style={{
             scale: imgScale,
             opacity: imgOpacity,
-            filter: imgFilter,
             x: imgX,
             y: imgY,
           }}
@@ -175,13 +188,13 @@ function CinematicScene({ scene, index }: { scene: Scene; index: number }) {
         {/* Text layer */}
         {scene.text && (
           <motion.div
+            ref={textLayerRef}
             className={`absolute inset-0 z-10 flex items-center px-6 md:px-16 lg:px-24 ${
               isEven ? 'justify-start' : 'justify-end'
             }`}
             style={{
               opacity: textOpacity,
               y: textY,
-              filter: textBlur,
               scale: textScale,
             }}
           >
@@ -217,7 +230,15 @@ function CinematicHero({
   const overlayOpacity = useTransform(scrollYProgress, [0, 1], [0.35, 0.85])
   const textOpacity = useTransform(scrollYProgress, [0, 0.5], [1, 0])
   const textY = useTransform(scrollYProgress, [0, 1], [0, -100])
-  const textBlur = useBlur(scrollYProgress, [0, 0.4, 0.6], [0, 0, 8])
+
+  const heroTextRef = useRef<HTMLDivElement>(null)
+  const heroTextFilter = useTransform(scrollYProgress, (p) => {
+    const blur = interpolate([[0, 0], [0.4, 0], [0.6, 8]] as Stops, p)
+    return `blur(${blur}px)`
+  })
+  useMotionValueEvent(heroTextFilter, 'change', (v) => {
+    if (heroTextRef.current) heroTextRef.current.style.filter = v
+  })
 
   return (
     <section ref={ref} className="relative h-[120vh]">
@@ -248,8 +269,9 @@ function CinematicHero({
         />
 
         <motion.div
+          ref={heroTextRef}
           className="relative z-10 flex flex-col items-center justify-center h-full px-6 text-center"
-          style={{ opacity: textOpacity, y: textY, filter: textBlur }}
+          style={{ opacity: textOpacity, y: textY }}
         >
           <motion.h1
             className="font-serif text-3xl sm:text-4xl md:text-5xl lg:text-7xl xl:text-8xl font-light italic tracking-wide text-off-white/90 max-w-4xl leading-relaxed"
