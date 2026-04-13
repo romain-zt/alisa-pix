@@ -13,7 +13,7 @@ export default function GrainOverlay() {
 
   return (
     <>
-      {/* Film grain */}
+      {/* Film grain — keyframe defined in globals.css */}
       <div
         className="pointer-events-none fixed inset-0 z-50 opacity-[0.025] mix-blend-overlay"
         aria-hidden="true"
@@ -49,21 +49,6 @@ export default function GrainOverlay() {
           )`,
         }}
       />
-
-      <style jsx>{`
-        @keyframes grain-shift {
-          0%, 100% { transform: translate(0, 0); }
-          10% { transform: translate(-0.5%, -0.5%); }
-          20% { transform: translate(0.5%, 0.5%); }
-          30% { transform: translate(-0.5%, 0.5%); }
-          40% { transform: translate(0.5%, -0.5%); }
-          50% { transform: translate(-0.25%, 0); }
-          60% { transform: translate(0.25%, 0); }
-          70% { transform: translate(0, 0.5%); }
-          80% { transform: translate(0, -0.5%); }
-          90% { transform: translate(0.5%, 0.25%); }
-        }
-      `}</style>
     </>
   )
 }
