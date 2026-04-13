@@ -2,10 +2,22 @@
 
 import { useRef } from 'react'
 import { motion, useScroll, useTransform } from 'framer-motion'
+import Link from 'next/link'
 import { useI18n } from '@/lib/i18n/context'
 import ProtectedImage from '@/components/ProtectedImage'
 import { experienceImages } from '@/lib/images'
 
+function ProgressBar() {
+  const { scrollYProgress } = useScroll()
+  const scaleX = useTransform(scrollYProgress, [0, 1], [0, 1])
+
+  return (
+    <motion.div
+      className="fixed top-0 left-0 right-0 h-px bg-gold/30 z-[60] origin-left"
+      style={{ scaleX }}
+    />
+  )
+}
 
 function ExperienceHero() {
   const ref = useRef<HTMLDivElement>(null)
@@ -107,16 +119,47 @@ function ExperienceFrame({
   )
 }
 
-function ClosingSection() {
+function ClosingCTA() {
+  const { t } = useI18n()
+
   return (
-    <section className="h-[40vh] flex items-center justify-center">
+    <section className="h-[80vh] flex flex-col items-center justify-center px-6 tone-warm">
       <motion.div
-        className="w-16 h-px bg-gold/20"
+        className="w-16 h-px bg-gold/20 mb-16"
         initial={{ scaleX: 0 }}
         whileInView={{ scaleX: 1 }}
         transition={{ duration: 2.4, ease: [0.25, 0.46, 0.45, 0.94] }}
         viewport={{ once: true }}
       />
+
+      <motion.div
+        className="text-center"
+        initial={{ opacity: 0, y: 20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        transition={{ duration: 2.5, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
+        viewport={{ once: true }}
+      >
+        <Link href="/contact" className="group">
+          <span className="font-serif text-4xl sm:text-5xl md:text-6xl font-light italic text-off-white/70 group-hover:text-off-white transition-colors duration-[2000ms]">
+            {t.experience.cta}
+          </span>
+        </Link>
+      </motion.div>
+
+      <motion.div
+        className="mt-16"
+        initial={{ opacity: 0 }}
+        whileInView={{ opacity: 1 }}
+        transition={{ duration: 2, delay: 1.2 }}
+        viewport={{ once: true }}
+      >
+        <Link
+          href="/contact"
+          className="font-sans text-xs tracking-[0.25em] uppercase text-gold/40 hover:text-gold border border-gold/15 hover:border-gold/35 px-8 py-3 transition-all duration-1000"
+        >
+          {t.nav.book}
+        </Link>
+      </motion.div>
     </section>
   )
 }
@@ -127,6 +170,7 @@ export default function ExperiencePage() {
 
   return (
     <main className="relative">
+      <ProgressBar />
       <ExperienceHero />
 
       {lines.map((line, i) => (
@@ -138,7 +182,7 @@ export default function ExperiencePage() {
         />
       ))}
 
-      <ClosingSection />
+      <ClosingCTA />
     </main>
   )
 }

@@ -5,8 +5,16 @@
   --color-off-white: #F5F2EF;
   --color-gold: #C6A86E;
   --color-gold-dim: rgba(198, 168, 110, 0.4);
+  --color-rose: #C4A0A0;
+  --color-rose-dim: rgba(196, 160, 160, 0.4);
   --color-warm-gray: #8A8178;
   --color-charcoal: #1A1A1A;
+
+  --color-tone-deep: #050506;
+  --color-tone-warm: #0d0a08;
+  --color-tone-ember: #0d0907;
+  --color-tone-dusk: #09080d;
+  --color-tone-silk: #0a0909;
 
   --font-serif: "Cormorant Garamond", "Georgia", serif;
   --font-sans: "Inter", system-ui, sans-serif;
@@ -96,4 +104,174 @@ body {
 
 html {
   scrollbar-width: none;
+}
+
+@layer utilities {
+
+  /* ─── CINEMATIC DEPTH SYSTEM ─── */
+
+  .cinema-root {
+    position: relative;
+    background: #0B0B0B;
+  }
+
+  .cinema-hole {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 1;
+    background: radial-gradient(
+      ellipse 80% 65% at 50% 50%,
+      rgba(255, 255, 255, 0.025) 0%,
+      rgba(255, 255, 255, 0.008) 15%,
+      transparent 30%,
+      rgba(0, 0, 0, 0.35) 65%,
+      rgba(0, 0, 0, 0.75) 100%
+    );
+  }
+
+  .cinema-lens {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 2;
+    background:
+      radial-gradient(ellipse 100% 100% at 50% 50%, transparent 55%, rgba(0, 0, 0, 0.025) 60%, transparent 65%),
+      radial-gradient(ellipse 100% 100% at 50% 50%, transparent 70%, rgba(0, 0, 0, 0.015) 75%, transparent 80%),
+      radial-gradient(ellipse 100% 100% at 50% 50%, transparent 85%, rgba(0, 0, 0, 0.01) 90%, transparent 95%);
+    animation: lens-breathe 50s ease-in-out infinite;
+  }
+
+  .cinema-leak {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 3;
+    background:
+      radial-gradient(ellipse 45% 40% at 12% 20%, rgba(198, 168, 110, 0.025) 0%, transparent 70%),
+      radial-gradient(ellipse 35% 35% at 88% 80%, rgba(196, 160, 160, 0.02) 0%, transparent 70%);
+    animation: leak-drift 65s ease-in-out infinite;
+  }
+
+  @keyframes lens-breathe {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.75; transform: scale(1.015); }
+  }
+
+  @keyframes leak-drift {
+    0%, 100% {
+      opacity: 1;
+      background-position: 0% 0%, 100% 100%;
+    }
+    33% {
+      opacity: 0.65;
+      background-position: 5% -5%, 95% 105%;
+    }
+    66% {
+      opacity: 0.8;
+      background-position: -3% 3%, 103% 97%;
+    }
+  }
+
+  /* ─── SECTION TONE SYSTEM ─── */
+
+  .tone-deep { background: var(--color-tone-deep); }
+  .tone-warm { background: var(--color-tone-warm); }
+  .tone-ember { background: var(--color-tone-ember); }
+  .tone-dusk { background: var(--color-tone-dusk); }
+  .tone-silk { background: var(--color-tone-silk); }
+
+  .section-fade-top::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 120px;
+    background: linear-gradient(to bottom, var(--color-black), transparent);
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  .section-fade-bottom::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 120px;
+    background: linear-gradient(to top, var(--color-black), transparent);
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  /* ─── B&W REVEAL ─── */
+
+  .bw-image {
+    filter: grayscale(1) brightness(0.85) contrast(1.1);
+    transition: filter 2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  }
+
+  .bw-image-reveal {
+    filter: grayscale(0) brightness(1) contrast(1);
+  }
+
+  .bw-image-hover:hover {
+    filter: grayscale(0) brightness(1) contrast(1);
+  }
+
+  /* ─── MICRO TYPOGRAPHY ─── */
+
+  .label-micro {
+    font-family: var(--font-sans);
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    font-weight: 400;
+  }
+
+  .label-small {
+    font-family: var(--font-sans);
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    font-weight: 300;
+  }
+
+  /* ─── GOLD LINE DIVIDER ─── */
+
+  .gold-line {
+    height: 1px;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(198, 168, 110, 0.3) 20%,
+      rgba(198, 168, 110, 0.3) 80%,
+      transparent
+    );
+  }
+
+  .rose-line {
+    height: 1px;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(196, 160, 160, 0.25) 20%,
+      rgba(196, 160, 160, 0.25) 80%,
+      transparent
+    );
+  }
+}
+
+/* ─── REDUCED MOTION ─── */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

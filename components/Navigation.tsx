@@ -20,7 +20,8 @@ function FullscreenOverlay({
   const links = [
     { href: '/', label: 'VASILISA' },
     { href: '/experience', label: t.nav.experience },
-    { href: '/gallery', label: 'Gallery' },
+    { href: '/gallery', label: t.nav.gallery },
+    { href: '/about', label: t.nav.about },
     { href: '/contact', label: t.nav.contact },
   ]
 
@@ -34,7 +35,6 @@ function FullscreenOverlay({
           exit={{ opacity: 0 }}
           transition={{ duration: OVERLAY_DURATION, ease: OVERLAY_EASE }}
         >
-          {/* Backdrop */}
           <motion.div
             className="absolute inset-0 bg-black/95 backdrop-blur-sm"
             initial={{ opacity: 0 }}
@@ -44,7 +44,6 @@ function FullscreenOverlay({
             onClick={onClose}
           />
 
-          {/* Close trigger — top right */}
           <motion.button
             className="absolute top-6 right-6 md:top-10 md:right-12 z-10 w-11 h-11 flex items-center justify-center cursor-pointer"
             onClick={onClose}
@@ -58,7 +57,6 @@ function FullscreenOverlay({
             <span className="block w-6 h-px bg-off-white/60 -rotate-45 absolute" />
           </motion.button>
 
-          {/* Links */}
           <nav className="relative z-10 flex flex-col items-center gap-10 md:gap-14">
             {links.map((link, i) => (
               <motion.div
@@ -68,7 +66,7 @@ function FullscreenOverlay({
                 exit={{ opacity: 0, y: -20 }}
                 transition={{
                   duration: 1.2,
-                  delay: 0.2 + i * 0.12,
+                  delay: 0.2 + i * 0.1,
                   ease: OVERLAY_EASE,
                 }}
               >
@@ -82,16 +80,36 @@ function FullscreenOverlay({
               </motion.div>
             ))}
 
+            {/* Book CTA — soft gold */}
+            <motion.div
+              initial={{ opacity: 0, y: 40 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{
+                duration: 1.2,
+                delay: 0.2 + links.length * 0.1,
+                ease: OVERLAY_EASE,
+              }}
+            >
+              <Link
+                href="/contact"
+                onClick={onClose}
+                className="font-sans text-xs tracking-[0.25em] uppercase text-gold/60 hover:text-gold border border-gold/20 hover:border-gold/40 px-8 py-3 transition-all duration-1000"
+              >
+                {t.nav.book}
+              </Link>
+            </motion.div>
+
             {/* Locale toggle */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 0.8, delay: 0.6 }}
+              transition={{ duration: 0.8, delay: 0.8 }}
             >
               <button
                 onClick={() => { toggle(); onClose() }}
-                className="font-sans text-xs tracking-[0.2em] uppercase text-gold/50 hover:text-gold transition-colors duration-1000 mt-4 cursor-pointer"
+                className="font-sans text-xs tracking-[0.2em] uppercase text-off-white/25 hover:text-off-white/50 transition-colors duration-1000 mt-2 cursor-pointer"
               >
                 {locale === 'en' ? 'RU' : 'EN'}
               </button>
@@ -138,7 +156,7 @@ export default function Navigation() {
 
   return (
     <>
-      {/* Ghost logo — fades in/out based on scroll direction */}
+      {/* Ghost logo */}
       <AnimatePresence>
         {logoVisible && !menuOpen && (
           <motion.div
@@ -158,7 +176,7 @@ export default function Navigation() {
         )}
       </AnimatePresence>
 
-      {/* Floating trigger dot — appears after scrolling past hero */}
+      {/* Floating trigger dot */}
       <AnimatePresence>
         {triggerVisible && !menuOpen && (
           <motion.button
@@ -170,7 +188,7 @@ export default function Navigation() {
             transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
             aria-label="Open menu"
           >
-            <span className="block w-1.5 h-1.5 rounded-full bg-off-white/40 group-hover:bg-off-white/80 group-hover:scale-150 transition-all duration-1000" />
+            <span className="block w-1.5 h-1.5 rounded-full bg-gold/40 group-hover:bg-gold/80 group-hover:scale-150 transition-all duration-1000" />
           </motion.button>
         )}
       </AnimatePresence>

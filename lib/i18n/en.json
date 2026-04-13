@@ -1,15 +1,24 @@
 {
   "nav": {
     "experience": "Experience",
-    "contact": "Contact"
+    "gallery": "Gallery",
+    "about": "About",
+    "contact": "Contact",
+    "book": "Inquire"
   },
   "home": {
     "hero": "You don't have to know how.",
-    "enter": "Enter",
+    "enter": "Begin your experience",
     "s1": "You just have to arrive.",
     "s2": "You are guided.",
     "s3": "You let go.",
-    "s4": "And something shifts."
+    "s4": "And something shifts.",
+    "testimonials_intro": "In their words",
+    "t1": "I came nervous. I left feeling like the woman I forgot I was.",
+    "t2": "It wasn't about the photos. It was about finally being seen.",
+    "t3": "The most liberating three hours of my life.",
+    "gallery_teaser": "A glimpse",
+    "gallery_cta": "View gallery"
   },
   "experience": {
     "l1": "This is not a photoshoot.",
@@ -17,15 +26,36 @@
     "l3": "Confidential. Selective.",
     "l4": "Every session is unique.",
     "l5": "There is no script.",
-    "l6": "Only presence."
+    "l6": "Only presence.",
+    "cta": "Ready?"
+  },
+  "about": {
+    "title": "Vasilisa",
+    "subtitle": "Behind the lens",
+    "p1": "I don't photograph bodies.",
+    "p2": "I photograph what happens when someone stops performing.",
+    "p3": "Every woman who walks through my door carries something — a version of herself she hasn't met yet. My work is to create the space where that meeting happens.",
+    "p4": "The session is not about poses or lighting setups. It's about trust. About the moment you exhale and stop holding yourself together.",
+    "p5": "That's when the real image appears.",
+    "philosophy_title": "Philosophy",
+    "philosophy": "Beauty is not something you perform. It's something you allow.",
+    "cta": "Experience it yourself"
   },
   "contact": {
-    "headline": "Access is limited.",
-    "subline": "By invitation only.",
+    "headline": "Begin here.",
+    "subline": "Every conversation is confidential.",
     "email": "hello@vasilisa.photo",
-    "telegram": "@vasilisa_photo"
+    "telegram": "@vasilisa_photo",
+    "form_name": "Your name",
+    "form_email": "Your email",
+    "form_message": "Tell me about yourself",
+    "form_submit": "Send inquiry",
+    "reassurance": "Your inquiry is treated with absolute discretion.",
+    "or_reach": "Or reach out directly"
   },
   "footer": {
-    "copy": "© Vasilisa"
+    "copy": "© Vasilisa",
+    "tagline": "Private luxury photography",
+    "confidential": "All sessions are confidential"
   }
 }

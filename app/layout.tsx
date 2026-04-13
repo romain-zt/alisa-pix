@@ -3,8 +3,8 @@ import './globals.css'
 import ClientProviders from './providers'
 
 export const metadata: Metadata = {
-  title: 'VASILISA',
-  description: 'A private luxury photography experience.',
+  title: 'VASILISA — Private Luxury Photography',
+  description: 'A private luxury photography experience. Confidential. Selective. By invitation.',
   robots: { index: false, follow: false },
 }
 
@@ -21,7 +21,12 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className="bg-black text-off-white antialiased">
+      <body className="bg-black text-off-white antialiased cinema-root">
+        {/* Cinematic depth layers */}
+        <div className="cinema-hole" aria-hidden="true" />
+        <div className="cinema-lens" aria-hidden="true" />
+        <div className="cinema-leak" aria-hidden="true" />
+
         <ClientProviders>{children}</ClientProviders>
       </body>
     </html>
