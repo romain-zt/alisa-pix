@@ -1,0 +1,78 @@
+---
+description: Localization and i18n policy — multilingual from day one.
+globs:
+alwaysApply: true
+---
+
+# i18n / Localization Policy
+
+## Principle
+
+The architecture must be **multilingual from day one**, even though only `en-US` is initially active. Adding a new locale later must not require schema refactoring.
+
+## Current state
+
+- Locale routing: `app/[locale]/` with `en` and `fr` via `middleware.ts`
+- UI strings: loaded from Google Sheets CSV, with TS fallbacks in `lib/i18n/fallback/`
+- Content data: `POSTER_ITEMS` in `content.ts` are locale-agnostic (same data for en/fr)
+- Types: `Language = 'en' | 'fr'` in `lib/i18n/types.ts`
+
+## Payload localization config
+
+When setting up Payload, configure localization from the start:
+
+```typescript
+// payload.config.ts
+localization: {
+  locales: [
+    { label: 'English', code: 'en' },
+    // Add more locales here when needed
+    // { label: 'French', code: 'fr' },
+  ],
+  defaultLocale: 'en',
+  fallback: true,
+}
+```
+
+## Field localization rules
+
+### Localize these fields (use `localized: true`)
+- Titles, descriptions, taglines, body text
+- SEO metadata (meta title, meta description, keywords)
+- Alt text for images
+- CTA labels, button text
+- Any user-facing string that could differ by language
+
+### Do NOT localize these fields
+- Slugs (URL slugs should be locale-agnostic or handled at the route level)
+- Dates, years, numeric IDs
+- Email addresses, phone numbers, URLs
+- Tags/categories (unless they need translated labels)
+- Technical fields (status, sort order, publish date)
+
+## Two types of i18n
+
+### 1. UI i18n (chrome, labels, navigation)
+- Managed via translation files or a Payload Global
+- Examples: nav labels, button text, form labels, footer text
+
+### 2. Content localization (page content, work descriptions)
+- Managed via Payload's localized fields on collections
+- Examples: work item descriptions, team bios, about page content
+
+## Locale-aware assets
+
+This is critical for a cinema/media site:
+- A film poster may differ by country/locale
+- Media relationships should support locale-aware variants
+- Schema pattern: use a localized relationship field to Media, or a locale-keyed array of assets
+- This applies to: posters, key art, press kits, localized stills, downloadable assets
+
+## Route structure with Payload
+
+Keep the `[locale]` segment in the frontend route group:
+```
+app/(frontend)/[locale]/page.tsx
+```
+
+Payload admin panel does NOT need locale in the URL — Payload handles locale switching internally.

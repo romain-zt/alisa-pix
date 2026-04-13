@@ -1,0 +1,61 @@
+---
+description: Progressive migration policy — migrate one feature at a time, preserve existing content.
+globs:
+alwaysApply: true
+---
+
+# Progressive Migration Policy
+
+## Core principle
+
+Migrate the site **one page or feature at a time** from hardcoded content to Payload CMS. Never attempt a full rewrite.
+
+## Before ANY schema or content change
+
+You MUST:
+
+1. **Search the current repository** for existing content related to the feature
+2. **Read the current hardcoded data** in:
+   - `app/[locale]/content.ts` (media items, poster data)
+   - `lib/i18n/fallback/en.ts` and `fr.ts` (all localized text)
+   - `lib/i18n/types.ts` (type definitions)
+   - `lib/seo.ts` (SEO metadata per page)
+   - The specific page's `*Content.tsx` component
+   - `app/[locale]/globals.css` (design tokens, CSS variables)
+3. **Inspect current component props** to understand what data the frontend expects
+4. **Check current image references** in `public/assets/` directories
+5. **Document what you found** before proposing a Payload schema
+
+## Migration order (recommended)
+
+1. **Infrastructure** — Payload setup, Docker Compose, database, S3 storage
+2. **Design system global** — migrate CSS variables / branding to a Payload Global
+3. **Media collection** — set up Payload media with S3 adapter
+4. **Works collection** — migrate `POSTER_ITEMS` / `MEDIA` data
+5. **Team collection** — migrate `teamMembers`
+6. **News collection** — migrate `awardsNews`
+7. **Site config global** — SEO defaults, contact info, navigation
+8. **Page-by-page** — home, about, our-work, development, press, contact, legal
+9. **Blocks** — introduce block-based page building where it makes sense
+
+## Rules during migration
+
+- Keep the old hardcoded data in place until the Payload equivalent is **seeded, tested, and rendering correctly**
+- Use a **feature flag or environment check** if needed to switch between old and new data source
+- When a page is fully migrated, **remove the old hardcoded data** for that feature
+- Do NOT remove code that other un-migrated pages still depend on
+- Keep diffs small — one collection/global/page per PR when possible
+- Every migration PR should include a seed script for the migrated content
+
+## Content discovery checklist
+
+Before creating any Payload collection or global, verify:
+
+- [ ] What fields does the current TypeScript type have?
+- [ ] What fields does the current component actually render?
+- [ ] Are there fields in the type that are unused?
+- [ ] Is there content in the fallback files that the component ignores?
+- [ ] What images are referenced and where do they live?
+- [ ] Is the content locale-aware or locale-agnostic?
+- [ ] What SEO metadata is associated with this content?
+- [ ] Are there any computed/derived values (slugs, YouTube IDs, descriptions)?

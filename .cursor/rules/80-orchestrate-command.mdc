@@ -1,0 +1,54 @@
+---
+description: Triggers the orchestrator agent when the user types /orchestrate
+globs:
+alwaysApply: false
+---
+
+# /orchestrate Command
+
+When the user types `/orchestrate`, activate the **orchestrator** workflow.
+
+## Behavior
+
+1. **Read all specs** from `specs/` directory
+2. **Parse status** of each spec (check acceptance criteria `[x]` vs `[ ]`)
+3. **Determine which spec(s) to implement** based on:
+   - User's message (if they specify a spec number or name)
+   - Dependency order (lower-numbered specs first)
+   - Current completion status (skip fully done specs)
+4. **Build an execution plan** mapping tasks to subagents
+5. **Present the plan** and wait for user approval
+6. **Execute** by launching subagents via the Task tool
+7. **Verify** results against the spec's checklist
+8. **Iterate** if verification fails
+
+## Usage
+
+```
+/orchestrate                     → picks next pending spec
+/orchestrate 03                  → implements spec 03 specifically
+/orchestrate 03-split-payload    → implements spec by name
+```
+
+## Agent routing
+
+| Concern | Subagent type |
+|---------|---------------|
+| Payload schemas | `payload-architect` |
+| Content field mapping | `content-modeler` |
+| Design tokens / branding | `design-system-modeler` |
+| Seed scripts | `seed-engineer` |
+| Frontend components | `frontend-guardian` |
+| Media / S3 storage | `media-storage-advisor` |
+| Verification | `verifier` |
+| File creation / refactoring | `generalPurpose` |
+| Git, build, install | `shell` |
+| Code exploration | `explore` |
+
+## Key rules
+
+- **Always plan before executing** — present the plan, get approval
+- **Respect spec dependency order** — lower numbers first
+- **Never push to main** — create a feature branch
+- **Update spec checkboxes** when criteria are verified
+- **Use TodoWrite** to track progress visibly

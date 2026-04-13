@@ -1,0 +1,46 @@
+---
+description: Branch safety policy — NEVER push to main/master. Always use feature branches.
+globs:
+alwaysApply: true
+---
+
+# Branch Safety Policy
+
+## CRITICAL: No direct pushes to main or master
+
+**NEVER** push directly to `main` or `master`. Production may deploy automatically on push to these branches.
+
+### Rules
+
+1. **Always work on a feature branch**
+   - Naming: `feat/<feature>`, `migrate/<feature>`, `fix/<feature>`, `chore/<feature>`
+   - Examples: `migrate/payload-setup`, `migrate/works-collection`, `feat/design-system-global`
+
+2. **Never suggest commands that push to main/master**
+   - No `git push origin main`
+   - No `git push origin master`
+   - No `git checkout main && git merge ...`
+
+3. **If generating git instructions, always default to a feature branch**
+   ```bash
+   # Correct
+   git checkout -b migrate/works-collection
+   git push -u origin migrate/works-collection
+
+   # NEVER
+   git push origin main
+   ```
+
+4. **Rebase safety**
+   - If rebasing onto main/master, do NOT push the result to main/master
+   - After rebase: push to the feature branch with `--force-with-lease`
+   - Never use `--force` (use `--force-with-lease` instead)
+
+5. **Pull request workflow**
+   - All changes go through PRs from feature branch → main
+   - PRs should be reviewed before merge
+   - Squash or rebase merge preferred
+
+6. **If accidentally on main**
+   - Immediately create a branch: `git checkout -b migrate/<feature>`
+   - Do NOT commit on main

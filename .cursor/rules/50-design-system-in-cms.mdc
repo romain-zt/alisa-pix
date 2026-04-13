@@ -1,0 +1,93 @@
+---
+description: Design system in CMS policy — branding config must be editable in Payload.
+globs:
+alwaysApply: true
+---
+
+# Design System in CMS
+
+## Principle
+
+The current visual identity lives in code (`globals.css` CSS variables). The Payload version must make these values **editable by the end client** in the admin panel, while keeping them **seedable** from the current implementation.
+
+## Current design tokens (source: `app/[locale]/globals.css`)
+
+### Colors
+| Token | Current value | Purpose |
+|-------|---------------|---------|
+| `--background` | `#070708` | Page background |
+| `--foreground` | `#F5F0EB` | Primary text |
+| `--rfe-red` | `#8B1A1A` | Accent — blood red |
+| `--rfe-rose` | `#C4A0A0` | Accent — dusty rose |
+| `--rfe-gold` | `#B5975A` | Accent — warm gold |
+| `--rfe-gold-dim` | `rgba(181,151,90,0.6)` | Gold at reduced opacity |
+| `--rfe-rose-dim` | `rgba(196,160,160,0.5)` | Rose at reduced opacity |
+
+### Section tones
+| Token | Value | Character |
+|-------|-------|-----------|
+| `--tone-deep` | `#050506` | Deepest black |
+| `--tone-charcoal` | `#0a0a0c` | Charcoal |
+| `--tone-slate` | `#0c0d10` | Blue-black |
+| `--tone-warm` | `#0b0908` | Warm black |
+| `--tone-cool` | `#080a0d` | Cool black |
+| `--tone-ember` | `#0d0907` | Ember |
+| `--tone-dusk` | `#090810` | Dusk |
+
+### Easings
+| Token | Value |
+|-------|-------|
+| `--ease-emerge` | `cubic-bezier(0.16, 1, 0.3, 1)` |
+| `--ease-quiet` | `cubic-bezier(0.87, 0, 0.13, 1)` |
+| `--ease-sharp` | `cubic-bezier(0.76, 0, 0.24, 1)` |
+
+### Typography
+- Brand font: `Sackers Gothic`
+- Sans fallback: `Inter` → system-ui
+- Serif: `Fraunces` → Georgia
+- Radius base: `0.25rem`
+
+## Payload model
+
+Create a `SiteConfig` **Global** (or similar) with groups for:
+
+1. **Brand identity** — brand name, tagline, logos (upload), favicon
+2. **Color palette** — primary colors, accents, section tones (color picker fields)
+3. **Typography** — font family names, heading/body font choices
+4. **Spacing & radius** — base radius, spacing scale presets
+5. **SEO defaults** — default meta title template, description, OG image
+6. **Social links** — Instagram, IMDb, LinkedIn, etc.
+7. **Contact info** — email, phone, address
+
+### Implementation approach
+
+1. **Seed the Global** from current CSS variable values
+2. **Frontend reads the Global** via Payload Local API in the root layout
+3. **Inject values as CSS custom properties** on `<html>` or `<body>`
+4. **Tailwind theme** continues to reference `var(--...)` — no change needed in components
+5. **Admin edits** update the Global → values flow to CSS → site updates
+
+### Example seed
+```typescript
+await payload.updateGlobal({
+  slug: 'site-config',
+  data: {
+    brandName: 'RFE',
+    colors: {
+      background: '#070708',
+      foreground: '#F5F0EB',
+      rfeRed: '#8B1A1A',
+      rfeRose: '#C4A0A0',
+      rfeGold: '#B5975A',
+    },
+    // ...
+  },
+})
+```
+
+## Rules
+- Do NOT invent a new branding system — derive from what exists in `globals.css`
+- Do NOT remove CSS utilities (cinema effects, reveals, etc.) from the stylesheet — only move **values** to CMS
+- The cinematic effect classes (`.cinema-hole`, `.cinema-leak`, etc.) stay as CSS — they are presentation, not content
+- Design tokens in the CMS should be seedable and editable
+- Consider caching the Global in the layout to avoid per-request DB hits

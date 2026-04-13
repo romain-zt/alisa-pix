@@ -1,0 +1,74 @@
+---
+description: Seed-first migration policy — every migration step must include runnable seeds.
+globs:
+alwaysApply: true
+---
+
+# Seed-First Migration Policy
+
+## Core principle
+
+**No migration step is complete without a seed script.** The target workflow is:
+
+1. Code the Payload collection/global/block
+2. Write a seed script that populates it
+3. Run the seed
+4. Log in as admin
+5. See the content immediately — inspect and edit it
+
+## Seed requirements
+
+### Mandatory characteristics
+- **Deterministic** — running the seed twice produces the same result (upsert, not duplicate)
+- **Rerunnable** — safe to run on an already-seeded database
+- **Incremental** — each feature/page should be seedable independently
+- **Derived from existing content** — when migrating hardcoded data, import from the current TS/JSON source
+
+### Implementation pattern
+- Use **Payload Local API** (`payload.create()`, `payload.update()`, etc.)
+- Seeds should run in a server-safe context (not browser)
+- Prefer a seed script or endpoint pattern:
+  ```
+  scripts/seed/index.ts          ← main entry, calls individual seeds
+  scripts/seed/seed-works.ts     ← seeds works collection
+  scripts/seed/seed-team.ts      ← seeds team members
+  scripts/seed/seed-site-config.ts ← seeds site config global
+  ```
+- Or use a Payload seed endpoint / `onInit` hook for development
+
+### Upsert pattern
+```typescript
+const existing = await payload.find({
+  collection: 'works',
+  where: { slug: { equals: item.slug } },
+  limit: 1,
+})
+
+if (existing.docs.length > 0) {
+  await payload.update({
+    collection: 'works',
+    id: existing.docs[0].id,
+    data: itemData,
+  })
+} else {
+  await payload.create({
+    collection: 'works',
+    data: itemData,
+  })
+}
+```
+
+### Media seeding
+- For images already in `public/assets/`, seeds should upload them to the Payload media collection
+- Use file buffers from the local filesystem during seeding
+- Map existing image paths to Payload media IDs for relationship fields
+
+### Admin user seed
+- Always include an admin user seed for local development
+- Use environment variables for admin credentials (never hardcode production passwords)
+
+## What NOT to do
+- Do NOT rely on "just create it manually in the admin panel" as the primary workflow
+- Do NOT write seeds that fail on re-run (check for existence first)
+- Do NOT create seeds that depend on auto-generated IDs from other seeds without lookup
+- Do NOT skip seeding for "simple" content — every CMS-managed value should be seedable

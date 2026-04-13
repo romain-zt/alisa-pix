@@ -1,0 +1,60 @@
+---
+description: Testing and verification policy — build checks, type safety, visual verification.
+globs:
+alwaysApply: true
+---
+
+# Testing & Verification Policy
+
+## Build gates
+
+Every change must pass before being considered done:
+
+1. **`pnpm build`** — Next.js production build must succeed
+2. **TypeScript** — no type errors (`tsc --noEmit` or build catches them)
+3. **Lint** — if ESLint is configured, `pnpm lint` must pass
+
+## Verification checklist
+
+### For collection/global/block changes
+- [ ] Schema compiles without errors
+- [ ] Seed script runs successfully and is idempotent
+- [ ] Admin panel shows the collection/global correctly
+- [ ] Fields render in admin with correct types (text, upload, select, etc.)
+- [ ] Localized fields show locale switcher in admin
+
+### For frontend changes
+- [ ] Page renders without errors in dev mode
+- [ ] Page renders at mobile breakpoint (375px)
+- [ ] Page renders at desktop breakpoint (1440px)
+- [ ] Images load correctly (from S3 or fallback)
+- [ ] Locale switching works (if applicable)
+- [ ] Navigation and links work
+- [ ] No console errors in browser
+
+### For seed scripts
+- [ ] First run populates data correctly
+- [ ] Second run does not duplicate data
+- [ ] Media assets upload successfully
+- [ ] Relationships between collections are correct
+
+## What we don't have yet (and that's OK)
+
+- No unit test framework is set up
+- No E2E test framework is set up
+- No CI pipeline yet
+
+When tests are introduced, prefer:
+- **Vitest** for unit/integration tests
+- **Playwright** for E2E tests
+- Tests for seed scripts (verify they don't throw)
+- Tests for data access functions
+
+## Visual verification
+
+Since this is a highly visual site with cinematic effects:
+- Always check the actual rendered page after changes
+- Verify cinematic effects (grain, cinema depth, lens) still work
+- Verify reveal animations trigger on scroll
+- Verify black-and-white to color transitions on hover
+- Check responsive behavior on at least mobile and desktop

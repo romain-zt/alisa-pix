@@ -1,0 +1,84 @@
+---
+description: Monorepo conventions — package naming, dependency direction, version management.
+globs:
+alwaysApply: true
+---
+
+# Monorepo Conventions
+
+## Structure
+
+```
+rfe-v0/
+├── apps/          ← deployable applications
+│   └── rfe-v0/    ← Next.js + Payload website
+├── packages/      ← shared internal packages
+│   ├── ui/
+│   ├── design-tokens/
+│   ├── tsconfig/
+│   └── eslint-config/
+├── specs/         ← spec-driven development docs
+├── docker-compose.yml
+├── pnpm-workspace.yaml
+├── turbo.json
+└── package.json   ← root workspace (no app code)
+```
+
+## Package naming
+
+All internal packages use the `@rfe/` scope:
+
+| Package | Name | Purpose |
+|---------|------|---------|
+| `packages/ui` | `@rfe/ui` | Shared UI components + cn() utility |
+| `packages/design-tokens` | `@rfe/design-tokens` | CSS variables, brand colors, easings |
+| `packages/tsconfig` | `@rfe/tsconfig` | Shared TypeScript configurations |
+| `packages/eslint-config` | `@rfe/eslint-config` | Shared ESLint flat config |
+| `apps/rfe-v0` | `@rfe/v0` | The Next.js + Payload website |
+
+## Dependency direction
+
+```
+apps/* ──imports──▶ packages/*
+packages/* ──NEVER imports──▶ apps/*
+packages/* ──may import──▶ other packages/*
+```
+
+- Apps depend on packages, never the reverse
+- Packages may depend on other packages (e.g. `@rfe/ui` depends on `@rfe/design-tokens`)
+- Use `workspace:*` protocol for internal deps
+
+## Version management — pnpm catalog
+
+Shared dependency versions are centralized in `pnpm-workspace.yaml` under `catalog:`.
+Individual `package.json` files reference versions with `"catalog:"` instead of hardcoded ranges.
+
+Catalog-managed dependencies:
+- `react`, `react-dom`
+- `next`
+- `typescript`
+- `tailwindcss`, `@tailwindcss/postcss`
+- `payload`, `@payloadcms/*`
+- `sharp`
+
+## Where new code goes
+
+- **App-specific** (routes, content components, CMS schemas, seeds) → `apps/rfe-v0/`
+- **Reusable across apps** (generic UI, utilities, tokens) → `packages/`
+- **Specs** → `specs/`
+- **Cursor config** → `.cursor/`
+
+## Build orchestration
+
+Turborepo manages task execution:
+- `pnpm build` — builds all packages then apps (respects `dependsOn: ["^build"]`)
+- `pnpm dev` — starts app dev server (persistent, no cache)
+- `pnpm lint` / `pnpm typecheck` — runs across all workspaces
+
+## Rules
+
+- Do NOT publish packages to npm — these are workspace-only
+- Do NOT create a new package without a spec in `specs/`
+- Do NOT add shared dependencies outside the pnpm catalog
+- Do NOT import from `apps/*` in any `packages/*` code
+- Keep the root `package.json` free of app-level dependencies

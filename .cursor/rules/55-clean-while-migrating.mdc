@@ -1,0 +1,56 @@
+---
+description: Clean-while-migrating policy — improve structure when adjacent and safe.
+globs:
+alwaysApply: true
+---
+
+# Clean While Migrating
+
+## Principle
+
+The current codebase was vibe-coded fast. The Payload migration is an opportunity to **clean up adjacent issues** — but only when it is safe and useful, never as a separate big rewrite.
+
+## What to clean
+
+### Do clean (when adjacent to the migration step)
+- Duplicated content/data patterns → consolidate into one source
+- Dead hardcoded content once the Payload equivalent is seeded and tested
+- Inconsistent naming (rename for clarity when migrating that specific feature)
+- Unused imports, dead code in files you're already modifying
+- Type safety improvements in files you're touching
+- Component prop simplification when replacing hardcoded data with Payload data
+- Remove Google Sheets CSV fetching logic once content lives in Payload
+
+### Do NOT clean
+- Files/features unrelated to the current migration step
+- CSS utility classes that still work fine (cinema effects, reveals, etc.)
+- Component visual behavior that renders correctly
+- Broad "let's rename everything" refactors
+- Academic code quality improvements that don't serve the migration
+
+## How to clean
+
+1. **One PR, one feature** — migration + adjacent cleanup in the same PR is fine
+2. **Keep diffs small** — if cleanup would make the diff huge, split it into a follow-up
+3. **Test after cleaning** — verify the page still renders correctly
+4. **Document what was removed** — in the PR description, note what old code was deleted and why
+5. **Don't clean ahead** — only clean what the current migration step touches
+
+## Specific cleanup targets
+
+| Current mess | Clean-up approach |
+|-------------|-------------------|
+| `content.ts` has `POSTER_ITEMS` duplicated for en/fr | Migrate to a single Works collection with localized fields |
+| Google Sheets CSV loader (`lib/i18n/sheets.ts`) | Remove once all strings are in Payload globals |
+| Fallback TS files (`fallback/en.ts`, `fr.ts`) | Remove once Payload is the source of truth |
+| `styles/globals.css` (unused alternate stylesheet) | Delete — only `app/[locale]/globals.css` is active |
+| Hardcoded nav items in `Header.tsx` | Replace with Payload Navigation global data |
+| Hardcoded footer email in `Footer.tsx` | Replace with Payload ContactInfo global data |
+| `base.md` at repo root | Remove if it's just project notes |
+| `components.json` referencing wrong CSS path | Fix path or remove if not using shadcn CLI |
+
+## Timing
+
+- Clean AFTER the new Payload equivalent is working
+- Never clean BEFORE — keep the old code as a reference until migration is verified
+- Remove old code in the same PR that introduces the replacement, or in a dedicated cleanup PR immediately after
