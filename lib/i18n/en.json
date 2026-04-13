@@ -1,0 +1,31 @@
+{
+  "nav": {
+    "experience": "Experience",
+    "contact": "Contact"
+  },
+  "home": {
+    "hero": "You don't have to know how.",
+    "enter": "Enter",
+    "s1": "You just have to arrive.",
+    "s2": "You are guided.",
+    "s3": "You let go.",
+    "s4": "And something shifts."
+  },
+  "experience": {
+    "l1": "This is not a photoshoot.",
+    "l2": "It's a shift.",
+    "l3": "Confidential. Selective.",
+    "l4": "Every session is unique.",
+    "l5": "There is no script.",
+    "l6": "Only presence."
+  },
+  "contact": {
+    "headline": "Access is limited.",
+    "subline": "By invitation only.",
+    "email": "hello@vasilisa.photo",
+    "telegram": "@vasilisa_photo"
+  },
+  "footer": {
+    "copy": "© Vasilisa"
+  }
+}

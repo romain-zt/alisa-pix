@@ -1,0 +1,31 @@
+{
+  "name": "vasilisa-v0",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --turbopack",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "next": "^15.3.1",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "framer-motion": "^12.7.3",
+    "lenis": "^1.2.3",
+    "three": "^0.174.0",
+    "@react-three/fiber": "^9.1.2",
+    "@react-three/drei": "^10.0.6"
+  },
+  "devDependencies": {
+    "@types/node": "^22.14.1",
+    "@types/react": "^19.1.0",
+    "@types/react-dom": "^19.1.2",
+    "@types/three": "^0.174.0",
+    "typescript": "^5.8.3",
+    "tailwindcss": "^4.1.4",
+    "@tailwindcss/postcss": "^4.1.4",
+    "postcss": "^8.5.3"
+  }
+}

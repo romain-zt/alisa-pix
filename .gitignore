@@ -1,2 +1,12 @@
 .cursor/plans
 .cursor/__ignored
+node_modules
+.next
+out
+*.tsbuildinfo
+.env
+.env.local
+node_modules
+.next
+.turbo
+.env
