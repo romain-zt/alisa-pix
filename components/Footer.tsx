@@ -8,17 +8,15 @@ export default function Footer() {
 
   return (
     <footer className="relative px-6 md:px-12 pb-8 pt-24">
-      {/* Gold divider */}
       <motion.div
         className="gold-line w-full mb-12"
         initial={{ scaleX: 0 }}
         whileInView={{ scaleX: 1 }}
-        transition={{ duration: 2.4, ease: [0.25, 0.46, 0.45, 0.94] }}
+        transition={{ duration: 1.5, ease: [0.25, 0.46, 0.45, 0.94] }}
         viewport={{ once: true }}
       />
 
       <div className="max-w-6xl mx-auto flex flex-col md:flex-row md:items-end md:justify-between gap-10">
-        {/* Brand */}
         <div>
           <span className="font-serif text-lg tracking-[0.2em] text-off-white/70">
             VASILISA
@@ -28,7 +26,6 @@ export default function Footer() {
           </p>
         </div>
 
-        {/* Links */}
         <div className="flex flex-col items-start md:items-end gap-3">
           <a
             href={`mailto:${t.contact.email}`}
@@ -57,7 +54,6 @@ export default function Footer() {
         </div>
       </div>
 
-      {/* Bottom bar */}
       <div className="max-w-6xl mx-auto mt-12 flex flex-col md:flex-row md:justify-between gap-2">
         <span className="label-micro text-off-white/15">
           {t.footer.copy}

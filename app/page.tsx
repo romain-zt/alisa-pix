@@ -18,9 +18,9 @@ function TestimonialWhisper({ quote, delay = 0 }: { quote: string; delay?: numbe
   return (
     <motion.blockquote
       className="max-w-md mx-auto text-center"
-      initial={{ opacity: 0, y: 30 }}
+      initial={{ opacity: 0, y: 20 }}
       whileInView={{ opacity: 1, y: 0 }}
-      transition={{ duration: 2.4, delay, ease: [0.25, 0.46, 0.45, 0.94] }}
+      transition={{ duration: 1.8, delay, ease: [0.25, 0.46, 0.45, 0.94] }}
       viewport={{ once: true, margin: '-15%' }}
     >
       <p className="font-serif text-lg sm:text-xl md:text-2xl font-light italic leading-relaxed text-off-white/60">
@@ -39,15 +39,15 @@ function TestimonialsSection() {
         className="label-micro text-center text-gold/40 mb-20 md:mb-28"
         initial={{ opacity: 0 }}
         whileInView={{ opacity: 1 }}
-        transition={{ duration: 2, ease: [0.25, 0.46, 0.45, 0.94] }}
+        transition={{ duration: 1.5 }}
         viewport={{ once: true }}
       >
         {t.home.testimonials_intro}
       </motion.p>
 
       <div className="flex flex-col gap-20 md:gap-28">
-        <TestimonialWhisper quote={t.home.t1} delay={0.2} />
-        <TestimonialWhisper quote={t.home.t2} delay={0.15} />
+        <TestimonialWhisper quote={t.home.t1} delay={0.1} />
+        <TestimonialWhisper quote={t.home.t2} delay={0.1} />
         <TestimonialWhisper quote={t.home.t3} delay={0.1} />
       </div>
 
@@ -55,7 +55,7 @@ function TestimonialsSection() {
         className="rose-line w-24 mx-auto mt-24"
         initial={{ scaleX: 0 }}
         whileInView={{ scaleX: 1 }}
-        transition={{ duration: 2, delay: 0.3 }}
+        transition={{ duration: 1.5, delay: 0.2 }}
         viewport={{ once: true }}
       />
     </section>
@@ -72,9 +72,9 @@ function GalleryTeaser() {
     offset: ['start end', 'end start'],
   })
 
-  const y1 = useTransform(scrollYProgress, [0, 1], [40, -40])
-  const y2 = useTransform(scrollYProgress, [0, 1], [20, -20])
-  const y3 = useTransform(scrollYProgress, [0, 1], [60, -60])
+  const y1 = useTransform(scrollYProgress, [0, 1], [20, -20])
+  const y2 = useTransform(scrollYProgress, [0, 1], [10, -10])
+  const y3 = useTransform(scrollYProgress, [0, 1], [30, -30])
 
   return (
     <section ref={ref} className="relative py-24 md:py-36 px-6 md:px-12 tone-ember">
@@ -82,59 +82,44 @@ function GalleryTeaser() {
         className="label-micro text-center text-gold/40 mb-16 md:mb-24"
         initial={{ opacity: 0 }}
         whileInView={{ opacity: 1 }}
-        transition={{ duration: 2 }}
+        transition={{ duration: 1.5 }}
         viewport={{ once: true }}
       >
         {t.home.gallery_teaser}
       </motion.p>
 
-      {/* Asymmetric grid */}
       <div className="max-w-5xl mx-auto grid grid-cols-12 gap-3 md:gap-4">
-        {/* Tall left */}
-        <motion.div
-          className="col-span-5 aspect-[3/4] overflow-hidden"
-          style={{ y: y1 }}
-        >
+        <motion.div className="col-span-5 aspect-[3/4] overflow-hidden" style={{ y: y1 }}>
           <motion.div
             className="w-full h-full bw-image"
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
-            transition={{ duration: 1.5 }}
+            transition={{ duration: 1.2 }}
             viewport={{ once: true }}
-            whileHover={{ filter: 'grayscale(0) brightness(1) contrast(1)' }}
           >
             <ProtectedImage src={teaserImages[0]} alt="" className="w-full h-full" />
           </motion.div>
         </motion.div>
 
-        {/* Right column — two stacked */}
         <div className="col-span-7 flex flex-col gap-3 md:gap-4">
-          <motion.div
-            className="aspect-[16/10] overflow-hidden"
-            style={{ y: y2 }}
-          >
+          <motion.div className="aspect-[16/10] overflow-hidden" style={{ y: y2 }}>
             <motion.div
               className="w-full h-full bw-image"
               initial={{ opacity: 0 }}
               whileInView={{ opacity: 1 }}
-              transition={{ duration: 1.5, delay: 0.15 }}
+              transition={{ duration: 1.2, delay: 0.1 }}
               viewport={{ once: true }}
-              whileHover={{ filter: 'grayscale(0) brightness(1) contrast(1)' }}
             >
               <ProtectedImage src={teaserImages[1]} alt="" className="w-full h-full" />
             </motion.div>
           </motion.div>
-          <motion.div
-            className="aspect-[16/9] overflow-hidden"
-            style={{ y: y3 }}
-          >
+          <motion.div className="aspect-[16/9] overflow-hidden" style={{ y: y3 }}>
             <motion.div
               className="w-full h-full bw-image"
               initial={{ opacity: 0 }}
               whileInView={{ opacity: 1 }}
-              transition={{ duration: 1.5, delay: 0.3 }}
+              transition={{ duration: 1.2, delay: 0.2 }}
               viewport={{ once: true }}
-              whileHover={{ filter: 'grayscale(0) brightness(1) contrast(1)' }}
             >
               <ProtectedImage src={teaserImages[2]} alt="" className="w-full h-full" />
             </motion.div>
@@ -142,12 +127,11 @@ function GalleryTeaser() {
         </div>
       </div>
 
-      {/* Gallery link */}
       <motion.div
         className="text-center mt-16 md:mt-24"
         initial={{ opacity: 0 }}
         whileInView={{ opacity: 1 }}
-        transition={{ duration: 2, delay: 0.4 }}
+        transition={{ duration: 1.5, delay: 0.3 }}
         viewport={{ once: true }}
       >
         <Link
@@ -170,19 +154,15 @@ function EnterSection() {
         className="text-center"
         initial={{ opacity: 0 }}
         whileInView={{ opacity: 1 }}
-        transition={{ duration: 3, ease: [0.25, 0.46, 0.45, 0.94] }}
+        transition={{ duration: 2, ease: [0.25, 0.46, 0.45, 0.94] }}
         viewport={{ once: true, margin: '-10%' }}
       >
         <Link href="/contact" className="group inline-block">
           <motion.span
             className="font-serif text-xl md:text-2xl tracking-[0.3em] uppercase text-gold/50 group-hover:text-gold transition-colors duration-[2000ms] block"
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 15 }}
             whileInView={{ opacity: 1, y: 0 }}
-            transition={{
-              duration: 2.4,
-              delay: 0.4,
-              ease: [0.25, 0.46, 0.45, 0.94],
-            }}
+            transition={{ duration: 1.8, delay: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
             viewport={{ once: true }}
           >
             {t.home.enter}
@@ -191,7 +171,7 @@ function EnterSection() {
             className="mt-6 mx-auto w-10 h-px bg-gold/20 group-hover:w-24 group-hover:bg-gold/40 transition-all duration-[2000ms]"
             initial={{ scaleX: 0 }}
             whileInView={{ scaleX: 1 }}
-            transition={{ duration: 2, delay: 0.8 }}
+            transition={{ duration: 1.5, delay: 0.6 }}
             viewport={{ once: true }}
           />
         </Link>
@@ -205,17 +185,10 @@ export default function HomePage() {
 
   return (
     <main className="relative">
-
-      {/* ─── SCENE 1 · FULL (hero) ─── */}
-      <FullScene
-        src={heroImages[0]}
-        text={t.home.hero}
-        isHero
-      />
+      <FullScene src={heroImages[0]} text={t.home.hero} isHero />
 
       <Breath height="40vh" />
 
-      {/* ─── SCENE 2 · FLOATING ─── */}
       <FloatingScene
         src={scrollImages[0]}
         text={t.home.s1}
@@ -225,16 +198,13 @@ export default function HomePage() {
 
       <Breath height="30vh" />
 
-      {/* ─── SCENE 3 · CLOSE-UP ─── */}
       <CloseUpScene
         src={heroImages[1]}
         duration="100vh"
-        driver="viewport"
       />
 
       <Breath height="55vh" />
 
-      {/* ─── SCENE 4 · HORIZONTAL ─── */}
       <HorizontalScene
         src={scrollImages[1]}
         text={t.home.s2}
@@ -244,7 +214,6 @@ export default function HomePage() {
 
       <Breath height="22vh" />
 
-      {/* ─── SCENE 5 · FULL (second immersion) ─── */}
       <FullScene
         src={heroImages[2]}
         text={t.home.s3}
@@ -254,16 +223,13 @@ export default function HomePage() {
 
       <Breath height="45vh" />
 
-      {/* ─── SCENE 6 · CLOSE-UP ─── */}
       <CloseUpScene
         src={scrollImages[2]}
         duration="90vh"
-        driver="scroll"
       />
 
       <Breath height="35vh" />
 
-      {/* ─── SCENE 7 · FLOATING ─── */}
       <FloatingScene
         src={scrollImages[3]}
         text={t.home.s4}
@@ -273,15 +239,12 @@ export default function HomePage() {
 
       <Breath height="30vh" />
 
-      {/* ─── TESTIMONIALS ─── */}
       <TestimonialsSection />
 
-      {/* ─── GALLERY TEASER ─── */}
       <GalleryTeaser />
 
       <Breath height="15vh" />
 
-      {/* ─── CTA ─── */}
       <EnterSection />
 
       <div className="h-[10vh]" aria-hidden />

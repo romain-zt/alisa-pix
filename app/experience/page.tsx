@@ -26,12 +26,11 @@ function ExperienceHero() {
     offset: ['start start', 'end start'],
   })
 
-  const scale = useTransform(scrollYProgress, [0, 1], [1, 1.15])
   const opacity = useTransform(scrollYProgress, [0, 0.7], [1, 0])
 
   return (
     <section ref={ref} className="relative h-[100dvh] overflow-hidden">
-      <motion.div className="absolute inset-0" style={{ scale }}>
+      <div className="absolute inset-0">
         <ProtectedImage
           src={experienceImages[0]}
           alt=""
@@ -39,7 +38,7 @@ function ExperienceHero() {
           priority
         />
         <div className="absolute inset-0 bg-black/50" />
-      </motion.div>
+      </div>
 
       <motion.div
         className="relative z-10 h-full"
@@ -58,58 +57,22 @@ function ExperienceFrame({
   text: string
   index: number
 }) {
-  const ref = useRef<HTMLDivElement>(null)
-  const { scrollYProgress } = useScroll({
-    target: ref,
-    offset: ['start end', 'end start'],
-  })
-
-  const scale = useTransform(
-    scrollYProgress,
-    [0, 0.3, 0.5, 0.7, 1],
-    [0.95, 1.02, 1.05, 1.02, 0.95]
-  )
-  const imgOpacity = useTransform(
-    scrollYProgress,
-    [0, 0.15, 0.4, 0.7, 0.9],
-    [0, 1, 1, 1, 0]
-  )
-  const brightness = useTransform(
-    scrollYProgress,
-    [0, 0.25, 0.5, 0.75, 1],
-    [0.3, 0.8, 1, 0.8, 0.3]
-  )
-  const filterVal = useTransform(brightness, (v) => `brightness(${v})`)
-
-  const textOpacity = useTransform(
-    scrollYProgress,
-    [0.2, 0.35, 0.55, 0.7],
-    [0, 1, 1, 0]
-  )
-  const textY = useTransform(scrollYProgress, [0.2, 0.5, 0.7], [30, 0, -20])
-  const textBlur = useTransform(
-    scrollYProgress,
-    [0.2, 0.35, 0.55, 0.7],
-    ['blur(10px)', 'blur(0px)', 'blur(0px)', 'blur(8px)']
-  )
-
   return (
     <section
-      ref={ref}
       className="relative h-[100dvh] overflow-hidden"
       style={{ marginTop: index === 0 ? 0 : '-8vh' }}
     >
-      <motion.div
-        className="absolute inset-0"
-        style={{ scale, opacity: imgOpacity, filter: filterVal }}
-      >
+      <div className="absolute inset-0">
         <ProtectedImage src={src} alt="" className="w-full h-full" />
         <div className="absolute inset-0 bg-black/50" />
-      </motion.div>
+      </div>
 
       <motion.div
         className="absolute inset-0 z-10 flex items-center justify-center px-8 md:px-16"
-        style={{ opacity: textOpacity, y: textY, filter: textBlur }}
+        initial={{ opacity: 0, y: 20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        transition={{ duration: 1.5, ease: [0.25, 0.46, 0.45, 0.94] }}
+        viewport={{ once: true, margin: '-20%' }}
       >
         <p className="font-serif text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-light italic text-center leading-relaxed tracking-wide text-off-white/85 max-w-xl">
           {text}
@@ -128,7 +91,7 @@ function ClosingCTA() {
         className="w-16 h-px bg-gold/20 mb-16"
         initial={{ scaleX: 0 }}
         whileInView={{ scaleX: 1 }}
-        transition={{ duration: 2.4, ease: [0.25, 0.46, 0.45, 0.94] }}
+        transition={{ duration: 2, ease: [0.25, 0.46, 0.45, 0.94] }}
         viewport={{ once: true }}
       />
 
@@ -136,7 +99,7 @@ function ClosingCTA() {
         className="text-center"
         initial={{ opacity: 0, y: 20 }}
         whileInView={{ opacity: 1, y: 0 }}
-        transition={{ duration: 2.5, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
+        transition={{ duration: 2, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
         viewport={{ once: true }}
       >
         <Link href="/contact" className="group">
@@ -150,7 +113,7 @@ function ClosingCTA() {
         className="mt-16"
         initial={{ opacity: 0 }}
         whileInView={{ opacity: 1 }}
-        transition={{ duration: 2, delay: 1.2 }}
+        transition={{ duration: 1.5, delay: 0.6 }}
         viewport={{ once: true }}
       >
         <Link

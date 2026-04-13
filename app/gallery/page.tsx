@@ -38,7 +38,6 @@ export default function GalleryPage() {
       <CinematicGallery
         images={allImages}
         mode={mode}
-        grain
         showCounter
       />
     </main>

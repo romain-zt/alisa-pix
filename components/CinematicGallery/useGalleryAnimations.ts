@@ -1,40 +1,7 @@
 'use client'
 
 import { useEffect, useRef, type RefObject } from 'react'
-import { animate, createTimeline, stagger } from 'animejs'
-
-export function useSlideEntrance(
-  isActive: boolean,
-  counterRef: RefObject<HTMLSpanElement | null>,
-  captionRef: RefObject<HTMLSpanElement | null>,
-) {
-  const hasPlayed = useRef(false)
-
-  useEffect(() => {
-    if (!isActive || hasPlayed.current) return
-    hasPlayed.current = true
-
-    const targets: HTMLElement[] = []
-    if (counterRef.current) targets.push(counterRef.current)
-    if (captionRef.current) targets.push(captionRef.current)
-
-    if (targets.length === 0) return
-
-    const tl = createTimeline({
-      defaults: { duration: 800, ease: 'outExpo' },
-    })
-
-    tl.add(targets, {
-      opacity: [0, 1],
-      translateY: [12, 0],
-      delay: stagger(120),
-    }, 200)
-
-    return () => {
-      tl.pause()
-    }
-  }, [isActive, counterRef, captionRef])
-}
+import { animate } from 'animejs'
 
 export function useCounterScrub(
   counterRef: RefObject<HTMLSpanElement | null>,

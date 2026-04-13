@@ -3,7 +3,6 @@
 import { useState, FormEvent } from 'react'
 import { motion } from 'framer-motion'
 import { useI18n } from '@/lib/i18n/context'
-import SoftReveal from '@/components/SoftReveal'
 
 export default function ContactPage() {
   const { t } = useI18n()
@@ -28,14 +27,13 @@ export default function ContactPage() {
         className="w-full max-w-md"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ duration: 2, delay: 0.3 }}
+        transition={{ duration: 1.5, delay: 0.2 }}
       >
-        {/* Header */}
         <motion.h1
           className="font-serif text-3xl sm:text-4xl md:text-5xl font-light italic tracking-wide text-off-white/90 text-center mb-3"
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1.5, delay: 0.5, ease: [0.16, 1, 0.3, 1] }}
+          transition={{ duration: 1.2, delay: 0.4, ease: [0.16, 1, 0.3, 1] }}
         >
           {t.contact.headline}
         </motion.h1>
@@ -44,19 +42,18 @@ export default function ContactPage() {
           className="label-micro text-center text-off-white/30 mb-16"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ duration: 1.2, delay: 1 }}
+          transition={{ duration: 1, delay: 0.8 }}
         >
           {t.contact.subline}
         </motion.p>
 
-        {/* Form */}
         {!submitted ? (
           <motion.form
             onSubmit={handleSubmit}
             className="flex flex-col gap-8"
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1.5, delay: 1.2 }}
+            transition={{ duration: 1.2, delay: 1 }}
           >
             <div>
               <label htmlFor="name" className="label-micro text-off-white/25 block mb-3">
@@ -96,14 +93,9 @@ export default function ContactPage() {
               />
             </div>
 
-            <motion.p
-              className="label-micro text-off-white/20 text-center"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 2 }}
-            >
+            <p className="label-micro text-off-white/20 text-center">
               {t.contact.reassurance}
-            </motion.p>
+            </p>
 
             <button
               type="submit"
@@ -117,7 +109,7 @@ export default function ContactPage() {
             className="text-center py-12"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ duration: 2 }}
+            transition={{ duration: 1.5 }}
           >
             <p className="font-serif text-xl italic text-off-white/60">
               Thank you. We&apos;ll be in touch.
@@ -125,18 +117,17 @@ export default function ContactPage() {
           </motion.div>
         )}
 
-        {/* Direct links */}
         <motion.div
           className="mt-20"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ duration: 1.5, delay: 1.8 }}
+          transition={{ duration: 1.2, delay: 1.4 }}
         >
           <p className="label-micro text-off-white/20 text-center mb-6">
             {t.contact.or_reach}
           </p>
 
-          <SoftReveal className="flex flex-col items-center gap-5">
+          <div className="flex flex-col items-center gap-5">
             <a
               href={`mailto:${t.contact.email}`}
               className="label-small text-gold/50 hover:text-gold transition-colors duration-1000"
@@ -161,7 +152,7 @@ export default function ContactPage() {
                 Instagram
               </a>
             </div>
-          </SoftReveal>
+          </div>
         </motion.div>
       </motion.div>
     </main>

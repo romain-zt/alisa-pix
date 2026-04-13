@@ -10,7 +10,6 @@ import type { CinematicGalleryProps } from './types'
 export default function CinematicGallery({
   images,
   mode = 'vertical',
-  grain = true,
   showCounter = true,
   className = '',
 }: CinematicGalleryProps) {
@@ -26,12 +25,10 @@ export default function CinematicGallery({
       index={index}
       total={total}
       isActive={index === activeIndex}
-      grain={grain}
       showCounter={false}
     />
   ))
 
-  // Spacers for virtualized offscreen slides above/below the window
   const topSpacerHeight = virtualWindow.startIndex * 100
   const bottomSpacerHeight = (total - 1 - virtualWindow.endIndex) * 100
 
@@ -47,14 +44,12 @@ export default function CinematicGallery({
                 index={index}
                 total={total}
                 isActive={index === activeIndex}
-                grain={grain}
                 showCounter={false}
               />
             ))}
           </div>
         </HorizontalScroller>
 
-        {/* Fixed counter overlay */}
         {showCounter && (
           <div className="fixed bottom-6 right-6 md:bottom-10 md:right-10 z-50 pointer-events-none">
             <span
@@ -81,7 +76,6 @@ export default function CinematicGallery({
         )}
       </div>
 
-      {/* Fixed counter overlay */}
       {showCounter && (
         <div className="fixed bottom-6 right-6 md:bottom-10 md:right-10 z-50 pointer-events-none">
           <span

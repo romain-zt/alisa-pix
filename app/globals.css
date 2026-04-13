@@ -136,10 +136,8 @@ html {
     pointer-events: none;
     z-index: 2;
     background:
-      radial-gradient(ellipse 100% 100% at 50% 50%, transparent 55%, rgba(0, 0, 0, 0.025) 60%, transparent 65%),
-      radial-gradient(ellipse 100% 100% at 50% 50%, transparent 70%, rgba(0, 0, 0, 0.015) 75%, transparent 80%),
-      radial-gradient(ellipse 100% 100% at 50% 50%, transparent 85%, rgba(0, 0, 0, 0.01) 90%, transparent 95%);
-    animation: lens-breathe 50s ease-in-out infinite;
+      radial-gradient(ellipse 100% 100% at 50% 50%, transparent 55%, rgba(0, 0, 0, 0.02) 60%, transparent 65%),
+      radial-gradient(ellipse 100% 100% at 50% 50%, transparent 70%, rgba(0, 0, 0, 0.01) 75%, transparent 80%);
   }
 
   .cinema-leak {
@@ -148,29 +146,8 @@ html {
     pointer-events: none;
     z-index: 3;
     background:
-      radial-gradient(ellipse 45% 40% at 12% 20%, rgba(198, 168, 110, 0.025) 0%, transparent 70%),
-      radial-gradient(ellipse 35% 35% at 88% 80%, rgba(196, 160, 160, 0.02) 0%, transparent 70%);
-    animation: leak-drift 65s ease-in-out infinite;
-  }
-
-  @keyframes lens-breathe {
-    0%, 100% { opacity: 1; transform: scale(1); }
-    50% { opacity: 0.75; transform: scale(1.015); }
-  }
-
-  @keyframes leak-drift {
-    0%, 100% {
-      opacity: 1;
-      background-position: 0% 0%, 100% 100%;
-    }
-    33% {
-      opacity: 0.65;
-      background-position: 5% -5%, 95% 105%;
-    }
-    66% {
-      opacity: 0.8;
-      background-position: -3% 3%, 103% 97%;
-    }
+      radial-gradient(ellipse 45% 40% at 12% 20%, rgba(198, 168, 110, 0.02) 0%, transparent 70%),
+      radial-gradient(ellipse 35% 35% at 88% 80%, rgba(196, 160, 160, 0.015) 0%, transparent 70%);
   }
 
   /* ─── SECTION TONE SYSTEM ─── */
@@ -263,20 +240,6 @@ html {
   }
 }
 
-/* ─── GRAIN ANIMATION ─── */
-
-@keyframes grain-shift {
-  0%, 100% { transform: translate(0, 0); }
-  10% { transform: translate(-0.5%, -0.5%); }
-  20% { transform: translate(0.5%, 0.5%); }
-  30% { transform: translate(-0.5%, 0.5%); }
-  40% { transform: translate(0.5%, -0.5%); }
-  50% { transform: translate(-0.25%, 0); }
-  60% { transform: translate(0.25%, 0); }
-  70% { transform: translate(0, 0.5%); }
-  80% { transform: translate(0, -0.5%); }
-  90% { transform: translate(0.5%, 0.25%); }
-}
 
 /* ─── REDUCED MOTION ─── */
 
