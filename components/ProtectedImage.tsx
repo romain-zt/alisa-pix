@@ -110,8 +110,9 @@ export default function ProtectedImage({ src, alt = '', className = '', priority
       gl.viewport(0, 0, canvas.width, canvas.height)
 
       function render() {
-        gl!.uniform1f(timeLoc, performance.now() * 0.001)
-        gl!.drawArrays(gl!.TRIANGLES, 0, 6)
+        if (!gl || !timeLoc) return
+        gl.uniform1f(timeLoc, performance.now() * 0.001)
+        gl.drawArrays(gl.TRIANGLES, 0, 6)
         animFrameRef.current = requestAnimationFrame(render)
       }
 

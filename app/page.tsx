@@ -42,22 +42,23 @@ function HeroSection() {
           className="font-serif text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-light italic tracking-wide text-off-white/90 max-w-3xl leading-relaxed"
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1.5, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
+          transition={{ duration: 1.8, delay: 0.6, ease: [0.16, 1, 0.3, 1] }}
         >
           {t.home.hero}
         </motion.h1>
       </motion.div>
 
+      {/* Scroll indicator — delayed entrance builds anticipation */}
       <motion.div
         className="absolute bottom-12 left-1/2 -translate-x-1/2 z-10"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ duration: 1.2, delay: 1.8 }}
+        transition={{ duration: 1.2, delay: 2.4 }}
       >
         <motion.div
           className="w-px h-12 bg-off-white/20 mx-auto mb-4"
           animate={{ scaleY: [0, 1, 0] }}
-          transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
+          transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
           style={{ transformOrigin: 'top' }}
         />
       </motion.div>
@@ -65,11 +66,26 @@ function HeroSection() {
   )
 }
 
-function ScrollTextSection({ text, image, reverse = false }: { text: string; image?: string; reverse?: boolean }) {
+function ScrollTextSection({
+  text,
+  image,
+  reverse = false,
+  delay = 0,
+}: {
+  text: string
+  image?: string
+  reverse?: boolean
+  delay?: number
+}) {
   return (
-    <section className="min-h-[80vh] md:min-h-screen flex items-center justify-center px-6 md:px-12 relative">
+    <section className="min-h-screen flex items-center justify-center px-6 md:px-12 relative">
       {image && (
-        <ScrollReveal className={`absolute ${reverse ? 'right-8 md:right-20' : 'left-8 md:left-20'} top-1/2 -translate-y-1/2 w-[40vw] md:w-[30vw] h-[50vh] md:h-[60vh] opacity-20`} blur>
+        <ScrollReveal
+          className={`absolute ${reverse ? 'right-8 md:right-20' : 'left-8 md:left-20'} top-1/2 -translate-y-1/2 w-[40vw] md:w-[30vw] h-[50vh] md:h-[60vh] opacity-20`}
+          blur
+          cinematic
+          delay={delay}
+        >
           <ParallaxImage src={image} className="w-full h-full rounded-sm" speed={0.2} />
         </ScrollReveal>
       )}
@@ -92,28 +108,65 @@ function EnterSection() {
           href="/experience"
           className="group inline-block"
         >
-          <span className="font-serif text-xl md:text-2xl tracking-[0.3em] uppercase text-gold/70 group-hover:text-gold transition-colors duration-1000">
+          <motion.span
+            className="font-serif text-xl md:text-2xl tracking-[0.3em] uppercase text-gold/70 group-hover:text-gold transition-colors duration-1000 block"
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            transition={{ duration: 1.8, delay: 0.6 }}
+            viewport={{ once: true }}
+          >
             {t.home.enter}
-          </span>
-          <div className="mt-4 mx-auto w-12 h-px bg-gold/30 group-hover:w-20 group-hover:bg-gold/60 transition-all duration-1000" />
+          </motion.span>
+          <motion.div
+            className="mt-4 mx-auto w-12 h-px bg-gold/30 group-hover:w-20 group-hover:bg-gold/60 transition-all duration-1000"
+            initial={{ scaleX: 0 }}
+            whileInView={{ scaleX: 1 }}
+            transition={{ duration: 1.4, delay: 1 }}
+            viewport={{ once: true }}
+          />
         </Link>
       </ScrollReveal>
     </section>
   )
 }
 
+/** Breathing space between narrative acts */
+function Breath({ height = '40vh' }: { height?: string }) {
+  return <div style={{ height }} />
+}
+
 export default function HomePage() {
   const { t } = useI18n()
 
   return (
-    <main>
+    <main className="relative">
+      {/* ACT 1 — Tension: the first impression */}
       <HeroSection />
-      <ScrollTextSection text={t.home.s1} image={scrollImages[0]} />
-      <ScrollTextSection text={t.home.s2} image={scrollImages[1]} reverse />
-      <ScrollTextSection text={t.home.s3} image={scrollImages[2]} />
-      <ScrollTextSection text={t.home.s4} image={scrollImages[3]} reverse />
+
+      <Breath />
+
+      {/* ACT 2 — Unfolding: the narrative builds */}
+      <ScrollTextSection text={t.home.s1} image={scrollImages[0]} delay={0.1} />
+
+      <Breath height="30vh" />
+
+      <ScrollTextSection text={t.home.s2} image={scrollImages[1]} reverse delay={0.2} />
+
+      <Breath height="45vh" />
+
+      {/* ACT 3 — Deepening: rhythm shifts */}
+      <ScrollTextSection text={t.home.s3} image={scrollImages[2]} delay={0.15} />
+
+      <Breath height="35vh" />
+
+      <ScrollTextSection text={t.home.s4} image={scrollImages[3]} reverse delay={0.25} />
+
+      <Breath height="50vh" />
+
+      {/* EPILOGUE — Invitation */}
       <EnterSection />
-      <div className="h-[20vh]" />
+
+      <Breath height="25vh" />
     </main>
   )
 }

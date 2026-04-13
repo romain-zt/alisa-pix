@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useEffect } from 'react'
+import { useRef } from 'react'
 import { motion, useScroll, useTransform } from 'framer-motion'
 import GalleryCanvas from './GalleryCanvas'
 import GrainOverlay from './GrainOverlay'
@@ -24,14 +24,25 @@ export default function GallerySlide({
     offset: ['start end', 'start start', 'end start', 'end end'],
   })
 
-  // Enter: 0→0.5 (scroll into view), Hold: 0.5 (centered), Exit: 0.5→1 (scroll out)
+  // Enter → presence → exit
   const opacity = useTransform(scrollYProgress, [0, 0.25, 0.5, 0.75, 1], [0, 1, 1, 1, 0])
   const scale = useTransform(scrollYProgress, [0, 0.25, 0.75, 1], [1.15, 1.02, 1.02, 1.15])
   const blur = useTransform(scrollYProgress, [0, 0.2, 0.5, 0.8, 1], [12, 0, 0, 0, 12])
   const filterBlur = useTransform(blur, (v) => `blur(${v}px)`)
 
-  // Slow Ken Burns zoom while in view
+  // Ken Burns
   const slowZoom = useTransform(scrollYProgress, [0.2, 0.8], [1, 1.06])
+
+  // Micro-rotation — imperfection = life
+  const rotate = useTransform(scrollYProgress, [0, 0.5, 1], [-0.8, 0, 0.8])
+
+  // Brightness awakening
+  const brightness = useTransform(scrollYProgress, [0, 0.3, 0.7, 1], [0.5, 1, 1, 0.5])
+  const combinedFilter = useTransform(
+    [filterBlur, brightness],
+    // @ts-expect-error — framer-motion combine transform typing
+    ([b, br]: [string, number]) => `${b} brightness(${br})`
+  )
 
   useSlideEntrance(isActive, counterRef, captionRef)
 
@@ -46,7 +57,12 @@ export default function GallerySlide({
     >
       <motion.div
         className="absolute inset-0"
-        style={{ scale, filter: filterBlur, willChange: 'transform, filter' }}
+        style={{
+          scale,
+          rotate,
+          filter: combinedFilter,
+          willChange: 'transform, filter',
+        }}
       >
         <motion.div className="w-full h-full" style={{ scale: slowZoom }}>
           <GalleryCanvas
@@ -92,7 +108,6 @@ export default function GallerySlide({
             </span>
           )}
         </div>
-        {/* Bottom line */}
         <div className="mt-4 h-px w-full bg-off-white/10" />
       </div>
     </motion.div>

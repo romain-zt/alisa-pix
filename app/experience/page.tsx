@@ -16,7 +16,7 @@ function ExperienceHero() {
           className="w-full h-full"
           initial={{ scale: 1.1 }}
           animate={{ scale: 1 }}
-          transition={{ duration: 3, ease: [0.16, 1, 0.3, 1] }}
+          transition={{ duration: 3.5, ease: [0.16, 1, 0.3, 1] }}
         >
           <ParallaxImage
             src={experienceImages[0]}
@@ -29,13 +29,27 @@ function ExperienceHero() {
   )
 }
 
-function TextSection({ text, idx }: { text: string; idx: number }) {
+const sectionRhythm = [
+  { imgSide: 'right' as const, voidBefore: '40vh', delay: 0.1 },
+  { imgSide: 'left' as const, voidBefore: '30vh', delay: 0.2 },
+  { imgSide: 'right' as const, voidBefore: '45vh', delay: 0.15 },
+  { imgSide: 'left' as const, voidBefore: '35vh', delay: 0.25 },
+  { imgSide: 'right' as const, voidBefore: '50vh', delay: 0.1 },
+  { imgSide: 'left' as const, voidBefore: '30vh', delay: 0.2 },
+]
+
+function TextSection({ text, idx, rhythm }: { text: string; idx: number; rhythm: typeof sectionRhythm[number] }) {
+  const hasImage = idx % 2 === 0
+  const isRight = rhythm.imgSide === 'right'
+
   return (
     <section className="min-h-[70vh] md:min-h-[80vh] flex items-center justify-center px-6 md:px-12 relative">
-      {idx % 2 === 0 && (
+      {hasImage && (
         <ScrollReveal
-          className="absolute right-6 md:right-16 top-1/2 -translate-y-1/2 w-[35vw] md:w-[25vw] h-[40vh] md:h-[55vh] opacity-15"
+          className={`absolute ${isRight ? 'right-6 md:right-16' : 'left-6 md:left-16'} top-1/2 -translate-y-1/2 w-[35vw] md:w-[25vw] h-[40vh] md:h-[55vh] opacity-15`}
           blur
+          cinematic
+          delay={rhythm.delay}
         >
           <ParallaxImage
             src={experienceImages[idx % experienceImages.length]}
@@ -57,7 +71,13 @@ function ClosingSection() {
   return (
     <section className="min-h-[50vh] flex items-center justify-center px-6">
       <ScrollReveal blur parallax>
-        <div className="w-16 h-px bg-gold/30 mx-auto" />
+        <motion.div
+          className="w-16 h-px bg-gold/30 mx-auto"
+          initial={{ scaleX: 0 }}
+          whileInView={{ scaleX: 1 }}
+          transition={{ duration: 1.8, delay: 0.4 }}
+          viewport={{ once: true }}
+        />
       </ScrollReveal>
     </section>
   )
@@ -68,13 +88,23 @@ export default function ExperiencePage() {
   const lines = [t.experience.l1, t.experience.l2, t.experience.l3, t.experience.l4, t.experience.l5, t.experience.l6]
 
   return (
-    <main>
+    <main className="relative">
       <ExperienceHero />
-      {lines.map((line, i) => (
-        <TextSection key={i} text={line} idx={i} />
-      ))}
+
+      {lines.map((line, i) => {
+        const rhythm = sectionRhythm[i] || sectionRhythm[0]
+        return (
+          <div key={i}>
+            {/* Breathing space — irregular rhythm prevents monotony */}
+            <div style={{ height: rhythm.voidBefore }} />
+            <TextSection text={line} idx={i} rhythm={rhythm} />
+          </div>
+        )
+      })}
+
+      <div style={{ height: '40vh' }} />
       <ClosingSection />
-      <div className="h-[15vh]" />
+      <div className="h-[20vh]" />
     </main>
   )
 }

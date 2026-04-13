@@ -110,7 +110,7 @@ export default function GalleryCanvas({ src, alt = '', className = '', active = 
   const glRef = useRef<{ gl: WebGLRenderingContext; timeLoc: WebGLUniformLocation | null } | null>(null)
 
   const render = useCallback(() => {
-    if (!glRef.current) return
+    if (!glRef.current?.timeLoc) return
     const { gl, timeLoc } = glRef.current
     gl.uniform1f(timeLoc, performance.now() * 0.001)
     gl.drawArrays(gl.TRIANGLES, 0, 6)

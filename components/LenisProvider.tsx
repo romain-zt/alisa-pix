@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, ReactNode } from 'react'
+import { useEffect, useRef, type ReactNode } from 'react'
 import Lenis from 'lenis'
 
 export default function LenisProvider({ children }: { children: ReactNode }) {
@@ -8,8 +8,9 @@ export default function LenisProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const lenis = new Lenis({
-      duration: 1.8,
-      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+      duration: 2.2,
+      // Cubic ease-out — slower, more sensual deceleration
+      easing: (t) => 1 - Math.pow(1 - t, 3),
       touchMultiplier: 1.5,
     })
 
