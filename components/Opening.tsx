@@ -11,7 +11,7 @@ export function Opening({ src }: { src: string }) {
   const punctureRef = useRef<HTMLSpanElement>(null)
   const hasPlayed = useRef(false)
 
-  const { ref: sectionRef, progress } = useSectionProgress()
+  const { ref: sectionRef, progress } = useSectionProgress<HTMLElement>()
 
   // Zoom OUT as user scrolls: 1.08 → 1.00
   // Opacity: held at 0.25, then slowly fades as user scrolls past

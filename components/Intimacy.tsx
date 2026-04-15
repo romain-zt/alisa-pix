@@ -5,7 +5,7 @@ import Image from 'next/image'
 import { useSectionProgress, useSectionStyle } from '@/hooks/useSectionProgress'
 
 export function Intimacy({ src }: { src: string }) {
-  const { ref: sectionRef, progress } = useSectionProgress()
+  const { ref: sectionRef, progress } = useSectionProgress<HTMLElement>()
 
   // Image: very slow zoom IN (1.0 → 1.06) — growing intimacy
   const imageStyler = useCallback((p: number) => {

@@ -5,7 +5,7 @@ import Image from 'next/image'
 import { useSectionProgress, useSectionStyle } from '@/hooks/useSectionProgress'
 
 export function FragmentCluster({ images }: { images: readonly string[] }) {
-  const { ref: sectionRef, progress } = useSectionProgress()
+  const { ref: sectionRef, progress } = useSectionProgress<HTMLElement>()
 
   // Fragment 1: sticky-feeling via slow parallax, slight zoom OUT (1.03 → 1.0)
   const f1Styler = useCallback((p: number) => {
