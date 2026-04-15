@@ -1,0 +1,1189 @@
+====================
+FILE: app/layout.tsx
+====================
+import type { Metadata, Viewport } from 'next'
+import { Inter, Cormorant_Garamond } from 'next/font/google'
+import './globals.css'
+
+const inter = Inter({
+  subsets: ['latin', 'cyrillic'],
+  variable: '--font-inter',
+  display: 'swap',
+})
+
+const cormorant = Cormorant_Garamond({
+  subsets: ['latin', 'cyrillic'],
+  weight: ['300', '400', '500'],
+  variable: '--font-cormorant',
+  display: 'swap',
+})
+
+export const metadata: Metadata = {
+  title: 'Vasilisa — Boudoir Photography',
+  description: 'A bright trace of your personality. Luxury boudoir photography in Paris.',
+  metadataBase: new URL('https://vasilisa.com'),
+  openGraph: {
+    title: 'Vasilisa — Boudoir Photography',
+    description: 'A bright trace of your personality',
+    type: 'website',
+  },
+}
+
+export const viewport: Viewport = {
+  themeColor: '#0a0908',
+  width: 'device-width',
+  initialScale: 1,
+}
+
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
+  return (
+    <html lang="en" className={`${inter.variable} ${cormorant.variable}`}>
+      <body className="grain">
+        {children}
+      </body>
+    </html>
+  )
+}
+
+====================
+FILE: app/page.tsx
+====================
+import { HomeContent } from '@/components/HomeContent'
+import { Colophon } from '@/components/Colophon'
+
+export default function HomePage() {
+  return (
+    <main>
+      <HomeContent />
+      <Colophon />
+    </main>
+  )
+}
+
+====================
+FILE: app/globals.css
+====================
+@import 'tailwindcss';
+
+/* ── Design Tokens ── */
+@theme {
+  --color-bg-deep: #0a0908;
+  --color-bg-surface: #0f0d0b;
+  --color-text-primary: #F0EBE3;
+  --color-text-muted: rgba(240, 235, 227, 0.45);
+  --color-accent: #C4A88A;
+  --color-accent-soft: rgba(196, 168, 138, 0.35);
+  --color-blush: #C4A0A0;
+
+  --color-tone-silk: #0d0b09;
+  --color-tone-shadow: #080808;
+  --color-tone-ember: #0d0907;
+  --color-tone-velvet: #0a080d;
+  --color-tone-smoke: #0b0a0d;
+
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-serif: 'Cormorant Garamond', 'Georgia', serif;
+
+  --ease-emerge: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-quiet: cubic-bezier(0.87, 0, 0.13, 1);
+  --ease-sharp: cubic-bezier(0.76, 0, 0.24, 1);
+}
+
+/* ── Base ── */
+html {
+  background-color: var(--color-bg-deep);
+  color: var(--color-text-primary);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-height: 100svh;
+  overflow-x: hidden;
+}
+
+::selection {
+  background: var(--color-accent-soft);
+  color: var(--color-text-primary);
+}
+
+/* ── Fluid Type Scale ── */
+:root {
+  --text-micro: clamp(0.5625rem, 1.2vw, 0.6875rem);
+  --text-caption: clamp(0.6875rem, 1.5vw, 0.8125rem);
+  --text-body: clamp(0.8125rem, 1.8vw, 0.9375rem);
+  --text-lead: clamp(0.9375rem, 2.2vw, 1.125rem);
+  --text-title: clamp(1.375rem, 3.5vw, 2.25rem);
+  --text-display: clamp(1.75rem, 5vw, 3.25rem);
+}
+
+/* ── Static Grain Overlay ── */
+.grain::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  pointer-events: none;
+  opacity: 0.035;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 200px 200px;
+}
+
+/* ── Image Treatment ── */
+.img-bw {
+  filter: grayscale(0.85) contrast(1.05) brightness(0.95);
+  transition: filter 700ms var(--ease-emerge);
+}
+
+.img-bw:hover {
+  filter: grayscale(0) contrast(1) brightness(1);
+}
+
+/* ── Section Tones ── */
+.tone-silk { background-color: var(--color-tone-silk); }
+.tone-shadow { background-color: var(--color-tone-shadow); }
+.tone-ember { background-color: var(--color-tone-ember); }
+.tone-velvet { background-color: var(--color-tone-velvet); }
+.tone-smoke { background-color: var(--color-tone-smoke); }
+
+/* ── Reduced Motion ── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .img-bw {
+    filter: none;
+  }
+}
+
+====================
+FILE: components/AsymmetricPair.tsx
+====================
+'use client'
+
+import Image from 'next/image'
+import { useScrollReveal } from '@/hooks/useScrollReveal'
+import { useParallax } from '@/hooks/useParallax'
+
+export function AsymmetricPair({
+  src,
+  alt = '',
+  title,
+  subtitle,
+  reverse = false,
+}: {
+  src: string
+  alt?: string
+  title: string
+  subtitle?: string
+  reverse?: boolean
+}) {
+  const textRef = useScrollReveal<HTMLDivElement>({
+    translateY: 25,
+    duration: 900,
+    delay: 200,
+  })
+
+  const imageRef = useParallax<HTMLDivElement>(0.06)
+
+  return (
+    <section
+      className={`md:grid md:grid-cols-12 md:gap-0 md:min-h-[75vh] md:items-center ${
+        reverse ? 'md:direction-rtl' : ''
+      }`}
+    >
+      <div
+        ref={imageRef}
+        className={`relative h-[55vh] md:h-[70vh] overflow-hidden ${
+          reverse
+            ? 'md:col-span-7 md:col-start-6 md:dir-ltr'
+            : 'md:col-span-7 md:col-start-1'
+        }`}
+      >
+        <Image
+          src={src}
+          alt={alt}
+          fill
+          className="object-cover img-bw"
+          sizes="(min-width: 768px) 58vw, 100vw"
+        />
+      </div>
+
+      <div
+        ref={textRef}
+        className={`px-6 py-10 md:py-0 ${
+          reverse
+            ? 'md:col-span-4 md:col-start-1 md:row-start-1 md:dir-ltr'
+            : 'md:col-span-4 md:col-start-9'
+        }`}
+      >
+        {subtitle && (
+          <p className="text-[var(--text-micro)] tracking-[0.2em] uppercase text-text-muted mb-4">
+            {subtitle}
+          </p>
+        )}
+        <h2 className="font-serif font-light text-text-primary text-[var(--text-title)] leading-tight">
+          {title}
+        </h2>
+      </div>
+    </section>
+  )
+}
+
+====================
+FILE: components/ImageReveal.tsx
+====================
+'use client'
+
+import Image from 'next/image'
+import { useScrollReveal } from '@/hooks/useScrollReveal'
+
+export function ImageReveal({
+  src,
+  alt = '',
+  aspect = '3/4',
+  priority = false,
+}: {
+  src: string
+  alt?: string
+  aspect?: string
+  priority?: boolean
+}) {
+  const ref = useScrollReveal<HTMLDivElement>({
+    translateY: 40,
+    duration: 1200,
+    delay: 100,
+  })
+
+  return (
+    <div ref={ref} className="w-full overflow-hidden">
+      <div className="relative w-full" style={{ aspectRatio: aspect }}>
+        <Image
+          src={src}
+          alt={alt}
+          fill
+          className="object-cover img-bw"
+          sizes="100vw"
+          priority={priority}
+        />
+      </div>
+    </div>
+  )
+}
+
+====================
+FILE: components/Opening.tsx
+====================
+'use client'
+
+import { useEffect, useRef } from 'react'
+import Image from 'next/image'
+import { animate, createTimeline } from 'animejs'
+
+export function Opening({ src }: { src: string }) {
+  const containerRef = useRef<HTMLElement>(null)
+  const hasPlayed = useRef(false)
+
+  useEffect(() => {
+    if (!containerRef.current || hasPlayed.current) return
+    hasPlayed.current = true
+
+    const prefersReducedMotion = window.matchMedia(
+      '(prefers-reduced-motion: reduce)'
+    ).matches
+
+    if (prefersReducedMotion) {
+      const img = containerRef.current.querySelector('.opening-image') as HTMLElement
+      const brand = containerRef.current.querySelector('.opening-brand') as HTMLElement
+      const tagline = containerRef.current.querySelector('.opening-tagline') as HTMLElement
+      if (img) img.style.opacity = '1'
+      if (brand) brand.style.opacity = '1'
+      if (tagline) tagline.style.opacity = '1'
+      return
+    }
+
+    const imgEl = containerRef.current.querySelector('.opening-image') as HTMLElement
+    const brandEl = containerRef.current.querySelector('.opening-brand') as HTMLElement
+    const taglineEl = containerRef.current.querySelector('.opening-tagline') as HTMLElement
+
+    const tl = createTimeline({
+      defaults: {
+        ease: 'cubicBezier(0.16, 1, 0.3, 1)',
+      },
+    })
+
+    tl.add(imgEl, {
+      opacity: [0, 0.45],
+      scale: [1.04, 1],
+      duration: 1800,
+    }, 0)
+      .add(brandEl, {
+        opacity: [0, 1],
+        translateY: [12, 0],
+        duration: 1200,
+      }, 800)
+      .add(taglineEl, {
+        opacity: [0, 0.5],
+        translateY: [8, 0],
+        duration: 900,
+      }, 1500)
+  }, [])
+
+  return (
+    <section
+      ref={containerRef}
+      className="relative h-[100svh] flex flex-col items-center justify-end overflow-hidden"
+    >
+      <div className="opening-image absolute inset-0 opacity-0">
+        <Image
+          src={src}
+          alt=""
+          fill
+          className="object-cover"
+          priority
+          sizes="100vw"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-bg-deep via-bg-deep/40 to-bg-deep/70" />
+      </div>
+
+      <div className="relative z-10 text-center pb-[15svh] px-6">
+        <h1 className="opening-brand opacity-0 font-serif font-light text-text-primary text-[var(--text-display)] tracking-[0.3em] uppercase mb-4">
+          Vasilisa
+        </h1>
+        <p className="opening-tagline opacity-0 text-[var(--text-micro)] tracking-[0.2em] uppercase text-text-muted">
+          A bright trace of your personality
+        </p>
+      </div>
+    </section>
+  )
+}
+
+====================
+FILE: components/Colophon.tsx
+====================
+export function Colophon() {
+  return (
+    <footer className="pt-24 md:pt-32 pb-10 md:pb-14 px-6">
+      <div className="max-w-sm">
+        <p className="text-[var(--text-micro)] tracking-[0.25em] uppercase text-text-muted mb-5">
+          Vasilisa
+        </p>
+        <p className="text-[var(--text-caption)] text-text-muted leading-relaxed mb-1">
+          Boudoir photography
+        </p>
+        <p className="text-[var(--text-caption)] text-text-muted leading-relaxed mb-4">
+          Paris
+        </p>
+        <a
+          href="mailto:hello@vasilisa.com"
+          className="text-[var(--text-caption)] text-accent underline underline-offset-4 decoration-accent-soft"
+        >
+          hello@vasilisa.com
+        </a>
+      </div>
+    </footer>
+  )
+}
+
+====================
+FILE: components/HomeContent.tsx
+====================
+'use client'
+
+import dynamic from 'next/dynamic'
+import { Opening } from './Opening'
+import { BreathingPause } from './BreathingPause'
+import { BOUDOIR_IMAGES } from '@/lib/images'
+
+const ImageReveal = dynamic(
+  () => import('./ImageReveal').then((m) => ({ default: m.ImageReveal })),
+  { loading: () => <div className="w-full aspect-[3/4]" /> }
+)
+
+const AsymmetricPair = dynamic(
+  () => import('./AsymmetricPair').then((m) => ({ default: m.AsymmetricPair })),
+  { loading: () => <div className="min-h-[55vh]" /> }
+)
+
+const EditorialGrid = dynamic(
+  () => import('./EditorialGrid').then((m) => ({ default: m.EditorialGrid })),
+  { loading: () => <div className="min-h-[80vh]" /> }
+)
+
+const Invitation = dynamic(
+  () => import('./Invitation').then((m) => ({ default: m.Invitation })),
+  { loading: () => <div className="min-h-[40vh]" /> }
+)
+
+export function HomeContent() {
+  return (
+    <>
+      {/* Act I: Mystery — the opening */}
+      <Opening src={BOUDOIR_IMAGES.hero} />
+
+      {/* Pause */}
+      <BreathingPause variant="empty" />
+
+      {/* Act II: Reveal — first full image */}
+      <ImageReveal src={BOUDOIR_IMAGES.reveal} aspect="3/4" />
+
+      {/* Pause with word */}
+      <BreathingPause variant="word" label="Portfolio" />
+
+      {/* Act III: Detail — asymmetric composition */}
+      <AsymmetricPair
+        src={BOUDOIR_IMAGES.featured}
+        title="Every detail speaks"
+        subtitle="Boudoir"
+      />
+
+      {/* Pause */}
+      <BreathingPause variant="line" />
+
+      {/* Act IV: Immersion — editorial gallery */}
+      <EditorialGrid images={BOUDOIR_IMAGES.gallery} />
+
+      {/* Pause */}
+      <BreathingPause variant="empty" />
+
+      {/* Act V: Full-bleed immersion */}
+      <ImageReveal src={BOUDOIR_IMAGES.immersion} aspect="16/9" />
+
+      {/* Pause */}
+      <BreathingPause variant="line" />
+
+      {/* Act VI: Invitation */}
+      <Invitation />
+    </>
+  )
+}
+
+====================
+FILE: components/Invitation.tsx
+====================
+'use client'
+
+import { useScrollReveal } from '@/hooks/useScrollReveal'
+
+export function Invitation() {
+  const ref = useScrollReveal<HTMLDivElement>({
+    translateY: 20,
+    duration: 1100,
+    delay: 100,
+  })
+
+  return (
+    <section className="flex items-center justify-center min-h-[40vh] py-16 px-6">
+      <div ref={ref} className="text-center max-w-md">
+        <p className="text-[var(--text-micro)] tracking-[0.25em] uppercase text-text-muted mb-6">
+          By appointment
+        </p>
+        <a
+          href="mailto:hello@vasilisa.com"
+          className="font-serif font-light text-[var(--text-lead)] text-accent underline underline-offset-4 decoration-accent-soft transition-opacity duration-500 hover:opacity-70"
+        >
+          hello@vasilisa.com
+        </a>
+      </div>
+    </section>
+  )
+}
+
+====================
+FILE: components/BreathingPause.tsx
+====================
+'use client'
+
+import { useScrollReveal } from '@/hooks/useScrollReveal'
+
+export function BreathingPause({
+  label,
+  variant = 'line',
+}: {
+  label?: string
+  variant?: 'empty' | 'line' | 'word'
+}) {
+  const ref = useScrollReveal<HTMLDivElement>({
+    translateY: 0,
+    duration: 1400,
+    delay: 0,
+  })
+
+  if (variant === 'empty') {
+    return <div className="min-h-[20vh]" aria-hidden="true" />
+  }
+
+  if (variant === 'word' && label) {
+    return (
+      <div
+        ref={ref}
+        className="flex items-center justify-center min-h-[25vh] py-12"
+      >
+        <p className="text-[var(--text-micro)] tracking-[0.3em] uppercase text-text-muted">
+          {label}
+        </p>
+      </div>
+    )
+  }
+
+  return (
+    <div
+      ref={ref}
+      className="flex items-center justify-center min-h-[15vh] py-8"
+      aria-hidden="true"
+    >
+      <div className="w-10 h-px bg-accent-soft" />
+    </div>
+  )
+}
+
+====================
+FILE: components/EditorialGrid.tsx
+====================
+'use client'
+
+import Image from 'next/image'
+import { useStaggerReveal } from '@/hooks/useStaggerReveal'
+
+export function EditorialGrid({ images }: { images: readonly string[] }) {
+  const ref = useStaggerReveal<HTMLDivElement>('.grid-item', {
+    stagger: 120,
+    translateY: 35,
+    duration: 1000,
+  })
+
+  return (
+    <div
+      ref={ref}
+      className="grid grid-cols-1 md:grid-cols-12 gap-2 md:gap-3 px-0 md:px-6"
+    >
+      {/* Row 1: large + small portrait */}
+      {images[0] && (
+        <div className="grid-item md:col-span-8 relative aspect-[3/2] overflow-hidden">
+          <Image
+            src={images[0]}
+            alt=""
+            fill
+            className="object-cover img-bw"
+            sizes="(min-width: 768px) 66vw, 100vw"
+          />
+        </div>
+      )}
+      {images[1] && (
+        <div className="grid-item md:col-span-4 relative aspect-[3/4] overflow-hidden">
+          <Image
+            src={images[1]}
+            alt=""
+            fill
+            className="object-cover img-bw"
+            sizes="(min-width: 768px) 33vw, 100vw"
+          />
+        </div>
+      )}
+
+      {/* Row 2: two medium */}
+      {images[2] && (
+        <div className="grid-item md:col-span-5 relative aspect-[4/5] overflow-hidden">
+          <Image
+            src={images[2]}
+            alt=""
+            fill
+            className="object-cover img-bw"
+            sizes="(min-width: 768px) 42vw, 100vw"
+          />
+        </div>
+      )}
+      {images[3] && (
+        <div className="grid-item md:col-span-7 relative aspect-[3/2] overflow-hidden">
+          <Image
+            src={images[3]}
+            alt=""
+            fill
+            className="object-cover img-bw"
+            sizes="(min-width: 768px) 58vw, 100vw"
+          />
+        </div>
+      )}
+
+      {/* Row 3: full bleed */}
+      {images[4] && (
+        <div className="grid-item md:col-span-12 relative aspect-[16/9] overflow-hidden">
+          <Image
+            src={images[4]}
+            alt=""
+            fill
+            className="object-cover img-bw"
+            sizes="100vw"
+          />
+        </div>
+      )}
+
+      {/* Row 4: offset pair */}
+      {images[5] && (
+        <div className="grid-item md:col-span-6 md:col-start-1 relative aspect-[2/3] overflow-hidden">
+          <Image
+            src={images[5]}
+            alt=""
+            fill
+            className="object-cover img-bw"
+            sizes="(min-width: 768px) 50vw, 100vw"
+          />
+        </div>
+      )}
+      {images[6] && (
+        <div className="grid-item md:col-span-5 md:col-start-8 relative aspect-[4/5] overflow-hidden md:mt-12">
+          <Image
+            src={images[6]}
+            alt=""
+            fill
+            className="object-cover img-bw"
+            sizes="(min-width: 768px) 42vw, 100vw"
+          />
+        </div>
+      )}
+
+      {/* Row 5: single offset */}
+      {images[7] && (
+        <div className="grid-item md:col-span-8 md:col-start-3 relative aspect-[3/2] overflow-hidden">
+          <Image
+            src={images[7]}
+            alt=""
+            fill
+            className="object-cover img-bw"
+            sizes="(min-width: 768px) 66vw, 100vw"
+          />
+        </div>
+      )}
+    </div>
+  )
+}
+
+====================
+FILE: hooks/useParallax.ts
+====================
+'use client'
+
+import { useEffect, useRef } from 'react'
+
+export function useParallax<T extends HTMLElement>(speed: number = 0.08) {
+  const ref = useRef<T>(null)
+
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+
+    const prefersReducedMotion = window.matchMedia(
+      '(prefers-reduced-motion: reduce)'
+    ).matches
+    if (prefersReducedMotion) return
+
+    const isSmall = window.matchMedia('(max-width: 768px)').matches
+    const s = isSmall ? speed * 0.3 : speed
+
+    let ticking = false
+
+    function onScroll() {
+      if (ticking) return
+      ticking = true
+
+      requestAnimationFrame(() => {
+        const rect = el!.getBoundingClientRect()
+        const center = window.innerHeight / 2
+        const elCenter = rect.top + rect.height / 2
+        const offset = (elCenter - center) * s
+
+        el!.style.transform = `translateY(${offset}px)`
+        ticking = false
+      })
+    }
+
+    window.addEventListener('scroll', onScroll, { passive: true })
+    onScroll()
+
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [speed])
+
+  return ref
+}
+
+====================
+FILE: hooks/useScrollReveal.ts
+====================
+'use client'
+
+import { useEffect, useRef } from 'react'
+import { animate } from 'animejs'
+
+interface RevealOptions {
+  translateY?: number
+  duration?: number
+  delay?: number
+  easing?: string
+  threshold?: number
+}
+
+export function useScrollReveal<T extends HTMLElement>(
+  options: RevealOptions = {}
+) {
+  const ref = useRef<T>(null)
+  const hasRevealed = useRef(false)
+
+  const {
+    translateY = 30,
+    duration = 1000,
+    delay = 0,
+    easing = 'cubicBezier(0.16, 1, 0.3, 1)',
+    threshold = 0.15,
+  } = options
+
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+
+    const prefersReducedMotion = window.matchMedia(
+      '(prefers-reduced-motion: reduce)'
+    ).matches
+
+    if (prefersReducedMotion) {
+      el.style.opacity = '1'
+      return
+    }
+
+    el.style.opacity = '0'
+    el.style.transform = `translateY(${translateY}px)`
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !hasRevealed.current) {
+          hasRevealed.current = true
+
+          animate(el, {
+            opacity: [0, 1],
+            translateY: [translateY, 0],
+            duration,
+            delay,
+            ease: easing,
+          })
+
+          observer.disconnect()
+        }
+      },
+      { threshold }
+    )
+
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [translateY, duration, delay, easing, threshold])
+
+  return ref
+}
+
+====================
+FILE: hooks/useStaggerReveal.ts
+====================
+'use client'
+
+import { useEffect, useRef } from 'react'
+import { animate, utils } from 'animejs'
+
+interface StaggerOptions {
+  stagger?: number
+  translateY?: number
+  duration?: number
+  easing?: string
+  threshold?: number
+}
+
+export function useStaggerReveal<T extends HTMLElement>(
+  childSelector: string,
+  options: StaggerOptions = {}
+) {
+  const ref = useRef<T>(null)
+  const hasRevealed = useRef(false)
+
+  const {
+    stagger = 100,
+    translateY = 25,
+    duration = 900,
+    easing = 'cubicBezier(0.16, 1, 0.3, 1)',
+    threshold = 0.1,
+  } = options
+
+  useEffect(() => {
+    const container = ref.current
+    if (!container) return
+
+    const children = container.querySelectorAll(childSelector)
+    if (!children.length) return
+
+    const prefersReducedMotion = window.matchMedia(
+      '(prefers-reduced-motion: reduce)'
+    ).matches
+
+    if (prefersReducedMotion) {
+      children.forEach((child) => {
+        ;(child as HTMLElement).style.opacity = '1'
+      })
+      return
+    }
+
+    children.forEach((child) => {
+      ;(child as HTMLElement).style.opacity = '0'
+      ;(child as HTMLElement).style.transform = `translateY(${translateY}px)`
+    })
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !hasRevealed.current) {
+          hasRevealed.current = true
+
+          animate(Array.from(children) as HTMLElement[], {
+            opacity: [0, 1],
+            translateY: [translateY, 0],
+            duration,
+            ease: easing,
+            delay: utils.stagger(stagger),
+          })
+
+          observer.disconnect()
+        }
+      },
+      { threshold }
+    )
+
+    observer.observe(container)
+    return () => observer.disconnect()
+  }, [childSelector, stagger, translateY, duration, easing, threshold])
+
+  return ref
+}
+
+====================
+FILE: lib/images.ts
+====================
+export const BOUDOIR_IMAGES = {
+  hero: '/assets/images/boudoir/IMG_7523.jpeg',
+  reveal: '/assets/images/boudoir/IMG_7820.jpeg',
+  featured: '/assets/images/boudoir/IMG_7408.jpeg',
+  detail: '/assets/images/boudoir/_DSC2188.jpeg',
+  immersion: '/assets/images/boudoir/IMG_7544.jpeg',
+
+  gallery: [
+    '/assets/images/boudoir/IMG_7355.jpeg',
+    '/assets/images/boudoir/IMG_5228.jpeg',
+    '/assets/images/boudoir/IMG_7549.jpeg',
+    '/assets/images/boudoir/IMG_6896.jpeg',
+    '/assets/images/boudoir/IMG_8326.jpeg',
+    '/assets/images/boudoir/0404.jpeg',
+    '/assets/images/boudoir/IMG_7529.jpeg',
+    '/assets/images/boudoir/IMG_3106.jpeg',
+  ],
+}
+
+export type BoudoirImages = typeof BOUDOIR_IMAGES
+
+====================
+FILE: specs/00-creative-direction.md
+====================
+# Creative Direction — Vasilisa Boudoir Photography
+
+## Identity
+
+**Vasilisa** is a luxury boudoir photography studio.
+The website is not a marketing tool — it is an **experience**.
+It must feel like entering a private gallery, not browsing a service page.
+
+**Tagline:** *A bright trace of your personality*
+
+---
+
+## 1. What We Learned From the References
+
+### From `composite-depannage-v0` (cinema restoration site)
+
+**Worth keeping:**
+- Cinematic CSS depth system (section tones, vignette layers)
+- `IntersectionObserver`-based scroll reveals — lightweight, no library tax
+- Editorial typography: serif headlines, tracked uppercase micro-labels
+- Dynamic imports for below-fold content (performance)
+- The *concept* of before/after reveals (clip-path transitions)
+
+**Rejected:**
+- 3+ simultaneous infinite animation loops (grain, lens, leak) — GPU waste
+- Shadcn/chart/sidebar token bloat in global CSS
+- Unfinished placeholder sections
+- YouTube iframe hover previews — noisy for a photography context
+
+### From `rfe` (film production company)
+
+**Worth keeping:**
+- Phased typography reveals (letter-spacing opens, slow fade)
+- B&W → color treatment on hover — perfect for boudoir
+- Editorial grid with mixed cell sizes (not uniform cards)
+- Section tonal rhythm (near-black variants for mood shifts)
+- Thin dividers and metallic accent lines (sparingly)
+- CMS block-based page composition model
+
+**Rejected:**
+- Blood-red accent palette — reads horror/crime, not intimacy
+- Split-screen dual portrait hero — boudoir = single subject or environment
+- Multiple competing infinite CSS loops on every page
+- Video autoplay on hover
+- `data-ai-*` attributes on blocks
+
+### From `old` (original Vasilisa Vite SPA)
+
+**Worth keeping:**
+- "Dark stage, work is light" — the core philosophy
+- Generous letter-spacing on the brand name
+- Full-bleed hero with asymmetric background positioning
+- Drop-cap editorial detail on text pages
+- The tagline itself
+
+**Rejected:**
+- Right-click blocking + alert() — hostile, amateur
+- Vite default purple links (#646cff)
+- Triple watermark overlays — noisy, not premium
+- `window.outerWidth` responsive checks — brittle
+- 12px body text
+- Stock CSS spinner
+- Roboto + Inter font mix without hierarchy
+
+---
+
+## 2. Visual Philosophy
+
+### Darkness as Intimacy
+
+The site lives in near-black. Not because "dark mode is trendy" — because darkness creates intimacy. A dark room with one light on. A gallery at night. The photographs are the light source.
+
+- **Background:** warm near-black (`#0a0908` range, not cold `#000`)
+- **Text:** warm off-white (`#F0EBE3` range), never pure white
+- **Accent:** one metallic warm tone — champagne/rose-gold (`#C4A88A`)
+- **Secondary accent:** soft blush (`#C4A0A0`)
+- **Never:** pure black, pure white, saturated colors, neon, gradients
+
+### Breathing Space
+
+Every section must breathe. The user should feel *space*, not *content*.
+
+- Minimum `clamp(4rem, 10vh, 8rem)` between major sections
+- Text blocks never wider than `38ch` on mobile, `52ch` on desktop
+- Images get the space — text is the whisper beside them
+- Empty space is not waste — it is the most expensive element
+
+### Typography Tone
+
+Two voices, one conversation:
+
+1. **Display/Brand:** A refined serif or display face — for the name, section titles, and whispered labels. Tracked, light, unhurried.
+2. **Body:** Clean sans-serif — for reading. Small but legible. Never competing with the images.
+
+Scale: `clamp()` fluid type. No fixed `px` sizes outside of micro-labels.
+
+Hierarchy through **weight and spacing**, not size jumps. A 12px tracked uppercase label can feel more powerful than a 48px headline — if it has room.
+
+### Sensual Rhythm
+
+The page has a heartbeat. Not a metronome — a human pulse.
+
+- **Slow sections:** large image, minimal text, long scroll distance
+- **Pause sections:** empty space, a single word, a thin line
+- **Detail sections:** closer crop, typography, a sentence
+- **Immersion sections:** edge-to-edge, no UI chrome, just the image
+
+This is not a "scroll to see features" page. It is a **visual poem**.
+
+---
+
+## 3. Motion Philosophy
+
+### What Motion Means Here
+
+Motion is not decoration. Motion is **emotion**.
+
+- A slow fade = "welcome"
+- A delayed reveal = "anticipation"
+- A parallax shift = "depth, presence"
+- No motion = "confidence, stillness"
+
+### Rules
+
+1. **Never animate for attention.** Animate for *feeling*.
+2. **Maximum 2 animated elements per viewport** at any time.
+3. **No continuous loops.** Everything starts. Everything ends.
+4. **Scroll triggers only.** No autoplay. No timers. No hover-triggered motion on mobile.
+5. **Reduced motion respected.** Always. `prefers-reduced-motion: reduce` disables everything except opacity fades.
+6. **Transform-only animations.** `translate`, `scale`, `opacity`. Never `width`, `height`, `top`, `left`, `filter` in animations.
+
+### Animation Personality
+
+| Property | Value |
+|----------|-------|
+| Default duration | 800ms–1200ms |
+| Easing | `cubicBezier(0.16, 1, 0.3, 1)` (expo out — the "emerge") |
+| Stagger | 80ms–150ms between siblings |
+| Parallax | Maximum 15% of section height |
+| Delay before first animation | 200ms minimum (let the content settle) |
+
+### What We Never Do
+
+- Bounce
+- Elastic overshoot
+- Continuous rotation
+- Scale > 1.05 on any element
+- Blur transitions (GPU-heavy, laggy on mobile)
+- Canvas or WebGL anything
+- More than 1 parallax layer per section
+
+---
+
+## 4. Color System
+
+### Primary Palette
+
+| Token | Value | Role |
+|-------|-------|------|
+| `--bg-deep` | `#0a0908` | Primary background — warm near-black |
+| `--bg-surface` | `#0f0d0b` | Card/section surface — slightly lifted |
+| `--text-primary` | `#F0EBE3` | Primary text — warm parchment |
+| `--text-muted` | `rgba(240, 235, 227, 0.5)` | Secondary text, captions |
+| `--accent` | `#C4A88A` | Champagne/rose-gold — lines, highlights |
+| `--accent-soft` | `rgba(196, 168, 138, 0.4)` | Accent at reduced presence |
+| `--blush` | `#C4A0A0` | Soft blush — subtle warmth |
+
+### Section Tones (near-black variants for mood shifts)
+
+| Token | Value | Character |
+|-------|-------|-----------|
+| `--tone-silk` | `#0d0b09` | Warm, intimate |
+| `--tone-shadow` | `#080808` | Neutral depth |
+| `--tone-ember` | `#0d0907` | Warm glow |
+| `--tone-velvet` | `#0a080d` | Cool, mysterious |
+| `--tone-smoke` | `#0b0a0d` | Hazy, soft |
+
+### Rules
+
+- No color should draw attention away from photographs
+- Accent is used for: thin lines, tiny labels, hover states
+- Never use accent as background
+- Text links: underline in `--accent-soft`, no color change on hover — only opacity shift
+
+---
+
+## 5. Image Treatment
+
+### Philosophy
+
+Images are the **content**. Everything else is frame.
+
+### Rules
+
+1. **Default state: desaturated** — B&W or low-saturation (CSS `filter: grayscale(0.8) contrast(1.05)`)
+2. **Active/hover state: full color** — smooth 600ms transition
+3. **Never crop to squares** — respect the photographer's composition. Use `object-fit: cover` with photographer-friendly ratios (3:4, 2:3, 4:5 for portrait; 16:9, 3:2 for landscape)
+4. **No rounded corners on photographs** — this is not a UI element
+5. **No drop shadows on photographs** — the dark background IS the frame
+6. **Loading: blur-up placeholder** — tiny base64 blur, not skeleton, not spinner
+7. **Grain overlay (optional):** one static SVG noise layer at 3-5% opacity over the page — not per-image, not animated
+
+---
+
+## 6. Layout Principles
+
+### Mobile (Primary)
+
+- **Full-width images** — edge to edge, no padding
+- **Text inset** — `padding-inline: clamp(1.5rem, 5vw, 3rem)`
+- **Vertical storytelling** — one idea per screen height
+- **Thumb zone:** all interactive elements in bottom 60% of screen
+- **No horizontal scroll** — ever
+
+### Desktop (Enhancement)
+
+- **Asymmetric compositions** — image 60-70%, text 30-40%
+- **Broken grid** — images can overlap text zones by 10-20%
+- **Sticky elements** — text can stick while image scrolls (or vice versa)
+- **Max content width:** `1400px` with generous side margins
+- **No centered marketing copy** — align left or right, with tension against the image
+
+### Never
+
+- Feature grids (3-column icon + text)
+- Card carousels
+- Centered hero with CTA button
+- "About Us" sections with circular team photos
+- Testimonial sliders
+- Pricing tables
+
+---
+
+## 7. Component Vocabulary
+
+Instead of generic web components, think in **exhibition terms**:
+
+| Instead of | Use |
+|-----------|-----|
+| Hero section | **Opening** — a moment of mystery before the first image |
+| Feature grid | **Gallery wall** — images at different scales, asymmetric |
+| CTA block | **Invitation** — a whispered line with a subtle link |
+| Testimonial | **Trace** — a single sentence, attributed, floating in space |
+| Footer | **Colophon** — minimal, the photographer's mark |
+| Navigation | **Index** — hidden until summoned, like a gallery guide |
+
+---
+
+## 8. Performance Contract
+
+| Metric | Target |
+|--------|--------|
+| FPS | 60fps minimum on iPhone 12+ |
+| LCP | < 2.5s |
+| CLS | < 0.1 |
+| JS bundle (initial) | < 80KB gzipped |
+| Animation technique | CSS transforms + anime.js (no GSAP, no Framer Motion) |
+| Images | Next.js `<Image>` with `sizes`, `priority` for above-fold |
+| Fonts | 2 maximum, `font-display: swap`, preloaded |
+| No | Canvas, WebGL, heavy blur, box-shadow animations |
+
+---
+
+## 9. What "Done" Looks Like
+
+The website should feel like:
+
+- Walking into a dimly lit gallery
+- Each scroll reveals the next piece
+- The photographer's eye guides your eye
+- You feel calm, not marketed to
+- You want to stay, not click away
+- The experience is the portfolio
+
+It should NOT feel like:
+
+- A Squarespace photography template
+- A startup landing page with dark mode
+- A Webflow agency portfolio
+- A CSS animation showcase
+- A social media feed
+
+---
+
+## 10. Reference Mood
+
+Think: **Helmut Newton exhibition catalog meets Acne Studios website meets the silence between tracks on a vinyl record.**
+
+Not: **Unsplash landing page meets Dribbble dark mode template meets "cool CSS tricks" blog post.**
+
