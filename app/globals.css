@@ -85,6 +85,17 @@ body {
 .tone-velvet { background-color: var(--color-tone-velvet); }
 .tone-smoke { background-color: var(--color-tone-smoke); }
 
+/* ── Soft Masks ── */
+.mask-soft-edges {
+  mask-image: linear-gradient(to bottom, transparent 0%, black 8%, black 92%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 8%, black 92%, transparent 100%);
+}
+
+.mask-vignette {
+  mask-image: radial-gradient(ellipse 75% 70% at 50% 50%, black 35%, transparent 100%);
+  -webkit-mask-image: radial-gradient(ellipse 75% 70% at 50% 50%, black 35%, transparent 100%);
+}
+
 /* ── Reduced Motion ── */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {

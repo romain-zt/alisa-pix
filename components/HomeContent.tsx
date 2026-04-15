@@ -2,68 +2,51 @@
 
 import dynamic from 'next/dynamic'
 import { Opening } from './Opening'
-import { BreathingPause } from './BreathingPause'
-import { BOUDOIR_IMAGES } from '@/lib/images'
+import { VoidTransition } from './VoidTransition'
+import { SCENE_IMAGES } from '@/lib/images'
 
-const ImageReveal = dynamic(
-  () => import('./ImageReveal').then((m) => ({ default: m.ImageReveal })),
-  { loading: () => <div className="w-full aspect-[3/4]" /> }
+const DepthScene = dynamic(
+  () => import('./DepthScene').then((m) => ({ default: m.DepthScene })),
+  { loading: () => <div className="min-h-[120vh]" /> }
 )
 
-const AsymmetricPair = dynamic(
-  () => import('./AsymmetricPair').then((m) => ({ default: m.AsymmetricPair })),
-  { loading: () => <div className="min-h-[55vh]" /> }
-)
-
-const EditorialGrid = dynamic(
-  () => import('./EditorialGrid').then((m) => ({ default: m.EditorialGrid })),
+const FragmentCluster = dynamic(
+  () => import('./FragmentCluster').then((m) => ({ default: m.FragmentCluster })),
   { loading: () => <div className="min-h-[80vh]" /> }
 )
 
-const Invitation = dynamic(
-  () => import('./Invitation').then((m) => ({ default: m.Invitation })),
-  { loading: () => <div className="min-h-[40vh]" /> }
+const Intimacy = dynamic(
+  () => import('./Intimacy').then((m) => ({ default: m.Intimacy })),
+  { loading: () => <div className="min-h-[90vh]" /> }
 )
 
 export function HomeContent() {
   return (
     <>
-      {/* Act I: Mystery — the opening */}
-      <Opening src={BOUDOIR_IMAGES.hero} />
+      {/* Act 1 — Threshold: dark entry, image barely sensed */}
+      <Opening src={SCENE_IMAGES.threshold} />
 
-      {/* Pause */}
-      <BreathingPause variant="empty" />
+      {/* Void → tone shift into descent */}
+      <VoidTransition fromTone="deep" toTone="silk" height="20vh" />
 
-      {/* Act II: Reveal — first full image */}
-      <ImageReveal src={BOUDOIR_IMAGES.reveal} aspect="3/4" />
-
-      {/* Pause with word */}
-      <BreathingPause variant="word" label="Portfolio" />
-
-      {/* Act III: Detail — asymmetric composition */}
-      <AsymmetricPair
-        src={BOUDOIR_IMAGES.featured}
-        title="Every detail speaks"
-        subtitle="Boudoir"
+      {/* Act 2 — Descent: layered depth scene, spatial tension */}
+      <DepthScene
+        atmosphereSrc={SCENE_IMAGES.descent.atmosphere}
+        mainSrc={SCENE_IMAGES.descent.main}
+        label="Boudoir"
       />
 
-      {/* Pause */}
-      <BreathingPause variant="line" />
+      {/* Void → tone shift with word */}
+      <VoidTransition fromTone="silk" toTone="shadow" height="28vh" word="Portfolio" />
 
-      {/* Act IV: Immersion — editorial gallery */}
-      <EditorialGrid images={BOUDOIR_IMAGES.gallery} />
+      {/* Act 3 — Fragments: non-linear cluster, overlaps, bleeds */}
+      <FragmentCluster images={SCENE_IMAGES.fragments} />
 
-      {/* Pause */}
-      <BreathingPause variant="empty" />
+      {/* Void → warm shift into intimacy */}
+      <VoidTransition fromTone="shadow" toTone="ember" height="22vh" line />
 
-      {/* Act V: Full-bleed immersion */}
-      <ImageReveal src={BOUDOIR_IMAGES.immersion} aspect="16/9" />
-
-      {/* Pause */}
-      <BreathingPause variant="line" />
-
-      {/* Act VI: Invitation */}
-      <Invitation />
+      {/* Act 4 — Intimacy: close, warm, discreet invitation */}
+      <Intimacy src={SCENE_IMAGES.intimacy} />
     </>
   )
 }

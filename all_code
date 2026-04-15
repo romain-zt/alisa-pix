@@ -154,6 +154,17 @@ body {
 .tone-velvet { background-color: var(--color-tone-velvet); }
 .tone-smoke { background-color: var(--color-tone-smoke); }
 
+/* ── Soft Masks ── */
+.mask-soft-edges {
+  mask-image: linear-gradient(to bottom, transparent 0%, black 8%, black 92%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 8%, black 92%, transparent 100%);
+}
+
+.mask-vignette {
+  mask-image: radial-gradient(ellipse 75% 70% at 50% 50%, black 35%, transparent 100%);
+  -webkit-mask-image: radial-gradient(ellipse 75% 70% at 50% 50%, black 35%, transparent 100%);
+}
+
 /* ── Reduced Motion ── */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
@@ -166,6 +177,117 @@ body {
   .img-bw {
     filter: none;
   }
+}
+
+====================
+FILE: components/VoidTransition.tsx
+====================
+'use client'
+
+const TONE_MAP: Record<string, string> = {
+  deep: 'var(--color-bg-deep)',
+  silk: 'var(--color-tone-silk)',
+  shadow: 'var(--color-tone-shadow)',
+  ember: 'var(--color-tone-ember)',
+  velvet: 'var(--color-tone-velvet)',
+  smoke: 'var(--color-tone-smoke)',
+}
+
+export function VoidTransition({
+  fromTone = 'deep',
+  toTone = 'deep',
+  height = '25vh',
+  word,
+  line,
+}: {
+  fromTone?: string
+  toTone?: string
+  height?: string
+  word?: string
+  line?: boolean
+}) {
+  const from = TONE_MAP[fromTone] || TONE_MAP.deep
+  const to = TONE_MAP[toTone] || TONE_MAP.deep
+
+  return (
+    <div
+      className="relative flex items-center justify-center"
+      style={{
+        minHeight: height,
+        background: `linear-gradient(to bottom, ${from}, ${to})`,
+      }}
+      aria-hidden={!word}
+    >
+      {word && (
+        <p className="text-[var(--text-micro)] tracking-[0.3em] uppercase text-text-muted opacity-60">
+          {word}
+        </p>
+      )}
+      {line && !word && (
+        <div className="w-10 h-px bg-accent-soft opacity-40" />
+      )}
+    </div>
+  )
+}
+
+====================
+FILE: components/Intimacy.tsx
+====================
+'use client'
+
+import Image from 'next/image'
+import { useSmoothParallax } from '@/hooks/useSmoothParallax'
+import { useScrollReveal } from '@/hooks/useScrollReveal'
+
+export function Intimacy({ src }: { src: string }) {
+  const imageRef = useSmoothParallax<HTMLDivElement>(0.92, 30)
+  const textRef = useScrollReveal<HTMLDivElement>({
+    translateY: 12,
+    duration: 1200,
+    delay: 200,
+  })
+
+  return (
+    <section className="relative min-h-[90vh] md:min-h-[100vh] flex flex-col items-center justify-center py-16 md:py-24 px-6 overflow-hidden">
+      {/* Warm atmospheric gradient — not flat */}
+      <div
+        className="absolute inset-0"
+        style={{
+          background:
+            'radial-gradient(ellipse at 40% 45%, #0f0d0a 0%, #0d0907 60%, #0a0908 100%)',
+        }}
+      />
+
+      {/* Image with soft-edge dissolution */}
+      <div
+        ref={imageRef}
+        className="relative z-10 w-[82vw] md:w-[42vw] max-w-[580px]"
+      >
+        <div className="relative aspect-[4/5] overflow-hidden mask-soft-edges">
+          <Image
+            src={src}
+            alt=""
+            fill
+            className="object-cover"
+            sizes="(min-width: 768px) 42vw, 82vw"
+          />
+        </div>
+      </div>
+
+      {/* Contact whisper */}
+      <div ref={textRef} className="relative z-10 text-center mt-12 md:mt-16">
+        <p className="text-[var(--text-micro)] tracking-[0.25em] uppercase text-text-muted mb-5">
+          By appointment
+        </p>
+        <a
+          href="mailto:hello@vasilisa.com"
+          className="font-serif font-light text-[var(--text-lead)] text-accent underline underline-offset-4 decoration-accent-soft transition-opacity duration-700 hover:opacity-60"
+        >
+          hello@vasilisa.com
+        </a>
+      </div>
+    </section>
+  )
 }
 
 ====================
@@ -290,7 +412,7 @@ FILE: components/Opening.tsx
 
 import { useEffect, useRef } from 'react'
 import Image from 'next/image'
-import { animate, createTimeline } from 'animejs'
+import { createTimeline } from 'animejs'
 
 export function Opening({ src }: { src: string }) {
   const containerRef = useRef<HTMLElement>(null)
@@ -305,18 +427,15 @@ export function Opening({ src }: { src: string }) {
     ).matches
 
     if (prefersReducedMotion) {
-      const img = containerRef.current.querySelector('.opening-image') as HTMLElement
-      const brand = containerRef.current.querySelector('.opening-brand') as HTMLElement
-      const tagline = containerRef.current.querySelector('.opening-tagline') as HTMLElement
-      if (img) img.style.opacity = '1'
+      const img = containerRef.current.querySelector('.threshold-image') as HTMLElement
+      const brand = containerRef.current.querySelector('.threshold-brand') as HTMLElement
+      if (img) img.style.opacity = '0.25'
       if (brand) brand.style.opacity = '1'
-      if (tagline) tagline.style.opacity = '1'
       return
     }
 
-    const imgEl = containerRef.current.querySelector('.opening-image') as HTMLElement
-    const brandEl = containerRef.current.querySelector('.opening-brand') as HTMLElement
-    const taglineEl = containerRef.current.querySelector('.opening-tagline') as HTMLElement
+    const imgEl = containerRef.current.querySelector('.threshold-image') as HTMLElement
+    const brandEl = containerRef.current.querySelector('.threshold-brand') as HTMLElement
 
     const tl = createTimeline({
       defaults: {
@@ -325,45 +444,46 @@ export function Opening({ src }: { src: string }) {
     })
 
     tl.add(imgEl, {
-      opacity: [0, 0.45],
-      scale: [1.04, 1],
-      duration: 1800,
-    }, 0)
+      opacity: [0, 0.25],
+      scale: [1.06, 1.02],
+      duration: 2000,
+    }, 300)
       .add(brandEl, {
         opacity: [0, 1],
-        translateY: [12, 0],
         duration: 1200,
-      }, 800)
-      .add(taglineEl, {
-        opacity: [0, 0.5],
-        translateY: [8, 0],
-        duration: 900,
-      }, 1500)
+      }, 1200)
   }, [])
 
   return (
     <section
       ref={containerRef}
-      className="relative h-[100svh] flex flex-col items-center justify-end overflow-hidden"
+      className="relative h-[100svh] flex items-end overflow-hidden"
     >
-      <div className="opening-image absolute inset-0 opacity-0">
+      {/* Atmospheric image — barely sensed, not clearly seen */}
+      <div className="threshold-image absolute inset-0 opacity-0">
         <Image
           src={src}
           alt=""
           fill
-          className="object-cover"
+          className="object-cover scale-[1.06]"
           priority
           sizes="100vw"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-bg-deep via-bg-deep/40 to-bg-deep/70" />
+        {/* Heavy vignette: dark at edges, slightly open at center-bottom */}
+        <div className="absolute inset-0 bg-gradient-to-t from-bg-deep/70 via-bg-deep/50 to-bg-deep/85" />
+        <div
+          className="absolute inset-0"
+          style={{
+            background:
+              'radial-gradient(ellipse 70% 60% at 50% 60%, transparent 15%, rgba(10,9,8,0.75) 70%, rgba(10,9,8,0.95) 100%)',
+          }}
+        />
       </div>
 
-      <div className="relative z-10 text-center pb-[15svh] px-6">
-        <h1 className="opening-brand opacity-0 font-serif font-light text-text-primary text-[var(--text-display)] tracking-[0.3em] uppercase mb-4">
+      {/* Brand whisper — bottom left, gallery placard style */}
+      <div className="threshold-brand opacity-0 relative z-10 pb-8 md:pb-12 pl-6 md:pl-10">
+        <p className="text-[var(--text-micro)] tracking-[0.3em] uppercase text-text-muted">
           Vasilisa
-        </h1>
-        <p className="opening-tagline opacity-0 text-[var(--text-micro)] tracking-[0.2em] uppercase text-text-muted">
-          A bright trace of your personality
         </p>
       </div>
     </section>
@@ -404,69 +524,162 @@ FILE: components/HomeContent.tsx
 
 import dynamic from 'next/dynamic'
 import { Opening } from './Opening'
-import { BreathingPause } from './BreathingPause'
-import { BOUDOIR_IMAGES } from '@/lib/images'
+import { VoidTransition } from './VoidTransition'
+import { SCENE_IMAGES } from '@/lib/images'
 
-const ImageReveal = dynamic(
-  () => import('./ImageReveal').then((m) => ({ default: m.ImageReveal })),
-  { loading: () => <div className="w-full aspect-[3/4]" /> }
+const DepthScene = dynamic(
+  () => import('./DepthScene').then((m) => ({ default: m.DepthScene })),
+  { loading: () => <div className="min-h-[120vh]" /> }
 )
 
-const AsymmetricPair = dynamic(
-  () => import('./AsymmetricPair').then((m) => ({ default: m.AsymmetricPair })),
-  { loading: () => <div className="min-h-[55vh]" /> }
-)
-
-const EditorialGrid = dynamic(
-  () => import('./EditorialGrid').then((m) => ({ default: m.EditorialGrid })),
+const FragmentCluster = dynamic(
+  () => import('./FragmentCluster').then((m) => ({ default: m.FragmentCluster })),
   { loading: () => <div className="min-h-[80vh]" /> }
 )
 
-const Invitation = dynamic(
-  () => import('./Invitation').then((m) => ({ default: m.Invitation })),
-  { loading: () => <div className="min-h-[40vh]" /> }
+const Intimacy = dynamic(
+  () => import('./Intimacy').then((m) => ({ default: m.Intimacy })),
+  { loading: () => <div className="min-h-[90vh]" /> }
 )
 
 export function HomeContent() {
   return (
     <>
-      {/* Act I: Mystery — the opening */}
-      <Opening src={BOUDOIR_IMAGES.hero} />
+      {/* Act 1 — Threshold: dark entry, image barely sensed */}
+      <Opening src={SCENE_IMAGES.threshold} />
 
-      {/* Pause */}
-      <BreathingPause variant="empty" />
+      {/* Void → tone shift into descent */}
+      <VoidTransition fromTone="deep" toTone="silk" height="20vh" />
 
-      {/* Act II: Reveal — first full image */}
-      <ImageReveal src={BOUDOIR_IMAGES.reveal} aspect="3/4" />
-
-      {/* Pause with word */}
-      <BreathingPause variant="word" label="Portfolio" />
-
-      {/* Act III: Detail — asymmetric composition */}
-      <AsymmetricPair
-        src={BOUDOIR_IMAGES.featured}
-        title="Every detail speaks"
-        subtitle="Boudoir"
+      {/* Act 2 — Descent: layered depth scene, spatial tension */}
+      <DepthScene
+        atmosphereSrc={SCENE_IMAGES.descent.atmosphere}
+        mainSrc={SCENE_IMAGES.descent.main}
+        label="Boudoir"
       />
 
-      {/* Pause */}
-      <BreathingPause variant="line" />
+      {/* Void → tone shift with word */}
+      <VoidTransition fromTone="silk" toTone="shadow" height="28vh" word="Portfolio" />
 
-      {/* Act IV: Immersion — editorial gallery */}
-      <EditorialGrid images={BOUDOIR_IMAGES.gallery} />
+      {/* Act 3 — Fragments: non-linear cluster, overlaps, bleeds */}
+      <FragmentCluster images={SCENE_IMAGES.fragments} />
 
-      {/* Pause */}
-      <BreathingPause variant="empty" />
+      {/* Void → warm shift into intimacy */}
+      <VoidTransition fromTone="shadow" toTone="ember" height="22vh" line />
 
-      {/* Act V: Full-bleed immersion */}
-      <ImageReveal src={BOUDOIR_IMAGES.immersion} aspect="16/9" />
-
-      {/* Pause */}
-      <BreathingPause variant="line" />
-
-      {/* Act VI: Invitation */}
-      <Invitation />
+      {/* Act 4 — Intimacy: close, warm, discreet invitation */}
+      <Intimacy src={SCENE_IMAGES.intimacy} />
     </>
+  )
+}
+
+====================
+FILE: components/FragmentCluster.tsx
+====================
+'use client'
+
+import Image from 'next/image'
+import { useSmoothParallax } from '@/hooks/useSmoothParallax'
+
+export function FragmentCluster({ images }: { images: readonly string[] }) {
+  const slowRef = useSmoothParallax<HTMLDivElement>(0.45, 60)
+
+  if (images.length < 5) return null
+
+  return (
+    <div className="relative md:h-[140vh] overflow-hidden tone-shadow">
+
+      {/* Fragment 1 — Large portrait, bleeds left edge */}
+      <div
+        className="
+          relative w-[88%] -ml-4 z-[2]
+          md:absolute md:w-[42vw] md:-left-[4vw] md:top-[5vh] md:ml-0
+        "
+      >
+        <div className="relative aspect-[3/4] overflow-hidden">
+          <Image
+            src={images[0]}
+            alt=""
+            fill
+            className="object-cover img-bw"
+            sizes="(min-width: 768px) 42vw, 88vw"
+          />
+        </div>
+      </div>
+
+      {/* Fragment 2 — Smaller landscape, overlaps fragment 1, pulls eye right */}
+      <div
+        className="
+          relative w-[62%] ml-auto mr-4 -mt-20 z-[3]
+          md:absolute md:w-[30vw] md:left-[36vw] md:top-[10vh] md:mt-0 md:mr-0
+        "
+      >
+        <div className="relative aspect-[3/2] overflow-hidden">
+          <Image
+            src={images[1]}
+            alt=""
+            fill
+            className="object-cover img-bw"
+            sizes="(min-width: 768px) 30vw, 62vw"
+          />
+        </div>
+      </div>
+
+      {/* Fragment 3 — Medium portrait, left side, with slow parallax */}
+      <div
+        ref={slowRef}
+        className="
+          relative w-[70%] ml-6 -mt-8 z-[1]
+          md:absolute md:w-[32vw] md:right-[3vw] md:top-[45vh] md:mt-0 md:ml-0
+        "
+      >
+        <div className="relative aspect-[4/5] overflow-hidden">
+          <Image
+            src={images[2]}
+            alt=""
+            fill
+            className="object-cover img-bw"
+            sizes="(min-width: 768px) 32vw, 70vw"
+          />
+        </div>
+      </div>
+
+      {/* Fragment 4 — Wide landscape, center-left */}
+      <div
+        className="
+          relative w-[92%] mx-auto -mt-12 z-[4]
+          md:absolute md:w-[48vw] md:left-[10vw] md:top-[62vh] md:mt-0
+        "
+      >
+        <div className="relative aspect-[16/9] overflow-hidden">
+          <Image
+            src={images[3]}
+            alt=""
+            fill
+            className="object-cover img-bw"
+            sizes="(min-width: 768px) 48vw, 92vw"
+          />
+        </div>
+      </div>
+
+      {/* Fragment 5 — Small portrait, bleeds right edge */}
+      <div
+        className="
+          relative w-[52%] ml-auto -mr-4 -mt-16 z-[5]
+          md:absolute md:w-[24vw] md:right-[-3vw] md:top-[90vh] md:mt-0 md:mr-0
+        "
+      >
+        <div className="relative aspect-[2/3] overflow-hidden">
+          <Image
+            src={images[4]}
+            alt=""
+            fill
+            className="object-cover img-bw"
+            sizes="(min-width: 768px) 24vw, 52vw"
+          />
+        </div>
+      </div>
+    </div>
   )
 }
 
@@ -546,6 +759,83 @@ export function BreathingPause({
     >
       <div className="w-10 h-px bg-accent-soft" />
     </div>
+  )
+}
+
+====================
+FILE: components/DepthScene.tsx
+====================
+'use client'
+
+import Image from 'next/image'
+import { useSmoothParallax } from '@/hooks/useSmoothParallax'
+
+interface DepthSceneProps {
+  atmosphereSrc: string
+  mainSrc: string
+  label?: string
+}
+
+export function DepthScene({ atmosphereSrc, mainSrc, label }: DepthSceneProps) {
+  const bgRef = useSmoothParallax<HTMLDivElement>(0.4, 80)
+  const midRef = useSmoothParallax<HTMLDivElement>(0.88, 50)
+  const fgRef = useSmoothParallax<HTMLDivElement>(1.2, 35)
+
+  return (
+    <section className="relative min-h-[120vh] md:min-h-[140vh] overflow-hidden tone-silk">
+      {/* Layer 1 — Background atmosphere: slow, blurred, dim */}
+      <div
+        ref={bgRef}
+        className="absolute inset-[-15%] z-[1]"
+      >
+        <Image
+          src={atmosphereSrc}
+          alt=""
+          fill
+          className="object-cover blur-[4px] opacity-25"
+          sizes="130vw"
+        />
+      </div>
+
+      {/* Layer 2 — Main image: sharp, asymmetric placement */}
+      <div
+        ref={midRef}
+        className="
+          relative z-10
+          pt-[12vh] md:pt-[18vh]
+          w-[88%] -ml-2
+          md:w-[48vw] md:ml-[8vw]
+        "
+      >
+        <div className="relative aspect-[3/4] overflow-hidden">
+          <Image
+            src={mainSrc}
+            alt=""
+            fill
+            className="object-cover"
+            sizes="(min-width: 768px) 48vw, 88vw"
+          />
+        </div>
+      </div>
+
+      {/* Layer 3 — Foreground accent: fast, floating label */}
+      {label && (
+        <div
+          ref={fgRef}
+          className="
+            absolute z-20
+            bottom-[10vh] right-6
+            md:bottom-[16vh] md:right-[10vw]
+            flex items-center gap-4
+          "
+        >
+          <div className="w-8 h-px bg-accent-soft opacity-40" />
+          <p className="text-[var(--text-micro)] tracking-[0.3em] uppercase text-text-muted opacity-60">
+            {label}
+          </p>
+        </div>
+      )}
+    </section>
   )
 }
 
@@ -871,28 +1161,85 @@ export function useStaggerReveal<T extends HTMLElement>(
 }
 
 ====================
-FILE: lib/images.ts
+FILE: hooks/useSmoothParallax.ts
 ====================
-export const BOUDOIR_IMAGES = {
-  hero: '/assets/images/boudoir/IMG_7523.jpeg',
-  reveal: '/assets/images/boudoir/IMG_7820.jpeg',
-  featured: '/assets/images/boudoir/IMG_7408.jpeg',
-  detail: '/assets/images/boudoir/_DSC2188.jpeg',
-  immersion: '/assets/images/boudoir/IMG_7544.jpeg',
+'use client'
 
-  gallery: [
-    '/assets/images/boudoir/IMG_7355.jpeg',
-    '/assets/images/boudoir/IMG_5228.jpeg',
-    '/assets/images/boudoir/IMG_7549.jpeg',
-    '/assets/images/boudoir/IMG_6896.jpeg',
-    '/assets/images/boudoir/IMG_8326.jpeg',
-    '/assets/images/boudoir/0404.jpeg',
-    '/assets/images/boudoir/IMG_7529.jpeg',
-    '/assets/images/boudoir/IMG_3106.jpeg',
-  ],
+import { useEffect, useRef } from 'react'
+
+export function useSmoothParallax<T extends HTMLElement>(
+  speed: number,
+  maxOffset: number = 100
+) {
+  const ref = useRef<T>(null)
+  const current = useRef(0)
+  const target = useRef(0)
+  const rafId = useRef<number>(0)
+
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+
+    const prefersReducedMotion = window.matchMedia(
+      '(prefers-reduced-motion: reduce)'
+    ).matches
+    if (prefersReducedMotion) return
+
+    const isSmall = window.matchMedia('(max-width: 768px)').matches
+    const effectiveSpeed = isSmall ? speed * 0.3 + 0.7 : speed
+
+    function onScroll() {
+      const rect = el!.getBoundingClientRect()
+      const viewportCenter = window.innerHeight / 2
+      const elementCenter = rect.top + rect.height / 2
+      const raw = (elementCenter - viewportCenter) * (effectiveSpeed - 1)
+      target.current = Math.max(-maxOffset, Math.min(maxOffset, raw))
+    }
+
+    function tick() {
+      current.current += (target.current - current.current) * 0.06
+      el!.style.transform = `translate3d(0, ${current.current}px, 0)`
+      rafId.current = requestAnimationFrame(tick)
+    }
+
+    el.style.willChange = 'transform'
+    window.addEventListener('scroll', onScroll, { passive: true })
+    onScroll()
+    rafId.current = requestAnimationFrame(tick)
+
+    return () => {
+      window.removeEventListener('scroll', onScroll)
+      if (rafId.current) cancelAnimationFrame(rafId.current)
+      el.style.willChange = 'auto'
+    }
+  }, [speed, maxOffset])
+
+  return ref
 }
 
-export type BoudoirImages = typeof BOUDOIR_IMAGES
+====================
+FILE: lib/images.ts
+====================
+export const SCENE_IMAGES = {
+  threshold: '/assets/images/boudoir/IMG_7523.jpeg',
+
+  descent: {
+    atmosphere: '/assets/images/boudoir/IMG_7544.jpeg',
+    main: '/assets/images/boudoir/IMG_7820.jpeg',
+  },
+
+  fragments: [
+    '/assets/images/boudoir/IMG_7355.jpeg',
+    '/assets/images/boudoir/IMG_7408.jpeg',
+    '/assets/images/boudoir/IMG_5228.jpeg',
+    '/assets/images/boudoir/IMG_6896.jpeg',
+    '/assets/images/boudoir/IMG_7549.jpeg',
+  ],
+
+  intimacy: '/assets/images/boudoir/IMG_8326.jpeg',
+}
+
+export type SceneImages = typeof SCENE_IMAGES
 
 ====================
 FILE: specs/00-creative-direction.md
