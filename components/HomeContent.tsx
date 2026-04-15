@@ -6,19 +6,44 @@ import { VoidTransition } from './VoidTransition'
 import { Navigation } from './Navigation'
 import { SCENE_IMAGES } from '@/lib/images'
 
+const FullSilence = dynamic(
+  () => import('./FullSilence').then((m) => ({ default: m.FullSilence })),
+  { loading: () => <div className="min-h-[90vh]" /> }
+)
+
 const DepthScene = dynamic(
   () => import('./DepthScene').then((m) => ({ default: m.DepthScene })),
   { loading: () => <div className="min-h-[180vh]" /> }
 )
 
-const ImpactImage = dynamic(
-  () => import('./ImpactImage').then((m) => ({ default: m.ImpactImage })),
-  { loading: () => <div className="min-h-[120vh]" /> }
+const MicroStory = dynamic(
+  () => import('./MicroStory').then((m) => ({ default: m.MicroStory })),
+  { loading: () => <div className="min-h-[60vh]" /> }
 )
 
-const FragmentCluster = dynamic(
-  () => import('./FragmentCluster').then((m) => ({ default: m.FragmentCluster })),
-  { loading: () => <div className="min-h-[180vh]" /> }
+const OverflowImage = dynamic(
+  () =>
+    import('./OverflowImage').then((m) => ({ default: m.OverflowImage })),
+  { loading: () => <div className="min-h-[130vh]" /> }
+)
+
+const HardCut = dynamic(
+  () => import('./HardCut').then((m) => ({ default: m.HardCut })),
+  { loading: () => <div className="min-h-[80vh]" /> }
+)
+
+const SplitTension = dynamic(
+  () =>
+    import('./SplitTension').then((m) => ({ default: m.SplitTension })),
+  { loading: () => <div className="min-h-[80vh]" /> }
+)
+
+const ImmersiveStack = dynamic(
+  () =>
+    import('./ImmersiveStack').then((m) => ({
+      default: m.ImmersiveStack,
+    })),
+  { loading: () => <div className="min-h-[520vh]" /> }
 )
 
 const Intimacy = dynamic(
@@ -36,71 +61,78 @@ export function HomeContent() {
     <>
       <Navigation />
 
-      {/* ═══ OPENING (slow) — 300svh sticky, veil lifts, image emerges ═══ */}
+      {/* ═══ SCENE 1: OPENING — sticky focus-pull, cinematic entrance ═══ */}
       <Opening src={SCENE_IMAGES.threshold} />
 
-      {/* ─── VOID: pressure — silence, tonal shift ─── */}
-      <VoidTransition
-        fromTone="deep"
-        toTone="silk"
-        height="8vh"
-        character="pressure"
-        bleedTop
-      />
+      {/* ═══ SCENE 2: FULL SILENCE — hard reset, darkness + one sentence ═══ */}
+      <FullSilence text="you don't see yourself like this" />
 
-      {/* ═══ DESCENT (slow) — layered depth, zoom-in ═══ */}
+      {/* ═══ SCENE 3: DEPTH — layered parallax, atmospheric descent ═══ */}
       <DepthScene
         atmosphereSrc={SCENE_IMAGES.descent.atmosphere}
         mainSrc={SCENE_IMAGES.descent.main}
         label="Boudoir"
       />
 
-      {/* ─── VOID: breathing — long silence, pure darkness ─── */}
+      {/* ─── VOID: generous breathing ─── */}
       <div
-        className="min-h-[40vh] md:min-h-[50vh]"
+        className="min-h-[55vh] md:min-h-[70vh]"
         aria-hidden="true"
         style={{
-          background: 'linear-gradient(to bottom, var(--color-tone-shadow), var(--color-bg-deep) 50%, var(--color-bg-deep))',
+          background:
+            'linear-gradient(to bottom, var(--color-tone-shadow), var(--color-bg-deep))',
         }}
       />
 
-      {/* ═══ IMPACT (brutal) — full viewport, no UI, B&W→color ═══ */}
-      <ImpactImage src={SCENE_IMAGES.impact} />
+      {/* ═══ SCENE 4: MICRO STORY — narrative rhythm, broken lines ═══ */}
+      <MicroStory
+        lines={['she arrived nervous', 'left different', "didn't say why"]}
+      />
 
-      {/* ─── VOID: whisper — "softer" floats in the darkness ─── */}
+      {/* ═══ SCENE 5: OVERFLOW — intimate, too close, break the frame ═══ */}
+      <OverflowImage src={SCENE_IMAGES.overflow} text="remember this" />
+
+      {/* ═══ SCENE 6: HARD CUT — bright shock, instant switch ═══ */}
+      <HardCut src={SCENE_IMAGES.hardcut} />
+
+      {/* ─── VOID: recovery rift ─── */}
       <VoidTransition
         fromTone="deep"
-        toTone="smoke"
-        height="35vh"
-        character="whisper"
-        word="softer"
-      />
-
-      {/* ═══ FRAGMENTS (chaos) — editorial cluster, overlapping ═══ */}
-      <FragmentCluster images={SCENE_IMAGES.fragments} />
-
-      {/* ─── VOID: rift — tense transition ─── */}
-      <VoidTransition
-        fromTone="shadow"
         toTone="ember"
-        height="18vh"
+        height="25vh"
         character="rift"
-        bleedTop
       />
 
-      {/* ═══ INTIMACY (slow) — off-center, private ═══ */}
+      {/* ═══ SCENE 7: SPLIT TENSION — 70/30 asymmetric, image bleeds ═══ */}
+      <SplitTension src={SCENE_IMAGES.split} text="softer than you think" />
+
+      {/* ─── VOID: breathing before gallery ─── */}
+      <div
+        className="min-h-[45vh] md:min-h-[55vh]"
+        aria-hidden="true"
+        style={{ background: 'var(--color-bg-deep)' }}
+      />
+
+      {/* ═══ SCENE 8: IMMERSIVE STACK — sticky layered gallery ═══ */}
+      <ImmersiveStack images={SCENE_IMAGES.stack} />
+
+      {/* ═══ SCENE 9: FULL SILENCE — emotional anchor, off-right ═══ */}
+      <FullSilence text="what you keep hidden" align="off-right" />
+
+      {/* ═══ SCENE 10: INTIMACY — off-center, private, atmospheric ═══ */}
       <Intimacy src={SCENE_IMAGES.intimacy} />
 
-      {/* ─── VOID: long silence before conversion ─── */}
+      {/* ─── VOID: generous silence before conversion ─── */}
       <div
-        className="min-h-[35vh] md:min-h-[45vh]"
+        className="min-h-[50vh] md:min-h-[65vh]"
         aria-hidden="true"
         style={{
-          background: 'linear-gradient(to bottom, var(--color-bg-deep), var(--color-tone-shadow))',
+          background:
+            'linear-gradient(to bottom, var(--color-bg-deep), var(--color-tone-shadow))',
         }}
       />
 
-      {/* ═══ SESSION GATE (conversion) — luxury entry point ═══ */}
+      {/* ═══ SCENE 11: SESSION GATE — conversion ═══ */}
       <SessionGate />
     </>
   )
