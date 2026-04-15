@@ -12,7 +12,7 @@ export function Opening({ src }: { src: string }) {
   const { ref: sectionRef, progress } = useSectionProgress<HTMLElement>()
 
   const scrollScale = 1.18 - progress * 0.18
-  const scrollOpacity = progress < 0.75 ? 0.35 : 0.35 - (progress - 0.75) * 1.4
+  const scrollOpacity = progress < 0.75 ? 0.3 : 0.3 - (progress - 0.75) * 1.2
   const brandShift = Math.min(progress * 50, 40)
 
   const bgStyler = useCallback((p: number) => {
@@ -27,9 +27,9 @@ export function Opening({ src }: { src: string }) {
 
   const punctureProgress = progress
   const punctureOpacity = punctureProgress > 0.15 && punctureProgress < 0.55
-    ? Math.min(0.5, (punctureProgress - 0.15) * 1.25)
+    ? Math.min(0.6, (punctureProgress - 0.15) * 1.5)
     : punctureProgress >= 0.55
-      ? Math.max(0, 0.5 - (punctureProgress - 0.55) * 1.11)
+      ? Math.max(0, 0.6 - (punctureProgress - 0.55) * 1.33)
       : 0
   const punctureX = -20 + progress * 40
 
@@ -44,59 +44,44 @@ export function Opening({ src }: { src: string }) {
     if (prefersReducedMotion) {
       const img = containerRef.current.querySelector('.threshold-image') as HTMLElement
       const brand = containerRef.current.querySelector('.threshold-brand') as HTMLElement
-      if (img) {
-        img.style.opacity = '0.35'
-        img.style.filter = 'none'
-      }
+      if (img) img.style.opacity = '0.3'
       if (brand) brand.style.opacity = '1'
       return
     }
 
     const imgEl = containerRef.current.querySelector('.threshold-image') as HTMLElement
     const brandEl = containerRef.current.querySelector('.threshold-brand') as HTMLElement
-    const punctureEl = containerRef.current.querySelector('.threshold-puncture') as HTMLElement
-    const bgEl = containerRef.current.querySelector('.threshold-bg') as HTMLElement
-    const lightEl = containerRef.current.querySelector('.threshold-light') as HTMLElement
 
-    const tl = createTimeline({
-      defaults: {
-        ease: 'cubicBezier(0.16, 1, 0.3, 1)',
-      },
+    // Focus pull — blur → sharp, dim → lit via CSS transition (GPU-composited)
+    imgEl.style.willChange = 'filter'
+    imgEl.style.filter = 'blur(10px) brightness(0.8)'
+    imgEl.style.transition = 'filter 2500ms cubic-bezier(0.16, 1, 0.3, 1)'
+    requestAnimationFrame(() => {
+      imgEl.style.filter = 'blur(0px) brightness(1)'
     })
 
-    // Focus pull + lens zoom on main image: blur→sharp, scale 1.15→1
+    // Opacity + brand via anime.js — only 2 layers
+    const tl = createTimeline({
+      defaults: { ease: 'cubicBezier(0.16, 1, 0.3, 1)' },
+    })
+
     tl.add(imgEl, {
-      filter: ['blur(10px)', 'blur(0px)'],
-      scale: [1.15, 1],
-      opacity: [0, 0.35],
+      opacity: [0, 0.3],
       duration: 2500,
-    }, 400)
-
-    // Background atmosphere — soft fade
-    .add(bgEl, {
-      opacity: [0, 0.15],
-      duration: 2000,
     }, 0)
+      .add(brandEl, {
+        opacity: [0, 1],
+        translateX: [-12, 0],
+        duration: 1600,
+      }, 1800)
 
-    // Directional light overlay — reveals after image focuses
-    .add(lightEl, {
-      opacity: [0, 1],
-      duration: 1800,
-    }, 800)
+    const cleanup = setTimeout(() => {
+      imgEl.style.transition = ''
+      imgEl.style.filter = ''
+      imgEl.style.willChange = ''
+    }, 2800)
 
-    // Puncture word — delayed drift in
-    .add(punctureEl, {
-      opacity: [0, 0.5],
-      translateX: [-30, 0],
-      duration: 2200,
-    }, 1800)
-
-    // Brand — enters last, after the world has settled
-    .add(brandEl, {
-      opacity: [0, 1],
-      translateX: [-12, 0],
-      duration: 1600,
-    }, 2400)
+    return () => clearTimeout(cleanup)
   }, [])
 
   return (
@@ -122,13 +107,12 @@ export function Opening({ src }: { src: string }) {
           />
         </div>
 
-        {/* Main image — focus pull + lens zoom, vignetted */}
+        {/* Main image — cinematic focus pull, vignetted into darkness */}
         <div
           className="threshold-image absolute inset-0 z-[2] opacity-0"
           style={{
             transform: `scale(${scrollScale})`,
             opacity: Math.max(0, scrollOpacity),
-            willChange: 'transform, filter, opacity',
           }}
         >
           <Image
@@ -139,16 +123,23 @@ export function Opening({ src }: { src: string }) {
             priority
             sizes="100vw"
           />
-          {/* Tight lens vignette — optical feel */}
-          <div className="lens-vignette absolute inset-0" />
+          {/* Vignette — lens edge darkening */}
+          <div
+            className="absolute inset-0"
+            style={{
+              background:
+                'radial-gradient(ellipse 55% 45% at 50% 50%, transparent 0%, rgba(10,9,8,0.55) 45%, rgba(10,9,8,0.95) 100%)',
+            }}
+          />
           <div className="absolute inset-0 bg-gradient-to-t from-bg-deep/90 via-transparent to-bg-deep/60" />
         </div>
 
-        {/* Directional light — studio feel, subtle warm highlight */}
+        {/* Directional light — studio soft light from top-left */}
         <div
-          className="threshold-light absolute inset-0 z-[3] pointer-events-none opacity-0"
+          className="absolute inset-0 z-[3] pointer-events-none"
           style={{
-            background: 'radial-gradient(circle at 30% 40%, rgba(255,255,255,0.06), transparent 55%)',
+            background:
+              'radial-gradient(ellipse 80% 70% at 25% 20%, rgba(255,245,230,0.06) 0%, transparent 65%)',
           }}
         />
 
@@ -164,6 +155,24 @@ export function Opening({ src }: { src: string }) {
           }}
         >
           closer
+        </span>
+
+        {/* Second puncture — appears later, opposite side */}
+        <span
+          className="absolute z-20 select-none pointer-events-none
+            bottom-[28vh] left-6
+            md:bottom-[32vh] md:left-[10vw]
+            text-[var(--text-micro)] tracking-[0.4em] uppercase text-text-muted/15"
+          style={{
+            opacity: progress > 0.4 && progress < 0.7
+              ? Math.min(0.35, (progress - 0.4) * 1.17)
+              : progress >= 0.7
+                ? Math.max(0, 0.35 - (progress - 0.7) * 1.17)
+                : 0,
+            transform: `translate3d(${-10 + progress * 20}px, 0, 0)`,
+          }}
+        >
+          not yet
         </span>
 
         {/* Brand — enters from the left, shifts up on scroll */}
