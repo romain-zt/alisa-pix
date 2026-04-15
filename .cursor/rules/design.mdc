@@ -1,0 +1,101 @@
+# Design Rules — Non-Negotiable
+
+## Identity
+
+This is a luxury boudoir photography website. Every pixel must serve the photograph. If a design decision does not make the images feel more powerful, it is wrong.
+
+## Forbidden Patterns
+
+These patterns are **banned**. If you catch yourself building any of these, stop and redesign.
+
+### Layout
+- No centered hero sections with a headline + subheadline + CTA button
+- No 3-column feature grids (icon + title + description)
+- No card carousels or sliders
+- No testimonial rotators
+- No pricing tables
+- No "About Us" sections with circular photos in a grid
+- No symmetrical 50/50 split sections
+- No uniform card grids (same size, same spacing)
+- No sticky CTA bars or floating action buttons
+
+### Typography
+- No headlines larger than `clamp(2rem, 5vw, 3.5rem)` — let spacing do the work
+- No bold body text — light and regular weights only
+- No centered paragraphs longer than 2 lines
+- No ALL CAPS for anything longer than 3 words
+- No decorative fonts beyond the brand serif
+
+### Color
+- No saturated colors anywhere on the page
+- No colored backgrounds (only near-black tones)
+- No colored text (only off-white and muted accent)
+- No gradients as decoration
+- No colored buttons — text links with underlines only
+
+### Animation
+- No bounce easing
+- No elastic overshoot
+- No continuous loops
+- No scale transforms above 1.05
+- No blur/filter transitions in animations
+- No more than 2 animated elements visible at once
+- No animation on page load — wait 200ms minimum
+- No hover animations on mobile (no hover state exists)
+
+### Images
+- No rounded corners on photographs
+- No drop shadows on photographs
+- No image borders or frames
+- No square crops unless the photographer intended it
+- No image zoom on hover (distorts composition)
+- No watermarks in the UI layer
+
+## Required Patterns
+
+### Layout
+- Asymmetric compositions — image dominant, text supporting
+- Edge-to-edge images on mobile
+- Generous vertical spacing between sections (`clamp(4rem, 10vh, 8rem)`)
+- Text width capped at `52ch` maximum
+- Broken grid on desktop — images can overlap text zones
+- Each "screen" (100vh) should contain one idea maximum
+
+### Typography
+- Brand serif for display, sans-serif for body
+- Letter-spacing as a design tool — `0.08em` to `0.2em` for labels
+- Fluid type with `clamp()` — no fixed px sizes
+- Hierarchy through weight and spacing, not size
+
+### Color
+- Warm near-black backgrounds (#0a0908 range)
+- Warm off-white text (#F0EBE3 range)
+- One metallic accent (champagne #C4A88A) used sparingly
+- Section tone variations for rhythm (near-black variants)
+
+### Images
+- Default: desaturated (grayscale 80% + slight contrast boost)
+- Hover/active: full color with 600ms transition
+- Next.js `<Image>` with proper `sizes` attribute always
+- Blur-up placeholder for loading, never skeleton or spinner
+
+### Animation
+- anime.js for JS-triggered animations
+- CSS transitions for hover/state changes
+- IntersectionObserver for scroll triggers
+- Transform-only: translate, scale, opacity
+- Default easing: cubicBezier(0.16, 1, 0.3, 1)
+- Default duration: 800ms–1200ms
+- Always respect `prefers-reduced-motion`
+
+## Quality Gate
+
+Before shipping any component, ask:
+
+1. Does this feel like a photography exhibition or a website template?
+2. Would this look right printed on matte black paper?
+3. Is the photograph the dominant element?
+4. Is there enough empty space?
+5. Would removing this element make the page better?
+
+If the answer to #5 is "yes" — remove it.

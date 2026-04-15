@@ -1,5 +1,5 @@
 {
-  "name": "vasilisa-v0",
+  "name": "vasilisa",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -9,23 +9,16 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@react-three/drei": "^10.0.6",
-    "@react-three/fiber": "^9.1.2",
-    "animejs": "^4.3.6",
-    "framer-motion": "^12.7.3",
-    "lenis": "^1.2.3",
+    "animejs": "^4.0.1",
     "next": "^15.3.1",
     "react": "^19.1.0",
-    "react-dom": "^19.1.0",
-    "three": "^0.174.0"
+    "react-dom": "^19.1.0"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.1.4",
     "@types/node": "^22.14.1",
     "@types/react": "^19.1.0",
     "@types/react-dom": "^19.1.2",
-    "@types/three": "^0.174.0",
-    "postcss": "^8.5.3",
     "tailwindcss": "^4.1.4",
     "typescript": "^5.8.3"
   }
