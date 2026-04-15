@@ -14,7 +14,24 @@ export const SCENE_IMAGES = {
     '/assets/images/boudoir/IMG_7549.jpeg',
   ],
 
+  impact: '/assets/images/boudoir/IMG_7529.jpeg',
+
   intimacy: '/assets/images/boudoir/IMG_8326.jpeg',
 }
+
+export const GALLERY_IMAGES = [
+  '/assets/images/boudoir/IMG_7523.jpeg',
+  '/assets/images/boudoir/IMG_7820.jpeg',
+  '/assets/images/boudoir/IMG_5228.jpeg',
+  '/assets/images/boudoir/IMG_7529.jpeg',
+  '/assets/images/boudoir/IMG_3109.jpeg',
+  '/assets/images/boudoir/IMG_7544.jpeg',
+  '/assets/images/boudoir/IMG_6896.jpeg',
+  '/assets/images/boudoir/IMG_8326.jpeg',
+  '/assets/images/boudoir/IMG_7355.jpeg',
+  '/assets/images/boudoir/IMG_5234.jpeg',
+  '/assets/images/boudoir/IMG_7550.jpeg',
+  '/assets/images/boudoir/IMG_8002.jpeg',
+]
 
 export type SceneImages = typeof SCENE_IMAGES

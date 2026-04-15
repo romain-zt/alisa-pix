@@ -3,11 +3,17 @@
 import dynamic from 'next/dynamic'
 import { Opening } from './Opening'
 import { VoidTransition } from './VoidTransition'
+import { Navigation } from './Navigation'
 import { SCENE_IMAGES } from '@/lib/images'
 
 const DepthScene = dynamic(
   () => import('./DepthScene').then((m) => ({ default: m.DepthScene })),
   { loading: () => <div className="min-h-[180vh]" /> }
+)
+
+const ImpactImage = dynamic(
+  () => import('./ImpactImage').then((m) => ({ default: m.ImpactImage })),
+  { loading: () => <div className="min-h-[120vh]" /> }
 )
 
 const FragmentCluster = dynamic(
@@ -20,54 +26,83 @@ const Intimacy = dynamic(
   { loading: () => <div className="min-h-[140vh]" /> }
 )
 
+const SessionGate = dynamic(
+  () => import('./SessionGate').then((m) => ({ default: m.SessionGate })),
+  { loading: () => <div className="min-h-[90vh]" /> }
+)
+
 export function HomeContent() {
   return (
     <>
-      {/* ═══ Threshold — sticky trap, dramatic zoom-out, held presence ═══ */}
+      <Navigation />
+
+      {/* ═══ OPENING (slow) — 300svh sticky, veil lifts, image emerges ═══ */}
       <Opening src={SCENE_IMAGES.threshold} />
 
-      {/* Void 1: PRESSURE — no content, just tonal shift + warm glow */}
+      {/* ─── VOID: pressure — silence, tonal shift ─── */}
       <VoidTransition
         fromTone="deep"
         toTone="silk"
-        height="10vh"
+        height="8vh"
         character="pressure"
         bleedTop
       />
 
-      {/* ═══ Descent — opposed layers, zoom-in, emotional punctures ═══ */}
+      {/* ═══ DESCENT (slow) — layered depth, zoom-in ═══ */}
       <DepthScene
         atmosphereSrc={SCENE_IMAGES.descent.atmosphere}
         mainSrc={SCENE_IMAGES.descent.main}
         label="Boudoir"
       />
 
-      {/* Void 2: WHISPER — a word at display size, serif, emotional moment */}
-      <VoidTransition
-        fromTone="shadow"
-        toTone="smoke"
-        height="22vh"
-        character="whisper"
-        word="softer"
-        bleedTop
-        bleedBottom
+      {/* ─── VOID: breathing — long silence, pure darkness ─── */}
+      <div
+        className="min-h-[40vh] md:min-h-[50vh]"
+        aria-hidden="true"
+        style={{
+          background: 'linear-gradient(to bottom, var(--color-tone-shadow), var(--color-bg-deep) 50%, var(--color-bg-deep))',
+        }}
       />
 
-      {/* ═══ Fragments — drift, scale, opposed motion, punctures ═══ */}
+      {/* ═══ IMPACT (brutal) — full viewport, no UI, B&W→color ═══ */}
+      <ImpactImage src={SCENE_IMAGES.impact} />
+
+      {/* ─── VOID: whisper — "softer" floats in the darkness ─── */}
+      <VoidTransition
+        fromTone="deep"
+        toTone="smoke"
+        height="35vh"
+        character="whisper"
+        word="softer"
+      />
+
+      {/* ═══ FRAGMENTS (chaos) — editorial cluster, overlapping ═══ */}
       <FragmentCluster images={SCENE_IMAGES.fragments} />
 
-      {/* Void 3: RIFT — diagonal accent + tracked word, tense and brief */}
+      {/* ─── VOID: rift — tense transition ─── */}
       <VoidTransition
         fromTone="shadow"
         toTone="ember"
-        height="16vh"
+        height="18vh"
         character="rift"
         word="soon"
         bleedTop
       />
 
-      {/* ═══ Intimacy — zoom-in, off-center, independent text, whisper close ═══ */}
+      {/* ═══ INTIMACY (slow) — off-center, private ═══ */}
       <Intimacy src={SCENE_IMAGES.intimacy} />
+
+      {/* ─── VOID: long silence before conversion ─── */}
+      <div
+        className="min-h-[35vh] md:min-h-[45vh]"
+        aria-hidden="true"
+        style={{
+          background: 'linear-gradient(to bottom, var(--color-bg-deep), var(--color-tone-shadow))',
+        }}
+      />
+
+      {/* ═══ SESSION GATE (conversion) — luxury entry point ═══ */}
+      <SessionGate />
     </>
   )
 }

@@ -121,6 +121,15 @@ body {
   -webkit-mask-image: radial-gradient(ellipse 90% 80% at 50% 50%, black 25%, transparent 85%);
 }
 
+/* ── Gallery Scroll ── */
+.gallery-scroll {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.gallery-scroll::-webkit-scrollbar {
+  display: none;
+}
+
 /* ── Reduced Motion ── */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {

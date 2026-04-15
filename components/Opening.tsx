@@ -11,33 +11,41 @@ export function Opening({ src }: { src: string }) {
 
   const { ref: sectionRef, progress } = useSectionProgress<HTMLElement>()
 
-  // Dramatic zoom OUT: 1.18 → 1.0 — the world pulls back slowly
-  const scrollScale = 1.18 - progress * 0.18
-  // Held presence: opacity stays low and warm, fades only at the very end
-  const scrollOpacity = progress < 0.75 ? 0.3 : 0.3 - (progress - 0.75) * 1.2
-  // Brand drifts upward with scroll — slow departure
-  const brandShift = Math.min(progress * 50, 40)
+  // Dramatic zoom OUT: 1.2 → 1.0
+  const scrollScale = 1.2 - progress * 0.2
+  // Opacity: low luminance that fades at the end
+  const scrollOpacity = progress < 0.8 ? 0.35 : 0.35 - (progress - 0.8) * 1.75
+  // Brand drifts upward slowly
+  const brandShift = Math.min(progress * 60, 50)
+  const brandOpacity = progress < 0.85 ? 1 : Math.max(0, (1 - progress) * 6.67)
 
-  // Background depth plane — moves at 0.4x speed (opposed, stays behind)
+  // Background depth plane — opposed, atmospheric
   const bgStyler = useCallback((p: number) => {
-    const y = 30 - p * 60
-    const scale = 1.3 - p * 0.05
+    const y = 40 - p * 80
+    const scale = 1.35 - p * 0.05
     return {
       transform: `translate3d(0, ${y}px, 0) scale(${scale})`,
-      opacity: `${p < 0.1 ? p * 10 * 0.15 : p > 0.8 ? (1 - p) * 5 * 0.15 : 0.15}`,
+      opacity: `${p < 0.1 ? p * 10 * 0.12 : p > 0.8 ? (1 - p) * 5 * 0.12 : 0.12}`,
     }
   }, [])
   const bgRef = useSectionStyle<HTMLDivElement>(bgStyler)
 
-  // Puncture word — drifts horizontally, independent of everything else
-  const punctureProgress = progress
-  const punctureOpacity = punctureProgress > 0.15 && punctureProgress < 0.55
-    ? Math.min(0.6, (punctureProgress - 0.15) * 1.5)
-    : punctureProgress >= 0.55
-      ? Math.max(0, 0.6 - (punctureProgress - 0.55) * 1.33)
+  // Puncture "closer": drifts horizontally
+  const punctureOpacity = progress > 0.12 && progress < 0.5
+    ? Math.min(0.5, (progress - 0.12) * 1.32)
+    : progress >= 0.5
+      ? Math.max(0, 0.5 - (progress - 0.5) * 1)
       : 0
-  const punctureX = -20 + progress * 40
+  const punctureX = -25 + progress * 50
 
+  // Second puncture "not yet": opposed timing
+  const p2Opacity = progress > 0.35 && progress < 0.65
+    ? Math.min(0.3, (progress - 0.35) * 1)
+    : progress >= 0.65
+      ? Math.max(0, 0.3 - (progress - 0.65) * 0.86)
+      : 0
+
+  // Intro timeline
   useEffect(() => {
     if (!containerRef.current || hasPlayed.current) return
     hasPlayed.current = true
@@ -49,7 +57,7 @@ export function Opening({ src }: { src: string }) {
     if (prefersReducedMotion) {
       const img = containerRef.current.querySelector('.threshold-image') as HTMLElement
       const brand = containerRef.current.querySelector('.threshold-brand') as HTMLElement
-      if (img) img.style.opacity = '0.3'
+      if (img) img.style.opacity = '0.35'
       if (brand) brand.style.opacity = '1'
       return
     }
@@ -58,6 +66,7 @@ export function Opening({ src }: { src: string }) {
     const brandEl = containerRef.current.querySelector('.threshold-brand') as HTMLElement
     const punctureEl = containerRef.current.querySelector('.threshold-puncture') as HTMLElement
     const bgEl = containerRef.current.querySelector('.threshold-bg') as HTMLElement
+    const veilEl = containerRef.current.querySelector('.threshold-veil') as HTMLElement
 
     const tl = createTimeline({
       defaults: {
@@ -65,24 +74,35 @@ export function Opening({ src }: { src: string }) {
       },
     })
 
-    tl.add(bgEl, {
-      opacity: [0, 0.15],
-      duration: 3000,
-    }, 200)
-      .add(imgEl, {
-        opacity: [0, 0.3],
-        duration: 2800,
-      }, 600)
-      .add(punctureEl, {
-        opacity: [0, 0.6],
-        translateX: [-30, 0],
-        duration: 2200,
-      }, 1800)
-      .add(brandEl, {
-        opacity: [0, 1],
-        translateX: [-12, 0],
-        duration: 1600,
-      }, 2400)
+    // Veil lifts first — pure darkness recedes
+    tl.add(veilEl, {
+      opacity: [1, 0],
+      duration: 2800,
+    }, 0)
+    // Background atmosphere emerges slowly
+    .add(bgEl, {
+      opacity: [0, 0.12],
+      scale: [1.4, 1.35],
+      duration: 3500,
+    }, 400)
+    // Main image: from deep darkness, slow reveal
+    .add(imgEl, {
+      opacity: [0, 0.35],
+      scale: [1.25, 1.2],
+      duration: 3200,
+    }, 1200)
+    // Puncture drifts in from left
+    .add(punctureEl, {
+      opacity: [0, 0.5],
+      translateX: [-40, 0],
+      duration: 2000,
+    }, 2800)
+    // Brand enters last — the signature
+    .add(brandEl, {
+      opacity: [0, 1],
+      translateX: [-15, 0],
+      duration: 1800,
+    }, 3200)
   }, [])
 
   return (
@@ -91,24 +111,29 @@ export function Opening({ src }: { src: string }) {
         (containerRef as React.MutableRefObject<HTMLElement | null>).current = node
         ;(sectionRef as React.MutableRefObject<HTMLElement | null>).current = node
       }}
-      className="relative h-[280svh]"
+      className="relative h-[300svh]"
     >
       <div className="sticky top-0 h-[100svh] overflow-hidden">
-        {/* Background depth plane — blurred, slow, atmospheric */}
+        {/* Darkness veil — the first thing that lifts */}
+        <div
+          className="threshold-veil absolute inset-0 z-[5] bg-bg-deep pointer-events-none"
+        />
+
+        {/* Background depth plane */}
         <div
           ref={bgRef}
-          className="threshold-bg absolute inset-[-25%] z-[1] opacity-0"
+          className="threshold-bg absolute inset-[-30%] z-[1] opacity-0"
         >
           <Image
             src={src}
             alt=""
             fill
-            className="object-cover blur-[8px]"
-            sizes="150vw"
+            className="object-cover blur-[10px]"
+            sizes="160vw"
           />
         </div>
 
-        {/* Main image — dramatic zoom OUT, vignetted into darkness */}
+        {/* Main image — dramatic zoom OUT, vignetted */}
         <div
           className="threshold-image absolute inset-0 z-[2] opacity-0"
           style={{
@@ -124,57 +149,55 @@ export function Opening({ src }: { src: string }) {
             priority
             sizes="100vw"
           />
+          {/* Deep vignette — tighter, more dramatic */}
           <div
             className="absolute inset-0"
             style={{
               background:
-                'radial-gradient(ellipse 60% 50% at 50% 50%, transparent 5%, rgba(10,9,8,0.6) 50%, rgba(10,9,8,0.95) 100%)',
+                'radial-gradient(ellipse 55% 45% at 50% 48%, transparent 0%, rgba(10,9,8,0.55) 45%, rgba(10,9,8,0.95) 100%)',
             }}
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-bg-deep/90 via-transparent to-bg-deep/60" />
+          <div className="absolute inset-0 bg-gradient-to-t from-bg-deep via-transparent to-bg-deep/70" />
         </div>
 
-        {/* Puncture — serif italic, horizontal drift, larger than before */}
+        {/* Puncture "closer" */}
         <span
           className="threshold-puncture absolute z-20 opacity-0
-            top-[28vh] right-6
-            md:top-[22vh] md:right-[14vw]
-            font-serif italic text-[var(--text-title)] text-text-muted/20 select-none pointer-events-none"
+            top-[30vh] right-6
+            md:top-[24vh] md:right-[12vw]
+            font-serif italic text-[var(--text-display)] text-text-muted/15 select-none pointer-events-none"
           style={{
             opacity: punctureOpacity,
-            transform: `translate3d(${punctureX}px, ${progress * -20}px, 0)`,
+            transform: `translate3d(${punctureX}px, ${progress * -25}px, 0)`,
           }}
         >
           closer
         </span>
 
-        {/* Second puncture — appears later, opposite side, smaller */}
+        {/* Puncture "not yet" — smaller, opposed, later */}
         <span
           className="absolute z-20 select-none pointer-events-none
-            bottom-[28vh] left-6
-            md:bottom-[32vh] md:left-[10vw]
-            text-[var(--text-micro)] tracking-[0.4em] uppercase text-text-muted/15"
+            bottom-[30vh] left-6
+            md:bottom-[34vh] md:left-[8vw]
+            text-[var(--text-micro)] tracking-[0.45em] uppercase text-text-muted/10"
           style={{
-            opacity: progress > 0.4 && progress < 0.7
-              ? Math.min(0.35, (progress - 0.4) * 1.17)
-              : progress >= 0.7
-                ? Math.max(0, 0.35 - (progress - 0.7) * 1.17)
-                : 0,
-            transform: `translate3d(${-10 + progress * 20}px, 0, 0)`,
+            opacity: p2Opacity,
+            transform: `translate3d(${-12 + progress * 24}px, 0, 0)`,
           }}
         >
           not yet
         </span>
 
-        {/* Brand — enters from the left (not just fading in), shifts up on scroll */}
+        {/* Brand — enters last, drifts up on scroll */}
         <div
           className="threshold-brand opacity-0 absolute z-10 bottom-0 left-0
-            pb-10 md:pb-14 pl-6 md:pl-10"
+            pb-12 md:pb-16 pl-6 md:pl-10"
           style={{
             transform: `translate3d(0, ${-brandShift}px, 0)`,
+            opacity: brandOpacity,
           }}
         >
-          <p className="text-[var(--text-micro)] tracking-[0.3em] uppercase text-text-muted">
+          <p className="text-[var(--text-micro)] tracking-[0.35em] uppercase text-text-muted/60">
             Vasilisa
           </p>
         </div>

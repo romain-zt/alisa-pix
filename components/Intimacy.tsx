@@ -115,21 +115,15 @@ export function Intimacy({ src }: { src: string }) {
         </div>
       </div>
 
-      {/* Contact — approaches from the right, independent drift */}
+      {/* Whisper text — drifts from the right, emotional close */}
       <div
         ref={textRef}
-        className="relative z-10 mt-12 md:mt-16 px-6
+        className="relative z-10 mt-16 md:mt-20 px-6
           md:ml-[55vw] md:text-left text-center"
       >
-        <p className="text-[var(--text-micro)] tracking-[0.25em] uppercase text-text-muted mb-4">
-          By appointment
+        <p className="font-serif italic text-[var(--text-lead)] text-text-muted/30 select-none">
+          yours
         </p>
-        <a
-          href="mailto:hello@vasilisa.com"
-          className="font-serif font-light text-[var(--text-lead)] text-accent underline underline-offset-4 decoration-accent-soft transition-opacity duration-700 hover:opacity-60"
-        >
-          hello@vasilisa.com
-        </a>
       </div>
 
       {/* Puncture "again" — end of experience, opposite corner */}
