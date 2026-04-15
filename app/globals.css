@@ -121,13 +121,46 @@ body {
   -webkit-mask-image: radial-gradient(ellipse 90% 80% at 50% 50%, black 25%, transparent 85%);
 }
 
-/* ── Gallery Scroll ── */
+/* ── Lens Vignette (optical) ── */
+.lens-vignette::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    ellipse 60% 50% at 50% 50%,
+    transparent 40%,
+    rgba(10, 9, 8, 0.85) 100%
+  );
+  pointer-events: none;
+}
+
+.lens-vignette-soft::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    ellipse 70% 60% at 50% 50%,
+    transparent 50%,
+    rgba(10, 9, 8, 0.6) 100%
+  );
+  pointer-events: none;
+}
+
+/* ── Gallery ── */
 .gallery-scroll {
   scrollbar-width: none;
   -ms-overflow-style: none;
 }
 .gallery-scroll::-webkit-scrollbar {
   display: none;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 0.15; transform: translateY(0); }
+}
+.animate-fade-in {
+  animation: fadeIn 1.5s cubic-bezier(0.16, 1, 0.3, 1) 2s forwards;
 }
 
 /* ── Reduced Motion ── */

@@ -92,16 +92,17 @@ function PressureVoid({ progress }: { progress: number }) {
 /** Whisper: a word appears large, serif italic — an emotional moment, not a label */
 function WhisperVoid({ progress, word }: { progress: number; word: string }) {
   const opacity = progress > 0.15 && progress < 0.75
-    ? Math.min(0.55, (progress - 0.15) * 0.92)
+    ? Math.min(0.5, (progress - 0.15) * 0.83)
     : progress >= 0.75
-      ? Math.max(0, 0.55 - (progress - 0.75) * 2.2)
+      ? Math.max(0, 0.5 - (progress - 0.75) * 2)
       : 0
 
   const x = -15 + progress * 30
 
   return (
     <p
-      className="font-serif italic text-[var(--text-display)] text-text-muted select-none pointer-events-none"
+      className="font-serif italic text-[var(--text-display)] text-text-muted select-none pointer-events-none
+        self-start ml-[15%] md:ml-[25%]"
       style={{
         opacity,
         transform: `translate3d(${x}px, ${(0.5 - progress) * 12}px, 0)`,

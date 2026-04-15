@@ -85,7 +85,6 @@ export function HomeContent() {
         toTone="ember"
         height="18vh"
         character="rift"
-        word="soon"
         bleedTop
       />
 

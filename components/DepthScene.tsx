@@ -47,18 +47,11 @@ export function DepthScene({ atmosphereSrc, mainSrc, label }: DepthSceneProps) {
   }, [])
   const fgRef = useSectionStyle<HTMLDivElement>(fgStyler)
 
-  // Puncture 1: "stay" — appears early-mid, drifts diagonally
+  // Puncture: "stay" — appears early-mid, drifts diagonally
   const p1Opacity = progress > 0.2 && progress < 0.55
-    ? Math.min(0.55, (progress - 0.2) * 1.57)
+    ? Math.min(0.5, (progress - 0.2) * 1.43)
     : progress >= 0.55
-      ? Math.max(0, 0.55 - (progress - 0.55) * 1.22)
-      : 0
-
-  // Puncture 2: "here" — appears later, opposite quadrant
-  const p2Opacity = progress > 0.5 && progress < 0.8
-    ? Math.min(0.35, (progress - 0.5) * 1.17)
-    : progress >= 0.8
-      ? Math.max(0, 0.35 - (progress - 0.8) * 1.75)
+      ? Math.max(0, 0.5 - (progress - 0.55) * 1.11)
       : 0
 
   return (
@@ -104,7 +97,7 @@ export function DepthScene({ atmosphereSrc, mainSrc, label }: DepthSceneProps) {
         </div>
       </div>
 
-      {/* Puncture 1 — "stay": serif italic, larger, diagonal drift */}
+      {/* Puncture — "stay": serif italic, diagonal drift */}
       <span
         className="absolute z-30
           left-[10%] bottom-[35vh]
@@ -116,20 +109,6 @@ export function DepthScene({ atmosphereSrc, mainSrc, label }: DepthSceneProps) {
         }}
       >
         stay
-      </span>
-
-      {/* Puncture 2 — "here": smaller, tracked, opposite corner, later timing */}
-      <span
-        className="absolute z-30
-          right-[8%] top-[45vh]
-          md:left-[18vw] md:top-[55vh]
-          text-[var(--text-caption)] tracking-[0.35em] uppercase text-text-muted/25 select-none pointer-events-none"
-        style={{
-          opacity: p2Opacity,
-          transform: `translate3d(${progress * -12}px, ${(0.65 - progress) * 10}px, 0)`,
-        }}
-      >
-        here
       </span>
 
       {/* Layer 3 — Foreground label: counter-drift, right side */}

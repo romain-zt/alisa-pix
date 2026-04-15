@@ -68,18 +68,11 @@ export function FragmentCluster({ images }: { images: readonly string[] }) {
   }, [])
   const accentRef = useSectionStyle<HTMLDivElement>(accentStyler)
 
-  // Puncture 1: "not yet" — serif italic, display size (not micro)
+  // Puncture: "not yet" — serif italic, display size
   const puncture1Opacity = progress > 0.2 && progress < 0.55
-    ? Math.min(0.6, (progress - 0.2) * 1.71)
+    ? Math.min(0.5, (progress - 0.2) * 1.43)
     : progress >= 0.55
-      ? Math.max(0, 0.6 - (progress - 0.55) * 1.33)
-      : 0
-
-  // Puncture 2: smaller, tracked, different timing — appears after first fades
-  const puncture2Opacity = progress > 0.55 && progress < 0.85
-    ? Math.min(0.35, (progress - 0.55) * 1.17)
-    : progress >= 0.85
-      ? Math.max(0, 0.35 - (progress - 0.85) * 2.33)
+      ? Math.max(0, 0.5 - (progress - 0.55) * 1.11)
       : 0
 
   if (images.length < 5) return null
@@ -207,22 +200,6 @@ export function FragmentCluster({ images }: { images: readonly string[] }) {
           />
         </div>
       </div>
-
-      {/* Puncture 2 — tracked uppercase, different timing, left side */}
-      <span
-        className="
-          hidden md:block
-          absolute z-30
-          left-[8vw] top-[78vh]
-          text-[var(--text-caption)] tracking-[0.35em] uppercase text-text-muted/20 select-none pointer-events-none
-        "
-        style={{
-          opacity: puncture2Opacity,
-          transform: `translate3d(${progress * 15}px, 0, 0)`,
-        }}
-      >
-        almost
-      </span>
 
       {/* Fragment 5 — Small, near-still, breathes, bleeds right edge */}
       <div
