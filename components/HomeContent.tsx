@@ -7,63 +7,66 @@ import { SCENE_IMAGES } from '@/lib/images'
 
 const DepthScene = dynamic(
   () => import('./DepthScene').then((m) => ({ default: m.DepthScene })),
-  { loading: () => <div className="min-h-[160vh]" /> }
+  { loading: () => <div className="min-h-[180vh]" /> }
 )
 
 const FragmentCluster = dynamic(
   () => import('./FragmentCluster').then((m) => ({ default: m.FragmentCluster })),
-  { loading: () => <div className="min-h-[160vh]" /> }
+  { loading: () => <div className="min-h-[180vh]" /> }
 )
 
 const Intimacy = dynamic(
   () => import('./Intimacy').then((m) => ({ default: m.Intimacy })),
-  { loading: () => <div className="min-h-[120vh]" /> }
+  { loading: () => <div className="min-h-[140vh]" /> }
 )
 
 export function HomeContent() {
   return (
     <>
-      {/* ═══ Threshold — sticky trap, zoom-out, held presence ═══ */}
+      {/* ═══ Threshold — sticky trap, dramatic zoom-out, held presence ═══ */}
       <Opening src={SCENE_IMAGES.threshold} />
 
-      {/* Bleed-through void — scene endings contaminate beginnings */}
+      {/* Void 1: PRESSURE — no content, just tonal shift + warm glow */}
       <VoidTransition
         fromTone="deep"
         toTone="silk"
-        height="12vh"
+        height="10vh"
+        character="pressure"
         bleedTop
       />
 
-      {/* ═══ Descent — opposed layers, zoom-in, emotional puncture ═══ */}
+      {/* ═══ Descent — opposed layers, zoom-in, emotional punctures ═══ */}
       <DepthScene
         atmosphereSrc={SCENE_IMAGES.descent.atmosphere}
         mainSrc={SCENE_IMAGES.descent.main}
         label="Boudoir"
       />
 
-      {/* Alive void — word drifts through tonal pressure */}
+      {/* Void 2: WHISPER — a word at display size, serif, emotional moment */}
       <VoidTransition
         fromTone="shadow"
         toTone="smoke"
-        height="18vh"
+        height="22vh"
+        character="whisper"
         word="softer"
         bleedTop
         bleedBottom
       />
 
-      {/* ═══ Fragments — drift, scale, opposed motion, puncture ═══ */}
+      {/* ═══ Fragments — drift, scale, opposed motion, punctures ═══ */}
       <FragmentCluster images={SCENE_IMAGES.fragments} />
 
-      {/* Stillness void — almost nothing, just a held breath */}
+      {/* Void 3: RIFT — diagonal accent + tracked word, tense and brief */}
       <VoidTransition
         fromTone="shadow"
         toTone="ember"
-        height="14vh"
-        line
+        height="16vh"
+        character="rift"
+        word="soon"
         bleedTop
       />
 
-      {/* ═══ Intimacy — zoom-in, independent text, whisper close ═══ */}
+      {/* ═══ Intimacy — zoom-in, off-center, independent text, whisper close ═══ */}
       <Intimacy src={SCENE_IMAGES.intimacy} />
     </>
   )

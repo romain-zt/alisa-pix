@@ -13,116 +13,137 @@ interface DepthSceneProps {
 export function DepthScene({ atmosphereSrc, mainSrc, label }: DepthSceneProps) {
   const { ref: sectionRef, progress } = useSectionProgress<HTMLElement>()
 
-  // Background: drifts UP (opposed to scroll direction), fades in then out
+  // Background: horizontal drift (not just vertical) + vertical opposed motion
   const bgStyler = useCallback((p: number) => {
-    const y = 60 - p * 120
-    const opacity = p < 0.2 ? p * 5 * 0.3 : p > 0.8 ? (1 - p) * 5 * 0.3 : 0.3
+    const y = 80 - p * 160
+    const x = -15 + p * 30
+    const opacity = p < 0.15 ? p / 0.15 * 0.35 : p > 0.8 ? (1 - p) * 5 * 0.35 : 0.35
     return {
-      transform: `translate3d(0, ${y}px, 0) scale(1.15)`,
+      transform: `translate3d(${x}px, ${y}px, 0) scale(1.2)`,
       opacity: `${opacity}`,
     }
   }, [])
   const bgRef = useSectionStyle<HTMLDivElement>(bgStyler)
 
-  // Main image: slow zoom IN from 1.0 → 1.04 + slight upward drift
+  // Main image: zoom IN from 0.97 → 1.06 (starts slightly small — reveals growing)
   const mainStyler = useCallback((p: number) => {
-    const scale = 1.0 + p * 0.04
-    const y = 30 - p * 60
+    const scale = 0.97 + p * 0.09
+    const y = 40 - p * 80
     return {
       transform: `translate3d(0, ${y}px, 0) scale(${scale})`,
     }
   }, [])
   const mainRef = useSectionStyle<HTMLDivElement>(mainStyler)
 
-  // Foreground label: moves OPPOSITE to main (downward while main goes up)
+  // Foreground label: counter-direction, drifts right + down
   const fgStyler = useCallback((p: number) => {
-    const y = -20 + p * 50
-    const opacity = p < 0.15 ? p / 0.15 : p > 0.85 ? (1 - p) / 0.15 : 1
+    const y = -25 + p * 60
+    const x = -5 + p * 15
+    const opacity = p < 0.12 ? p / 0.12 : p > 0.85 ? (1 - p) / 0.15 : 1
     return {
-      transform: `translate3d(0, ${y}px, 0)`,
-      opacity: `${Math.min(0.7, opacity * 0.7)}`,
+      transform: `translate3d(${x}px, ${y}px, 0)`,
+      opacity: `${Math.min(0.65, opacity * 0.65)}`,
     }
   }, [])
   const fgRef = useSectionStyle<HTMLDivElement>(fgStyler)
 
-  // Emotional puncture text: independent rhythm, appears mid-scroll
-  const punctureOpacity = progress > 0.3 && progress < 0.7
-    ? Math.min(0.45, (progress - 0.3) * 2.25)
-    : progress >= 0.7
-      ? Math.max(0, 0.45 - (progress - 0.7) * 1.5)
+  // Puncture 1: "stay" — appears early-mid, drifts diagonally
+  const p1Opacity = progress > 0.2 && progress < 0.55
+    ? Math.min(0.55, (progress - 0.2) * 1.57)
+    : progress >= 0.55
+      ? Math.max(0, 0.55 - (progress - 0.55) * 1.22)
+      : 0
+
+  // Puncture 2: "here" — appears later, opposite quadrant
+  const p2Opacity = progress > 0.5 && progress < 0.8
+    ? Math.min(0.35, (progress - 0.5) * 1.17)
+    : progress >= 0.8
+      ? Math.max(0, 0.35 - (progress - 0.8) * 1.75)
       : 0
 
   return (
     <section
       ref={sectionRef}
-      className="relative min-h-[160vh] md:min-h-[180vh] overflow-hidden"
+      className="relative min-h-[180vh] md:min-h-[210vh] overflow-hidden"
       style={{
-        background: 'linear-gradient(to bottom, var(--color-tone-silk), var(--color-tone-shadow) 80%, var(--color-tone-shadow))',
+        background: 'linear-gradient(to bottom, var(--color-tone-silk), var(--color-tone-shadow) 70%, var(--color-tone-shadow))',
       }}
     >
-      {/* Layer 1 — Background: opposed vertical drift, blurred, dim */}
+      {/* Layer 1 — Background: horizontal + vertical drift, blurred, warm */}
       <div
         ref={bgRef}
-        className="absolute inset-[-20%] z-[1]"
+        className="absolute inset-[-25%] z-[1]"
       >
         <Image
           src={atmosphereSrc}
           alt=""
           fill
-          className="object-cover blur-[5px]"
-          sizes="140vw"
+          className="object-cover blur-[6px]"
+          sizes="150vw"
         />
       </div>
 
-      {/* Layer 2 — Main image: zoom IN on scroll, asymmetric */}
-      <div className="relative z-10 pt-[14vh] md:pt-[20vh]">
+      {/* Layer 2 — Main image: zoom IN, bleeds left edge, soft bottom mask */}
+      <div className="relative z-10 pt-[10vh] md:pt-[16vh]">
         <div
           ref={mainRef}
           className="
-            w-[90%] -ml-3
-            md:w-[50vw] md:ml-[7vw]
+            w-[95%] -ml-6
+            md:w-[52vw] md:-ml-[2vw]
           "
         >
-          <div className="relative aspect-[3/4] overflow-hidden">
+          <div className="relative aspect-[3/4] overflow-hidden mask-soft-bottom">
             <Image
               src={mainSrc}
               alt=""
               fill
               className="object-cover"
-              sizes="(min-width: 768px) 50vw, 90vw"
+              sizes="(min-width: 768px) 52vw, 95vw"
             />
-            {/* Bottom fade — scene bleeds into next */}
-            <div className="absolute bottom-0 left-0 right-0 h-[15%] bg-gradient-to-t from-tone-shadow/60 to-transparent" />
           </div>
         </div>
       </div>
 
-      {/* Emotional puncture — NOT a caption, placed independently */}
+      {/* Puncture 1 — "stay": serif italic, larger, diagonal drift */}
       <span
         className="absolute z-30
-          left-[12%] bottom-[32vh]
-          md:left-[62vw] md:bottom-[38vh]
+          left-[10%] bottom-[35vh]
+          md:left-[60vw] md:bottom-[42vh]
           font-serif italic text-[var(--text-title)] text-text-muted select-none pointer-events-none"
         style={{
-          opacity: punctureOpacity,
-          transform: `translate3d(0, ${(0.5 - progress) * 20}px, 0)`,
+          opacity: p1Opacity,
+          transform: `translate3d(${(0.4 - progress) * 25}px, ${(0.4 - progress) * 15}px, 0)`,
         }}
       >
         stay
       </span>
 
-      {/* Layer 3 — Foreground label: moves opposite to main image */}
+      {/* Puncture 2 — "here": smaller, tracked, opposite corner, later timing */}
+      <span
+        className="absolute z-30
+          right-[8%] top-[45vh]
+          md:left-[18vw] md:top-[55vh]
+          text-[var(--text-caption)] tracking-[0.35em] uppercase text-text-muted/25 select-none pointer-events-none"
+        style={{
+          opacity: p2Opacity,
+          transform: `translate3d(${progress * -12}px, ${(0.65 - progress) * 10}px, 0)`,
+        }}
+      >
+        here
+      </span>
+
+      {/* Layer 3 — Foreground label: counter-drift, right side */}
       {label && (
         <div
           ref={fgRef}
           className="
             absolute z-20
-            bottom-[8vh] right-6
-            md:bottom-[14vh] md:right-[9vw]
+            bottom-[6vh] right-6
+            md:bottom-[12vh] md:right-[8vw]
             flex items-center gap-3
           "
         >
-          <div className="w-6 h-px bg-accent-soft" />
+          <div className="w-8 h-px bg-accent-soft" />
           <p className="text-[var(--text-micro)] tracking-[0.3em] uppercase text-text-muted">
             {label}
           </p>
