@@ -17,18 +17,31 @@ export function OverflowImage({ src, text }: OverflowImageProps) {
   const setRef = useCallback(
     (node: HTMLElement | null) => {
       sectionElRef.current = node
-      ;(progressRef as React.MutableRefObject<HTMLElement | null>).current =
-        node
+      ;(progressRef as React.MutableRefObject<HTMLElement | null>).current = node
     },
     [progressRef]
   )
 
   const imageStyler = useCallback((p: number) => {
-    const y = 30 - p * 60
-    const scale = 1.15 + p * 0.08
+    const curved = Math.pow(p, 1.6)
+    const y = 40 - curved * 80
+    const scale = 1.12 + curved * 0.1
     return { transform: `translate3d(0, ${y}px, 0) scale(${scale})` }
   }, [])
   const imageRef = useSectionStyle<HTMLDivElement>(imageStyler)
+
+  const lightStyler = useCallback((p: number) => {
+    const x = 20 + p * 50
+    const y = 30 + p * 20
+    const intensity = p > 0.08 && p < 0.75
+      ? Math.min(0.1, Math.pow((p - 0.08) / 0.67, 0.7) * 0.1)
+      : 0
+    return {
+      opacity: `${intensity}`,
+      transform: `translate3d(${x - 45}px, ${y - 35}px, 0)`,
+    }
+  }, [])
+  const lightRef = useSectionStyle<HTMLDivElement>(lightStyler)
 
   useEffect(() => {
     const el = focusRef.current
@@ -41,69 +54,90 @@ export function OverflowImage({ src, text }: OverflowImageProps) {
       return
     }
 
-    el.style.filter = 'blur(3px) brightness(0.85)'
+    el.style.filter = 'blur(4px) brightness(0.7) saturate(0.4)'
     el.style.transition =
-      'filter 2200ms cubic-bezier(0.16, 1, 0.3, 1)'
+      'filter 3000ms cubic-bezier(0.87, 0, 0.13, 1)'
 
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
-          el.style.filter = 'blur(0px) brightness(1)'
+          el.style.filter = 'blur(0px) brightness(1) saturate(1)'
           observer.disconnect()
         }
       },
-      { threshold: 0.08 }
+      { threshold: 0.06 }
     )
 
     observer.observe(el)
     return () => observer.disconnect()
   }, [])
 
+  const clipRadius = progress > 0.05
+    ? Math.min(85, 5 + Math.pow((progress - 0.05) / 0.95, 0.4) * 80)
+    : 5
+
   const textOpacity =
-    progress > 0.3 && progress < 0.8
-      ? Math.min(0.8, (progress - 0.3) * 1.6)
-      : progress >= 0.8
-        ? Math.max(0, 0.8 - (progress - 0.8) * 4)
+    progress > 0.35 && progress < 0.85
+      ? Math.min(0.85, Math.pow((progress - 0.35) / 0.5, 0.5) * 0.85)
+      : progress >= 0.85
+        ? Math.max(0, 0.85 - (progress - 0.85) * 5.67)
         : 0
 
   return (
     <section
       ref={setRef}
-      className="relative min-h-[130vh] md:min-h-[150vh] overflow-hidden"
+      className="relative min-h-[135vh] md:min-h-[155vh] overflow-hidden"
       style={{ background: 'var(--color-tone-shadow)' }}
     >
-      {/* Oversized image — bigger than viewport, cropped, slow parallax */}
-      <div ref={imageRef} className="absolute inset-[-15%] z-[1]">
+      {/* Oversized image — clip-path circle reveal + parallax */}
+      <div
+        ref={imageRef}
+        className="absolute inset-[-18%] z-[1]"
+        style={{
+          clipPath: `circle(${clipRadius}% at 48% 45%)`,
+          transition: 'clip-path 100ms linear',
+        }}
+      >
         <div ref={focusRef} className="relative w-full h-full">
           <Image
             src={src}
             alt=""
             fill
             className="object-cover"
-            sizes="130vw"
+            sizes="136vw"
           />
         </div>
       </div>
 
-      {/* Vignette — dark edges, intimate crop feeling */}
+      {/* Moving directional light — sweeps across image */}
       <div
-        className="absolute inset-0 z-[2] pointer-events-none"
+        ref={lightRef}
+        className="absolute inset-0 z-[2] pointer-events-none opacity-0"
         style={{
           background:
-            'radial-gradient(ellipse 65% 55% at 50% 50%, transparent 30%, rgba(10,9,8,0.7) 100%)',
+            'radial-gradient(ellipse 40% 50% at 35% 40%, rgba(255,245,230,0.15) 0%, transparent 60%)',
         }}
       />
 
-      {/* Text overlay — partially on image */}
+      {/* Deep vignette — more aggressive, asymmetric */}
+      <div
+        className="absolute inset-0 z-[3] pointer-events-none"
+        style={{
+          background:
+            'radial-gradient(ellipse 55% 45% at 48% 45%, transparent 25%, rgba(10,9,8,0.75) 100%)',
+        }}
+      />
+
+      {/* Text — appears BEFORE image is fully revealed */}
       {text && (
         <div
-          className="absolute z-[3] bottom-[15vh] md:bottom-[20vh] right-6 md:right-[10vw]"
+          className="absolute z-[4] bottom-[18vh] md:bottom-[22vh] right-8 md:right-[8vw]"
           style={{
             opacity: textOpacity,
-            transform: `translate3d(${(0.5 - progress) * 20}px, 0, 0)`,
+            transform: `translate3d(${(0.6 - progress) * 30}px, ${(0.5 - progress) * -10}px, 0)`,
           }}
         >
-          <p className="font-serif italic text-[var(--text-lead)] md:text-[var(--text-title)] text-text-primary/60 select-none">
+          <p className="font-serif italic text-[var(--text-lead)] md:text-[var(--text-title)] text-text-primary/70 select-none">
             {text}
           </p>
         </div>
