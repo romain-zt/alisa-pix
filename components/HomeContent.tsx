@@ -4,7 +4,6 @@ import dynamic from 'next/dynamic'
 import { Opening } from './Opening'
 import { VoidTransition } from './VoidTransition'
 import { Navigation } from './Navigation'
-import { WhisperBlock } from './WhisperBlock'
 import { SCENE_IMAGES } from '@/lib/images'
 
 const FullSilence = dynamic(
@@ -44,7 +43,7 @@ const ImmersiveStack = dynamic(
     import('./ImmersiveStack').then((m) => ({
       default: m.ImmersiveStack,
     })),
-  { loading: () => <div className="min-h-[520vh]" /> }
+  { loading: () => <div className="min-h-[540vh]" /> }
 )
 
 const Intimacy = dynamic(
@@ -57,90 +56,112 @@ const SessionGate = dynamic(
   { loading: () => <div className="min-h-[90vh]" /> }
 )
 
+const HorizontalDrift = dynamic(
+  () =>
+    import('./HorizontalDrift').then((m) => ({
+      default: m.HorizontalDrift,
+    })),
+  { loading: () => <div className="min-h-[450vh]" /> }
+)
+
 export function HomeContent() {
   return (
     <>
       <Navigation />
 
-      {/* ═══ SCENE 1: OPENING — sticky focus-pull, cinematic entrance ═══ */}
+      {/* ═══ SCENE 1: OPENING — darkness first, delayed focus pull, dead zone scroll ═══ */}
       <Opening src={SCENE_IMAGES.threshold} />
 
-      <WhisperBlock text="you hesitate" align="right" opacity={0.32} height="45vh" />
+      {/* ═══ SCENE 2: SLAM — hard cut text, no fade, instant threshold ═══ */}
+      <FullSilence text="you don't see yourself like this" mode="slam" />
 
-      {/* ═══ SCENE 2: FULL SILENCE — hard reset, darkness + one sentence ═══ */}
-      <FullSilence text="you don't see yourself like this" />
-
-      {/* ═══ SCENE 3: DEPTH — layered parallax, atmospheric descent ═══ */}
+      {/* ═══ SCENE 3: DEPTH — layered parallax, liquid light, non-linear curves ═══ */}
       <DepthScene
         atmosphereSrc={SCENE_IMAGES.descent.atmosphere}
         mainSrc={SCENE_IMAGES.descent.main}
         label="Boudoir"
       />
 
-      {/* ─── VOID + WHISPER: breathing with emotional anchor ─── */}
-      <div
-        className="min-h-[25vh]"
-        aria-hidden="true"
-        style={{
-          background:
-            'linear-gradient(to bottom, var(--color-tone-shadow), var(--color-bg-deep))',
-        }}
+      {/* ─── VOID: pressure shift, overlaps into next ─── */}
+      <VoidTransition
+        fromTone="shadow"
+        toTone="deep"
+        height="35vh"
+        character="pressure"
+        bleedBottom
       />
-      <WhisperBlock text="this is private" align="left" opacity={0.38} height="45vh" />
 
-      {/* ═══ SCENE 4: MICRO STORY — narrative rhythm, broken lines ═══ */}
+      {/* ═══ SCENE 4: MICRO STORY — each line enters differently ═══ */}
       <MicroStory
         lines={['she arrived nervous', 'left different', "didn't say why"]}
       />
 
-      {/* ═══ SCENE 5: OVERFLOW — intimate, too close, break the frame ═══ */}
+      {/* ─── VOID: whisper ─── */}
+      <VoidTransition
+        fromTone="deep"
+        toTone="shadow"
+        height="28vh"
+        character="whisper"
+        word="linger"
+      />
+
+      {/* ═══ SCENE 5: OVERFLOW — clip-path circle reveal + directional light ═══ */}
       <OverflowImage src={SCENE_IMAGES.overflow} text="remember this" />
 
-      <WhisperBlock text="not for everyone" align="off-right" opacity={0.3} height="40vh" />
-
-      {/* ═══ SCENE 6: HARD CUT — bright shock, instant switch ═══ */}
+      {/* ═══ SCENE 6: HARD CUT — flash burn, instant bright, no transition ═══ */}
       <HardCut src={SCENE_IMAGES.hardcut} />
 
-      {/* ─── VOID: recovery rift ─── */}
+      {/* ─── VOID: rift, bleed from hard cut ─── */}
       <VoidTransition
         fromTone="deep"
         toTone="ember"
-        height="25vh"
+        height="22vh"
         character="rift"
+        bleedTop
       />
 
-      {/* ═══ SCENE 7: SPLIT TENSION — 70/30 asymmetric, image bleeds ═══ */}
+      {/* ═══ SCENE 7: SPLIT TENSION — asymmetric, image bleeds ═══ */}
       <SplitTension src={SCENE_IMAGES.split} text="softer than you think" />
 
-      {/* ─── VOID + WHISPER: breathing before gallery ─── */}
-      <div
-        className="min-h-[20vh]"
-        aria-hidden="true"
-        style={{ background: 'var(--color-bg-deep)' }}
+      {/* ─── VOID: breath, line extends ─── */}
+      <VoidTransition
+        fromTone="deep"
+        toTone="shadow"
+        height="30vh"
+        character="breath"
+        line
       />
-      <WhisperBlock text="then you stay" align="off-left" opacity={0.35} height="48vh" />
 
-      {/* ═══ SCENE 8: IMMERSIVE STACK — sticky layered gallery ═══ */}
+      {/* ═══ SCENE 8: HORIZONTAL DRIFT — breaks vertical linearity ═══ */}
+      <HorizontalDrift images={SCENE_IMAGES.drift} />
+
+      {/* ─── VOID: recovery, minimal ─── */}
+      <div
+        className="min-h-[30vh] md:min-h-[40vh]"
+        aria-hidden="true"
+        style={{ background: 'var(--color-tone-shadow)' }}
+      />
+
+      {/* ═══ SCENE 9: IMMERSIVE STACK — each layer unique behavior ═══ */}
       <ImmersiveStack images={SCENE_IMAGES.stack} />
 
-      {/* ═══ SCENE 9: FULL SILENCE — emotional anchor, off-right ═══ */}
-      <FullSilence text="what you keep hidden" align="off-right" />
+      {/* ═══ SCENE 10: DISSOLVE — atmospheric, blurred text, bleeding from edge ═══ */}
+      <FullSilence text="what you keep hidden" align="off-right" mode="dissolve" />
 
-      {/* ═══ SCENE 10: INTIMACY — off-center, private, atmospheric ═══ */}
+      {/* ═══ SCENE 11: INTIMACY — expanding mask, breathing light ═══ */}
       <Intimacy src={SCENE_IMAGES.intimacy} />
 
-      {/* ─── VOID + WHISPER: silence before conversion ─── */}
+      {/* ─── VOID: generous silence ─── */}
       <div
-        className="min-h-[20vh]"
+        className="min-h-[45vh] md:min-h-[60vh]"
         aria-hidden="true"
         style={{
           background:
             'linear-gradient(to bottom, var(--color-bg-deep), var(--color-tone-shadow))',
         }}
       />
-      <WhisperBlock text="closer than expected" align="left" opacity={0.3} height="55vh" />
 
-      {/* ═══ SCENE 11: SESSION GATE — conversion ═══ */}
+      {/* ═══ SCENE 12: SESSION GATE — conversion ═══ */}
       <SessionGate />
     </>
   )
