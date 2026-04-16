@@ -6,6 +6,24 @@ import { VoidTransition } from './VoidTransition'
 import { Navigation } from './Navigation'
 import { SCENE_IMAGES } from '@/lib/images'
 
+const HorizontalFilmStrip = dynamic(
+  () =>
+    import('./HorizontalFilmStrip').then((m) => ({
+      default: m.HorizontalFilmStrip,
+    })),
+  { loading: () => <div className="min-h-[600vh]" /> }
+)
+
+const ZoomScene = dynamic(
+  () => import('./ZoomScene').then((m) => ({ default: m.ZoomScene })),
+  { loading: () => <div className="min-h-[320vh]" /> }
+)
+
+const DelayedReveal = dynamic(
+  () => import('./DelayedReveal').then((m) => ({ default: m.DelayedReveal })),
+  { loading: () => <div className="min-h-[240vh]" /> }
+)
+
 const FullSilence = dynamic(
   () => import('./FullSilence').then((m) => ({ default: m.FullSilence })),
   { loading: () => <div className="min-h-[90vh]" /> }
@@ -111,6 +129,9 @@ export function HomeContent() {
       {/* ═══ SCENE 6: HARD CUT — flash burn, instant bright, no transition ═══ */}
       <HardCut src={SCENE_IMAGES.hardcut} />
 
+      {/* ═══ SCENE 6.5: ZOOM — single image grows from nothing, overwhelms ═══ */}
+      <ZoomScene src={SCENE_IMAGES.zoom} text="too close" />
+
       {/* ─── VOID: rift, bleed from hard cut ─── */}
       <VoidTransition
         fromTone="deep"
@@ -151,14 +172,11 @@ export function HomeContent() {
       {/* ═══ SCENE 11: INTIMACY — expanding mask, breathing light ═══ */}
       <Intimacy src={SCENE_IMAGES.intimacy} />
 
-      {/* ─── VOID: generous silence ─── */}
-      <div
-        className="min-h-[45vh] md:min-h-[60vh]"
-        aria-hidden="true"
-        style={{
-          background:
-            'linear-gradient(to bottom, var(--color-bg-deep), var(--color-tone-shadow))',
-        }}
+      {/* ═══ SCENE 11.5: DELAYED REVEAL — long void, image arrives late ═══ */}
+      <DelayedReveal
+        src={SCENE_IMAGES.late}
+        text="she never looked like this before"
+        delay={0.72}
       />
 
       {/* ═══ SCENE 12: SESSION GATE — conversion ═══ */}

@@ -22,6 +22,18 @@ export function OverflowImage({ src, text }: OverflowImageProps) {
     [progressRef]
   )
 
+  // Gas layer — blurred, counter-drift to subject
+  const gasStyler = useCallback((p: number) => {
+    const y = -25 + p * 50
+    const x = 10 - p * 20
+    const opacity = p < 0.1 ? p / 0.1 * 0.16 : p > 0.85 ? (1 - p) / 0.15 * 0.16 : 0.16
+    return {
+      transform: `translate3d(${x}px, ${y}px, 0) scale(1.35)`,
+      opacity: `${opacity}`,
+    }
+  }, [])
+  const gasRef = useSectionStyle<HTMLDivElement>(gasStyler)
+
   const imageStyler = useCallback((p: number) => {
     const curved = Math.pow(p, 1.6)
     const y = 40 - curved * 80
@@ -89,7 +101,21 @@ export function OverflowImage({ src, text }: OverflowImageProps) {
       className="relative min-h-[135vh] md:min-h-[155vh] overflow-hidden"
       style={{ background: 'var(--color-tone-shadow)' }}
     >
-      {/* Oversized image — clip-path circle reveal + parallax */}
+      {/* Gas layer — blurred, counter-drift, low opacity */}
+      <div
+        ref={gasRef}
+        className="absolute inset-[-35%] z-[0] opacity-0"
+      >
+        <Image
+          src={src}
+          alt=""
+          fill
+          className="object-cover blur-[14px]"
+          sizes="170vw"
+        />
+      </div>
+
+      {/* Subject — oversized image, clip-path circle reveal + parallax */}
       <div
         ref={imageRef}
         className="absolute inset-[-18%] z-[1]"

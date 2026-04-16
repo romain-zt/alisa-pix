@@ -169,6 +169,65 @@ body {
   pointer-events: none;
 }
 
+/* ── Gas Layer (background atmosphere drift) ── */
+@keyframes gasDrift {
+  0%   { transform: translate(0px, 0px) scale(1.2); }
+  38%  { transform: translate(-1.5vw, 1.2vh) scale(1.18); }
+  72%  { transform: translate(1.2vw, -0.8vh) scale(1.21); }
+  100% { transform: translate(0px, 0px) scale(1.2); }
+}
+
+@keyframes gasDriftReverse {
+  0%   { transform: translate(0px, 0px) scale(1.25); }
+  40%  { transform: translate(2vw, -1.5vh) scale(1.23); }
+  68%  { transform: translate(-1.2vw, 1vh) scale(1.26); }
+  100% { transform: translate(0px, 0px) scale(1.25); }
+}
+
+.gas-drift {
+  animation: gasDrift 28s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.gas-drift-reverse {
+  animation: gasDriftReverse 34s ease-in-out infinite;
+  pointer-events: none;
+}
+
+/* ── Light Leak (interference) ── */
+@keyframes lightLeakWarm {
+  0%   { opacity: 0.04; transform: translate3d(0, 0, 0) scale(1); }
+  45%  { opacity: 0.10; transform: translate3d(2vw, -1vh, 0) scale(1.08); }
+  100% { opacity: 0.04; transform: translate3d(0, 0, 0) scale(1); }
+}
+
+@keyframes lightLeakCold {
+  0%   { opacity: 0.02; transform: translate3d(0, 0, 0); }
+  50%  { opacity: 0.07; transform: translate3d(-3vw, 2vh, 0); }
+  100% { opacity: 0.02; transform: translate3d(0, 0, 0); }
+}
+
+.light-leak-warm {
+  animation: lightLeakWarm 16s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.light-leak-cold {
+  animation: lightLeakCold 21s ease-in-out infinite;
+  pointer-events: none;
+}
+
+/* ── Shimmer (reflection interference) ── */
+@keyframes shimmerFade {
+  0%, 100% { opacity: 0.02; }
+  50%      { opacity: 0.06; }
+}
+
+.shimmer-slow {
+  animation: shimmerFade 22s ease-in-out infinite;
+  pointer-events: none;
+}
+
 /* ── Flash Effect ── */
 @keyframes flashBurn {
   0%   { opacity: 0.85; }

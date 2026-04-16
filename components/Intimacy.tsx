@@ -159,6 +159,19 @@ export function Intimacy({ src }: { src: string }) {
         again
       </span>
 
+      {/* Interference — light leak, bottom-left corner, slow CSS animation */}
+      <div
+        className="absolute z-[3] pointer-events-none light-leak-cold"
+        style={{
+          bottom: '-5%',
+          left: '-5%',
+          width: '55%',
+          height: '45%',
+          background:
+            'radial-gradient(ellipse at 20% 80%, rgba(196,168,138,0.07) 0%, rgba(196,160,120,0.03) 40%, transparent 70%)',
+        }}
+      />
+
       {/* Diagonal accent line — independent timing */}
       <div
         className="hidden md:block absolute z-20 right-[18vw] bottom-[20vh] w-20 h-px bg-accent-soft pointer-events-none"

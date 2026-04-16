@@ -106,7 +106,7 @@ export function DepthScene({ atmosphereSrc, mainSrc, label }: DepthSceneProps) {
             md:w-[54vw] md:-ml-[3vw]
           "
         >
-          <div className="relative aspect-[3/4] overflow-hidden mask-soft-bottom">
+          <div className="relative aspect-[3/4] overflow-hidden mask-soft-bottom lens-vignette-soft">
             <Image
               src={mainSrc}
               alt=""
@@ -131,6 +131,15 @@ export function DepthScene({ atmosphereSrc, mainSrc, label }: DepthSceneProps) {
       >
         stay
       </span>
+
+      {/* Interference — shimmer reflection, diagonal slow breathe */}
+      <div
+        className="absolute inset-0 z-[6] pointer-events-none shimmer-slow"
+        style={{
+          background:
+            'linear-gradient(155deg, rgba(255,252,242,0.025) 0%, transparent 35%, rgba(196,168,138,0.015) 65%, transparent 100%)',
+        }}
+      />
 
       {/* Layer 4 — Foreground label: counter-drift */}
       {label && (

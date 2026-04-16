@@ -37,6 +37,22 @@ export const SCENE_IMAGES = {
     '/assets/images/boudoir/IMG_6896.jpeg',
     '/assets/images/boudoir/IMG_7549.jpeg',
   ] as const,
+
+  // Horizontal filmstrip gallery — scroll-driven left-to-right
+  filmstrip: [
+    '/assets/images/boudoir/IMG_7529.jpeg',
+    '/assets/images/boudoir/IMG_3109.jpeg',
+    '/assets/images/boudoir/IMG_6896.jpeg',
+    '/assets/images/boudoir/IMG_8326.jpeg',
+    '/assets/images/boudoir/IMG_7550.jpeg',
+    '/assets/images/boudoir/IMG_8002.jpeg',
+  ] as const,
+
+  // Zoom-in scene — single image, expands from tiny to overwhelming
+  zoom: '/assets/images/boudoir/IMG_5231 2.jpeg',
+
+  // Delayed reveal — appears only after long void
+  late: '/assets/images/boudoir/IMG_7823.jpeg',
 }
 
 export const GALLERY_IMAGES = [
