@@ -4,6 +4,7 @@ import dynamic from 'next/dynamic'
 import { Opening } from './Opening'
 import { VoidTransition } from './VoidTransition'
 import { Navigation } from './Navigation'
+import { WhisperBlock } from './WhisperBlock'
 import { SCENE_IMAGES } from '@/lib/images'
 
 const FullSilence = dynamic(
@@ -64,6 +65,8 @@ export function HomeContent() {
       {/* ═══ SCENE 1: OPENING — sticky focus-pull, cinematic entrance ═══ */}
       <Opening src={SCENE_IMAGES.threshold} />
 
+      <WhisperBlock text="you hesitate" align="right" opacity={0.32} height="45vh" />
+
       {/* ═══ SCENE 2: FULL SILENCE — hard reset, darkness + one sentence ═══ */}
       <FullSilence text="you don't see yourself like this" />
 
@@ -74,15 +77,16 @@ export function HomeContent() {
         label="Boudoir"
       />
 
-      {/* ─── VOID: generous breathing ─── */}
+      {/* ─── VOID + WHISPER: breathing with emotional anchor ─── */}
       <div
-        className="min-h-[55vh] md:min-h-[70vh]"
+        className="min-h-[25vh]"
         aria-hidden="true"
         style={{
           background:
             'linear-gradient(to bottom, var(--color-tone-shadow), var(--color-bg-deep))',
         }}
       />
+      <WhisperBlock text="this is private" align="left" opacity={0.38} height="45vh" />
 
       {/* ═══ SCENE 4: MICRO STORY — narrative rhythm, broken lines ═══ */}
       <MicroStory
@@ -91,6 +95,8 @@ export function HomeContent() {
 
       {/* ═══ SCENE 5: OVERFLOW — intimate, too close, break the frame ═══ */}
       <OverflowImage src={SCENE_IMAGES.overflow} text="remember this" />
+
+      <WhisperBlock text="not for everyone" align="off-right" opacity={0.3} height="40vh" />
 
       {/* ═══ SCENE 6: HARD CUT — bright shock, instant switch ═══ */}
       <HardCut src={SCENE_IMAGES.hardcut} />
@@ -106,12 +112,13 @@ export function HomeContent() {
       {/* ═══ SCENE 7: SPLIT TENSION — 70/30 asymmetric, image bleeds ═══ */}
       <SplitTension src={SCENE_IMAGES.split} text="softer than you think" />
 
-      {/* ─── VOID: breathing before gallery ─── */}
+      {/* ─── VOID + WHISPER: breathing before gallery ─── */}
       <div
-        className="min-h-[45vh] md:min-h-[55vh]"
+        className="min-h-[20vh]"
         aria-hidden="true"
         style={{ background: 'var(--color-bg-deep)' }}
       />
+      <WhisperBlock text="then you stay" align="off-left" opacity={0.35} height="48vh" />
 
       {/* ═══ SCENE 8: IMMERSIVE STACK — sticky layered gallery ═══ */}
       <ImmersiveStack images={SCENE_IMAGES.stack} />
@@ -122,15 +129,16 @@ export function HomeContent() {
       {/* ═══ SCENE 10: INTIMACY — off-center, private, atmospheric ═══ */}
       <Intimacy src={SCENE_IMAGES.intimacy} />
 
-      {/* ─── VOID: generous silence before conversion ─── */}
+      {/* ─── VOID + WHISPER: silence before conversion ─── */}
       <div
-        className="min-h-[50vh] md:min-h-[65vh]"
+        className="min-h-[20vh]"
         aria-hidden="true"
         style={{
           background:
             'linear-gradient(to bottom, var(--color-bg-deep), var(--color-tone-shadow))',
         }}
       />
+      <WhisperBlock text="closer than expected" align="left" opacity={0.3} height="55vh" />
 
       {/* ═══ SCENE 11: SESSION GATE — conversion ═══ */}
       <SessionGate />
