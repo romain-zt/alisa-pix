@@ -23,6 +23,13 @@ export const SCENE_IMAGES = {
 
   intimacy: '/assets/images/boudoir/IMG_8326.jpeg',
 
+  drift: [
+    '/assets/images/boudoir/IMG_7529.jpeg',
+    '/assets/images/boudoir/IMG_3109.jpeg',
+    '/assets/images/boudoir/IMG_8002.jpeg',
+    '/assets/images/boudoir/IMG_7550.jpeg',
+  ] as const,
+
   fragments: [
     '/assets/images/boudoir/IMG_7355.jpeg',
     '/assets/images/boudoir/IMG_7408.jpeg',
