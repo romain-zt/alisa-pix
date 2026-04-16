@@ -51,18 +51,51 @@ export function SessionGate() {
         />
       </div>
 
-      {/* Warm radial glow */}
+      {/* Liquid light — warm accent glow, scroll-driven, left corner */}
       <div
         className="absolute inset-0 z-[2] pointer-events-none"
         style={{
-          background: `radial-gradient(ellipse 30% 40% at 20% 55%, rgba(196,168,138,${
-            progress > 0.2 ? Math.min(0.04, (progress - 0.2) * 0.06) : 0
-          }), transparent 70%)`,
+          background: `radial-gradient(ellipse 40% 55% at 15% 60%, rgba(196,168,138,${
+            progress > 0.15 ? Math.min(0.055, (progress - 0.15) * 0.08) : 0
+          }) 0%, rgba(196,160,120,${
+            progress > 0.2 ? Math.min(0.02, (progress - 0.2) * 0.03) : 0
+          }) 50%, transparent 75%)`,
+        }}
+      />
+
+      {/* Interference — deep shadow vignette */}
+      <div
+        className="absolute inset-0 z-[3] pointer-events-none"
+        style={{
+          background:
+            'radial-gradient(ellipse 70% 65% at 50% 50%, transparent 35%, rgba(8,8,8,0.55) 100%)',
+        }}
+      />
+
+      {/* Interference — shimmer reflection, very subtle */}
+      <div
+        className="absolute inset-0 z-[3] pointer-events-none shimmer-slow"
+        style={{
+          background:
+            'linear-gradient(to bottom, rgba(255,248,235,0.015) 0%, transparent 40%, transparent 70%, rgba(196,168,138,0.01) 100%)',
+        }}
+      />
+
+      {/* Light leak — top-right corner, cold */}
+      <div
+        className="absolute z-[3] pointer-events-none light-leak-cold"
+        style={{
+          top: '-8%',
+          right: '-5%',
+          width: '50%',
+          height: '50%',
+          background:
+            'radial-gradient(ellipse at 75% 20%, rgba(220,215,210,0.04) 0%, transparent 60%)',
         }}
       />
 
       <div
-        className="relative z-10 px-6 md:px-16 lg:px-24 w-full"
+        className="relative z-[10] px-6 md:px-16 lg:px-24 w-full"
         style={{
           opacity: contentOpacity,
           transform: `translate3d(${labelX}px, 0, 0)`,
