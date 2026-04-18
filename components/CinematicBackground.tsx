@@ -286,8 +286,8 @@ export function CinematicBackground({ src, rangeVH }: Props) {
 
   const warmAlpha = (0.22 + sun.intensity * 0.26) * (reducedMotion ? 0.55 : 1)
   const coolAlpha = (0.07 + sun.intensity * 0.12) * (reducedMotion ? 0.55 : 1)
-  const beamBase = 0.12 + sun.intensity * 0.22
-  const rayOpacity = (0.28 + sun.intensity * 0.32) * (reducedMotion ? 0.4 : 1)
+  const beamBase = 0.045 + sun.intensity * 0.09
+  const rayOpacity = (0.07 + sun.intensity * 0.1) * (reducedMotion ? 0.35 : 1)
   const shadowWash = (0.18 + sun.intensity * 0.22) * (reducedMotion ? 0.45 : 1)
   const shadowRadial = (0.32 + sun.intensity * 0.28) * (reducedMotion ? 0.5 : 1)
 
@@ -400,12 +400,12 @@ export function CinematicBackground({ src, rangeVH }: Props) {
             repeating-conic-gradient(
               from ${sun.rayFromDeg}deg at ${sun.sunX}% ${sun.sunY}%,
               transparent 0deg,
-              transparent 5deg,
-              rgba(255, 244, 228, 0.14) 5.4deg,
-              rgba(255, 248, 235, 0.2) 5.9deg,
-              rgba(255, 244, 228, 0.12) 6.4deg,
-              transparent 7.2deg,
-              transparent 14deg
+              transparent 7deg,
+              rgba(255, 244, 228, 0.04) 7.6deg,
+              rgba(255, 248, 235, 0.055) 8.2deg,
+              rgba(255, 244, 228, 0.035) 8.9deg,
+              transparent 10deg,
+              transparent 22deg
             )
           `,
         }}
