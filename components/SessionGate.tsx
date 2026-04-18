@@ -56,7 +56,7 @@ export function SessionGate() {
             Boudoir sessions in Paris.
           </p>
           <p className="text-[var(--text-caption)] text-text-muted/70 leading-relaxed mb-12">
-            Starting from €480.
+            Starting from €700.
           </p>
 
           <a
