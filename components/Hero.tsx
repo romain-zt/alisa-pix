@@ -154,50 +154,62 @@ export function Hero() {
       aria-label="Vasilisa — Boudoir Photography"
     >
       <div
-        className="flex flex-col items-center text-center px-6"
+        className="flex flex-col items-center text-center px-5 sm:px-6 w-full max-w-[min(100%,42rem)] mx-auto"
         style={{
           transform: `translate3d(0, ${wordY}px, 0)`,
         }}
       >
-        <p
-          className="hero-eyebrow text-[var(--text-micro)] tracking-[0.5em] uppercase text-text-muted/70 mb-8 md:mb-10 opacity-0"
-          style={{ opacity: tagOpacity }}
-        >
-          Paris · Boudoir
-        </p>
-
-        <h1
-          className="hero-wordmark font-serif font-light leading-[0.95] text-text-primary"
+        <div
+          className="hero-type-plate w-full rounded-[1.5rem] sm:rounded-[1.75rem] border border-[rgba(196,168,138,0.14)] px-6 py-9 sm:px-9 sm:py-10 md:px-11 md:py-12"
           style={{
-            fontSize: 'clamp(3.5rem, 14vw, 9.5rem)',
-            letterSpacing: '0.06em',
-            opacity: wordOpacity,
+            background:
+              'linear-gradient(165deg, rgba(10,9,8,0.52) 0%, rgba(6,5,4,0.62) 45%, rgba(5,4,3,0.68) 100%)',
+            backdropFilter: 'blur(14px) saturate(1.08)',
+            WebkitBackdropFilter: 'blur(14px) saturate(1.08)',
+            boxShadow:
+              '0 36px 72px -28px rgba(0,0,0,0.55), inset 0 1px 0 0 rgba(255,248,235,0.06)',
           }}
         >
-          {BRAND.map((char, i) => (
-            <span
-              key={i}
-              className="hero-letter inline-block opacity-0"
-              style={{
-                willChange: 'transform, opacity, filter',
-                transform: 'translateY(50px)',
-              }}
-            >
-              {char}
-            </span>
-          ))}
-        </h1>
+          <p
+            className="hero-eyebrow text-[var(--text-micro)] tracking-[0.5em] uppercase text-text-muted/80 mb-7 md:mb-9 opacity-0"
+            style={{ opacity: tagOpacity }}
+          >
+            Paris · Boudoir
+          </p>
 
-        <div
-          className="hero-tag-rule mt-10 md:mt-12 mb-6 h-px w-12 bg-accent-soft origin-center opacity-0"
-          style={{ transform: 'scaleX(0)', opacity: tagOpacity }}
-        />
-        <p
-          className="hero-tagline font-serif italic text-[var(--text-lead)] text-text-muted/90 max-w-md leading-relaxed opacity-0"
-          style={{ opacity: tagOpacity }}
-        >
-          A bright trace of your personality.
-        </p>
+          <h1
+            className="hero-wordmark font-serif font-light leading-[0.95] text-text-primary"
+            style={{
+              fontSize: 'clamp(3.25rem, 12vw, 9rem)',
+              letterSpacing: '0.06em',
+              opacity: wordOpacity,
+            }}
+          >
+            {BRAND.map((char, i) => (
+              <span
+                key={i}
+                className="hero-letter inline-block opacity-0"
+                style={{
+                  willChange: 'transform, opacity, filter',
+                  transform: 'translateY(50px)',
+                }}
+              >
+                {char}
+              </span>
+            ))}
+          </h1>
+
+          <div
+            className="hero-tag-rule mt-9 md:mt-11 mb-5 md:mb-6 h-px w-12 bg-accent-soft origin-center mx-auto opacity-0"
+            style={{ transform: 'scaleX(0)', opacity: tagOpacity }}
+          />
+          <p
+            className="hero-tagline font-serif italic text-[var(--text-lead)] text-text-muted max-w-md leading-relaxed mx-auto opacity-0"
+            style={{ opacity: tagOpacity }}
+          >
+            A bright trace of your personality.
+          </p>
+        </div>
       </div>
 
       {/* Scroll cue */}
