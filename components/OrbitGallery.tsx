@@ -205,23 +205,20 @@ export function OrbitGallery({ images }: OrbitGalleryProps) {
         eff = ((eff + 180) % 360 + 360) % 360 - 180
         const abs = Math.abs(eff)
 
-        // Visibility / depth-of-field falloff.
-        const opacity = Math.max(0, 1 - Math.pow(abs / 95, 1.6))
-        const blur = Math.min(7, Math.pow(abs / 28, 1.4))
-        const tint = Math.min(0.55, abs / 110)
+        // Visibility / depth-of-field falloff (steeper now — narrower FOV).
+        const opacity = Math.max(0, 1 - Math.pow(abs / 80, 1.7))
+        const blur = Math.min(8, Math.pow(abs / 24, 1.4))
+        const tint = Math.min(0.6, abs / 90)
 
-        // Scale falloff — center is full size, neighbours clearly recede,
-        // so the front photo is never crowded by its siblings.
-        // exp(-abs/45)  →  0°: 1.00 · 22.5°: 0.61 · 45°: 0.37 · 67°: 0.22
-        const scale = Math.max(0.18, Math.exp(-abs / SCALE_FALLOFF_DEG))
+        // Scale falloff — center dominates the field of view.
+        // exp(-abs/50)  →  0°: 1.00 · 22.5°: 0.64 · 45°: 0.41 · 67°: 0.26
+        const scale = Math.max(0.16, Math.exp(-abs / SCALE_FALLOFF_DEG))
 
-        // Side photos also sit a touch further back in Z, just for depth feel.
-        // (Cosmetic — independent of the perspective shrink.)
-        const zPush = Math.min(80, abs * 0.9)
-        el.style.transform = `rotateY(${(i * angleStep).toFixed(3)}deg) translateZ(${(R - zPush).toFixed(1)}px) scale(${scale.toFixed(3)})`
+        // Inside view: items live at translateZ(-R) on the inner surface.
+        // No extra zPush — all items are already equidistant from camera.
+        el.style.transform = `rotateY(${(i * angleStep).toFixed(3)}deg) translateZ(${(-R).toFixed(1)}px) scale(${scale.toFixed(3)})`
 
-        // Velocity-driven motion blur — the faster you spin, the more the
-        // off-axis frames smear. Capped so the centered photo stays sharp.
+        // Velocity-driven motion blur — faster spin smears off-axis frames.
         const velBlur = Math.min(5, angularVel * 0.6 * (abs / 25))
 
         // In focus mode, sink the orbit further into the background.
@@ -232,7 +229,8 @@ export function OrbitGallery({ images }: OrbitGalleryProps) {
           el.style.opacity = opacity.toFixed(3)
           el.style.filter = `blur(${(blur + velBlur).toFixed(2)}px) brightness(${(1 - tint * 0.5).toFixed(2)})`
         }
-        el.style.visibility = abs > 110 ? 'hidden' : 'visible'
+        // Past the FOV the item sits at/behind the camera depth — hide it.
+        el.style.visibility = abs > VISIBILITY_CULL_DEG ? 'hidden' : 'visible'
 
         if (abs < bestAbs) {
           bestAbs = abs
@@ -241,6 +239,8 @@ export function OrbitGallery({ images }: OrbitGalleryProps) {
       }
 
       // Reflection: only the active image is reflected, the rest fade.
+      // (Mostly hidden behind the now-larger active photo, but still visible
+      // on tall viewports where the photo doesn't bleed to the floor.)
       for (let i = 0; i < reflectionRefs.current.length; i++) {
         const r = reflectionRefs.current[i]
         if (!r) continue

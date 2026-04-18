@@ -407,7 +407,14 @@ body {
   will-change: transform;
 }
 .orbit-item {
-  --orbit-item-w: clamp(260px, 36vw, 460px);
+  /* Intrinsic photo size on the cylinder wall.
+   * Apparent on-screen width ≈ var * (perspective / R)
+   *   desktop: ratio = 1700/700 ≈ 2.43
+   *   mobile : ratio =  950/380 ≈ 2.50
+   * → desktop active photo lands around 70–75 % viewport width
+   *   mobile  active photo lands around 90 % viewport width
+   * vh is included so the photo can't bleed past the screen vertically. */
+  --orbit-item-w: min(30vw, 40vh, 520px);
   position: absolute;
   top: 50%;
   left: 50%;
@@ -489,13 +496,15 @@ body {
   filter: blur(20px);
   mix-blend-mode: screen;
 }
-/* Faint elliptical ring — the cylinder's actual footprint, slowly turning */
+/* Faint elliptical ring — the cylinder's actual footprint, slowly turning.
+ * In the inside view we sit at the cylinder's axis, so the ring reads as
+ * the floor circle around our feet — keep it wider and lower. */
 .orbit-floor-ring {
   position: absolute;
   left: 50%;
-  bottom: 8%;
-  width: clamp(620px, 92vw, 1500px);
-  height: clamp(120px, 14vw, 210px);
+  bottom: 2%;
+  width: clamp(720px, 110vw, 1700px);
+  height: clamp(140px, 18vw, 260px);
   border-radius: 50%;
   border: 1px solid rgba(240, 235, 227, 0.06);
   box-shadow:
@@ -505,14 +514,15 @@ body {
   transform: translate(-50%, 0);
   will-change: transform;
 }
-/* Inverted, blurred reflection of the active photo — proves the surface */
+/* Inverted, blurred reflection of the active photo — proves the surface.
+ * Sized to roughly match the new (larger) on-screen photo width.  */
 .orbit-floor-reflections {
   position: absolute;
   left: 50%;
   bottom: 0;
   transform: translateX(-50%);
-  width: clamp(260px, 36vw, 460px);
-  height: clamp(140px, 22vw, 280px);
+  width: min(72vw, 1100px);
+  height: clamp(160px, 24vh, 320px);
   /* Flip vertically so it reads as a mirror reflection */
   scale: 1 -1;
   /* Fade from sharp at top (touching the photo) to nothing at bottom */
