@@ -501,13 +501,15 @@ export function OrbitGallery({ images }: OrbitGalleryProps) {
       </div>
 
       <div className="orbit-hint" aria-hidden="true">
-        <span>tap full photo</span>
+        <span>tap photo</span>
         <span className="orbit-dot" />
         <span>drag</span>
         <span className="orbit-dot" />
         <span>scroll</span>
         <span className="orbit-dot" />
         <span>← →</span>
+        <span className="orbit-dot" />
+        <span>esc</span>
       </div>
     </div>
   )

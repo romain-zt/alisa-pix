@@ -588,6 +588,7 @@ body {
 .orbit-fullview-backdrop {
   position: absolute;
   inset: 0;
+  z-index: 0;
   margin: 0;
   padding: 0;
   border: none;
@@ -667,7 +668,6 @@ body {
   color: rgba(240, 235, 227, 0.32);
   pointer-events: none;
   user-select: none;
-  animation: orbitHintFade 14s ease-in-out infinite;
 }
 .orbit-hint .orbit-dot {
   width: 3px;
@@ -675,11 +675,6 @@ body {
   border-radius: 50%;
   background: currentColor;
   opacity: 0.5;
-}
-
-@keyframes orbitHintFade {
-  0%, 100% { opacity: 0.55; }
-  50%      { opacity: 0.95; }
 }
 
 @media (max-width: 768px) {
