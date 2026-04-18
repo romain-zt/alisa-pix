@@ -14,6 +14,11 @@ interface CameraState {
   scale: number
 }
 
+interface Size {
+  width: number
+  height: number
+}
+
 interface SunColorState {
   core: [number, number, number]
   glow: [number, number, number]
@@ -50,11 +55,11 @@ type SceneVars = Record<`--${string}`, string>
 
 const KEYFRAMES = [
   { t: 0.0, posX: 16, posY: 18, scale: 1.0 },
-  { t: 0.1, posX: 26, posY: 22, scale: 1.14 },
-  { t: 0.28, posX: 48, posY: 38, scale: 1.3 },
-  { t: 0.52, posX: 82, posY: 72, scale: 1.38 },
-  { t: 0.78, posX: 80, posY: 68, scale: 1.22 },
-  { t: 1.0, posX: 74, posY: 60, scale: 1.04 },
+  { t: 0.07, posX: 26, posY: 22, scale: 1.14 },
+  { t: 0.2, posX: 48, posY: 38, scale: 1.3 },
+  { t: 0.42, posX: 82, posY: 72, scale: 1.38 },
+  { t: 0.68, posX: 80, posY: 68, scale: 1.22 },
+  { t: 1.0, posX: 74, posY: 60, scale: 1.0 },
 ] as const
 
 function clamp01(value: number): number {
@@ -64,6 +69,10 @@ function clamp01(value: number): number {
 function smoothstep01(u: number): number {
   const t = clamp01(u)
   return t * t * (3 - 2 * t)
+}
+
+function lerp(from: number, to: number, u: number): number {
+  return from + (to - from) * u
 }
 
 function pchipSlope(
@@ -259,6 +268,37 @@ function buildSceneState(progress: number, reducedMotion: boolean): SceneState {
   }
 }
 
+function getFrameVars(progress: number, camera: CameraState, viewport: Size, image: Size): SceneVars {
+  const imageRatio = image.width / image.height
+  const viewportRatio = viewport.width / viewport.height
+  const fitMix = smoothstep01((clamp01(progress) - 0.6) / 0.4)
+
+  let coverWidth = viewport.width
+  let coverHeight = viewport.height
+  let containWidth = viewport.width
+  let containHeight = viewport.height
+
+  if (viewportRatio > imageRatio) {
+    coverHeight = viewport.width / imageRatio
+    containWidth = viewport.height * imageRatio
+  } else {
+    coverWidth = viewport.height * imageRatio
+    containHeight = viewport.width / imageRatio
+  }
+
+  const width = lerp(coverWidth, containWidth, fitMix)
+  const height = lerp(coverHeight, containHeight, fitMix)
+  const posX = lerp(camera.posX, 50, fitMix)
+  const posY = lerp(camera.posY, 50, fitMix)
+
+  return {
+    '--frame-width': `${width}px`,
+    '--frame-height': `${height}px`,
+    '--frame-left': `${(viewport.width - width) * (posX / 100)}px`,
+    '--frame-top': `${(viewport.height - height) * (posY / 100)}px`,
+  }
+}
+
 function getSceneVars(scene: SceneState): SceneVars {
   const [cr, cg, cb] = scene.sunColor.core
   const [gr, gg, gb] = scene.sunColor.glow
@@ -324,12 +364,19 @@ function applySceneVars(element: HTMLElement | null, scene: SceneState) {
   }
 }
 
-const INITIAL_STYLE = getSceneVars(buildSceneState(0, false)) as CSSProperties
+const INITIAL_STYLE = {
+  ...getSceneVars(buildSceneState(0, false)),
+  '--frame-width': '100vw',
+  '--frame-height': '100svh',
+  '--frame-left': '0px',
+  '--frame-top': '0px',
+} as CSSProperties
 
 export function CinematicBackground({ src, rangeVH }: Props) {
   const rootRef = useRef<HTMLDivElement>(null)
   const [revealed, setRevealed] = useState(false)
   const [reducedMotion, setReducedMotion] = useState(false)
+  const [imageSize, setImageSize] = useState<Size | null>(null)
 
   useEffect(() => {
     const id = requestAnimationFrame(() => setRevealed(true))
@@ -343,6 +390,25 @@ export function CinematicBackground({ src, rangeVH }: Props) {
     mediaQuery.addEventListener('change', sync)
     return () => mediaQuery.removeEventListener('change', sync)
   }, [])
+
+  useEffect(() => {
+    let cancelled = false
+    const image = new window.Image()
+
+    const sync = () => {
+      if (cancelled || image.naturalWidth === 0 || image.naturalHeight === 0) return
+      setImageSize({ width: image.naturalWidth, height: image.naturalHeight })
+    }
+
+    image.addEventListener('load', sync)
+    image.src = src
+    if (image.complete) sync()
+
+    return () => {
+      cancelled = true
+      image.removeEventListener('load', sync)
+    }
+  }, [src])
 
   useEffect(() => {
     const rootElement = rootRef.current
@@ -375,10 +441,30 @@ export function CinematicBackground({ src, rangeVH }: Props) {
     }
 
     function applyProgress(force = false) {
+      if (!rootElement) return
       const progress = getProgress()
       if (!force && Math.abs(progress - lastProgress) < 0.0005) return
       lastProgress = progress
-      applySceneVars(rootElement, buildSceneState(progress, reducedMotion))
+      const scene = buildSceneState(progress, reducedMotion)
+      applySceneVars(rootElement, scene)
+
+      const frameVars = imageSize
+        ? getFrameVars(
+            progress,
+            scene.camera,
+            { width: window.innerWidth, height: window.innerHeight },
+            imageSize
+          )
+        : {
+            '--frame-width': '100vw',
+            '--frame-height': '100svh',
+            '--frame-left': '0px',
+            '--frame-top': '0px',
+          }
+
+      for (const [name, value] of Object.entries(frameVars)) {
+        rootElement.style.setProperty(name, value)
+      }
     }
 
     function schedule(force = false) {
@@ -409,7 +495,7 @@ export function CinematicBackground({ src, rangeVH }: Props) {
       window.removeEventListener('scroll', onScroll)
       window.removeEventListener('resize', onResize)
     }
-  }, [rangeVH, reducedMotion])
+  }, [imageSize, rangeVH, reducedMotion])
 
   return (
     <div
@@ -434,11 +520,15 @@ export function CinematicBackground({ src, rangeVH }: Props) {
         }}
       >
         <div
-          className="absolute inset-0"
+          className="absolute overflow-hidden"
           style={{
+            width: 'var(--frame-width)',
+            height: 'var(--frame-height)',
+            left: 'var(--frame-left)',
+            top: 'var(--frame-top)',
             transform: 'scale(var(--camera-scale))',
             transformOrigin: '50% 50%',
-            willChange: 'transform',
+            willChange: 'transform, width, height, left, top',
           }}
         >
           <Image
