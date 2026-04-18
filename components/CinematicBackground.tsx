@@ -394,6 +394,17 @@ export function CinematicBackground({ src, rangeVH }: Props) {
         }}
       />
 
+      {/* Sun lighting — all light layers fade in slowly on first load */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        aria-hidden="true"
+        style={{
+          opacity: revealed ? 1 : 0,
+          transition: 'opacity 4800ms cubic-bezier(0.87, 0, 0.13, 1)',
+          transitionDelay: revealed ? '600ms' : '0ms',
+        }}
+      >
+
       {/* Shadow mass — opposite the sun; moves and strengthens with light */}
       <div
         className="absolute inset-0 pointer-events-none"
@@ -488,6 +499,8 @@ export function CinematicBackground({ src, rangeVH }: Props) {
           `,
         }}
       />
+
+      </div>{/* end sun lighting wrapper */}
 
       {/* Cinematic vignette — gentle, deepens slightly with scroll */}
       <div
