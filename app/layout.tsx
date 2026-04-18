@@ -17,11 +17,12 @@ const cormorant = Cormorant_Garamond({
 
 export const metadata: Metadata = {
   title: 'Vasilisa — Boudoir Photography',
-  description: 'A bright trace of your personality. Luxury boudoir photography in Paris.',
+  description:
+    'Paris boudoir — at ease in the room, light on your best self, honest retouch when it serves you.',
   metadataBase: new URL('https://vasilisa.com'),
   openGraph: {
     title: 'Vasilisa — Boudoir Photography',
-    description: 'A bright trace of your personality',
+    description: 'At ease — the best light on who you already are.',
     type: 'website',
   },
 }

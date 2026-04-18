@@ -5,7 +5,7 @@ import { Colophon } from '@/components/Colophon'
 export const metadata: Metadata = {
   title: 'Vasilisa — Photography',
   description:
-    'Boudoir photography in Paris — light, skin, and one room at a time.',
+    'Paris boudoir — at ease in the room, light on your best self, images you still believe in.',
 }
 
 export default function HomePage() {

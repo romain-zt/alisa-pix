@@ -16,7 +16,7 @@ import { OverlayChapter } from './OverlayChapter'
  * Flow:
  *   1. Hero          — wordmark assembles, no card (the type is the surface)
  *   2. Whisper I     — "you don't see yourself like this"   (whisper card)
- *   3. Manifesto     — two-line credo                        (soft card)
+ *   3. Manifesto     — light / ease / honest retouch          (soft card)
  *   4. Whisper II    — "closer than expected"                (whisper card)
  *   5. Threshold     — portrait floats, copy in soft card
  *   6. MicroStory    — three short lines, each in a whisper card
@@ -84,17 +84,17 @@ export function HomeContent() {
           className="font-serif font-light text-text-primary leading-[1.15]"
           style={{ fontSize: 'clamp(1.625rem, 4vw, 2.5rem)' }}
         >
-          Light is the conversation.
+          Light finds the best version of you.
           <br />
           <span className="italic text-text-muted/85">
-            Skin is the answer.
+            At home in the room — then on the wall.
           </span>
         </p>
         <div className="mt-9 h-px w-12 bg-accent-soft" />
-        <p className="mt-7 text-[var(--text-caption)] text-text-muted/75 leading-relaxed max-w-xs">
+        <p className="mt-7 text-[var(--text-caption)] text-text-muted/75 leading-relaxed max-w-sm">
           One subject, one room, two hours.
           <br />
-          No retouching beyond the natural.
+          Thoughtful retouch when it helps — never a rewrite of who you are.
         </p>
       </OverlayChapter>
 
