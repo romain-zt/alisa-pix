@@ -216,10 +216,10 @@ function getSunLighting(t: number) {
   const tc = Math.max(0, Math.min(1, t))
   /* Upper-left first — matches natural window light in bg-home */
   const path = [
-    { x: 0.05, y: 0.08 },
-    { x: 0.93, y: 0.1 },
-    { x: 0.88, y: 0.78 },
-    { x: 0.12, y: 0.84 },
+    { x: 0.08, y: 0.88 },
+    { x: 0.05, y: 0.10 },
+    { x: 0.92, y: 0.08 },
+    { x: 0.90, y: 0.86 },
   ] as const
   const n = path.length - 1
   const p = tc * n
@@ -400,8 +400,7 @@ export function CinematicBackground({ src, rangeVH }: Props) {
         aria-hidden="true"
         style={{
           opacity: revealed ? 1 : 0,
-          transition: 'opacity 4800ms cubic-bezier(0.87, 0, 0.13, 1)',
-          transitionDelay: revealed ? '600ms' : '0ms',
+          transition: 'opacity 3800ms cubic-bezier(0.87, 0, 0.13, 1)',
         }}
       >
 
