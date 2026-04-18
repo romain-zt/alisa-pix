@@ -4,7 +4,7 @@ import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
   title: 'Gallery — Vasilisa',
-  description: 'Boudoir photography by Vasilisa. Paris.',
+  description: 'Selected boudoir photos — full-screen prints in orbit. Paris.',
 }
 
 export default function GalleryPage() {

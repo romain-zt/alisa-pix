@@ -304,6 +304,7 @@ body {
   -webkit-user-select: none;
   opacity: 1;
   /* perspective is set in JS based on viewport size */
+  --orbit-light-w: 0.5;
 }
 .orbit-stage.orbit-dragging {
   cursor: grabbing;
@@ -360,16 +361,16 @@ body {
 }
 .orbit-light-a {
   background: radial-gradient(
-    ellipse 55% 45% at 25% 30%,
-    rgba(255, 220, 180, 0.18),
+    ellipse 55% 45% at calc(18% + var(--orbit-light-w, 0.5) * 22%) calc(26% + var(--orbit-light-w, 0.5) * 12%),
+    rgba(255, 220, 180, 0.2),
     transparent 65%
   );
   animation: lightLeakWarm 18s ease-in-out infinite;
 }
 .orbit-light-b {
   background: radial-gradient(
-    ellipse 50% 40% at 80% 75%,
-    rgba(196, 168, 138, 0.14),
+    ellipse 50% 40% at calc(82% - var(--orbit-light-w, 0.5) * 18%) calc(72% - var(--orbit-light-w, 0.5) * 10%),
+    rgba(196, 168, 138, 0.15),
     transparent 70%
   );
   animation: lightLeakCold 24s ease-in-out infinite;

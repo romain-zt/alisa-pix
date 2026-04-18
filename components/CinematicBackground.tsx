@@ -166,6 +166,7 @@ function getCameraState(t: number): CameraState {
 export function CinematicBackground({ src, rangeVH }: Props) {
   const [t, setT] = useState(0)
   const [revealed, setRevealed] = useState(false)
+  const [reducedMotion, setReducedMotion] = useState(false)
 
   useEffect(() => {
     const id = requestAnimationFrame(() => setRevealed(true))
@@ -173,10 +174,15 @@ export function CinematicBackground({ src, rangeVH }: Props) {
   }, [])
 
   useEffect(() => {
+    const mq = window.matchMedia('(prefers-reduced-motion: reduce)')
+    const sync = () => setReducedMotion(mq.matches)
+    sync()
+    mq.addEventListener('change', sync)
+    return () => mq.removeEventListener('change', sync)
+  }, [])
+
+  useEffect(() => {
     let ticking = false
-    const reduce = window.matchMedia(
-      '(prefers-reduced-motion: reduce)'
-    ).matches
 
     function computeRange(): number {
       if (rangeVH != null) return window.innerHeight * rangeVH
@@ -196,7 +202,9 @@ export function CinematicBackground({ src, rangeVH }: Props) {
       requestAnimationFrame(() => {
         const y = window.scrollY
         const range = computeRange()
-        const local = reduce ? 0 : Math.min(1, Math.max(0, y / range))
+        const local = reducedMotion
+          ? 0
+          : Math.min(1, Math.max(0, y / range))
         setT(local)
         ticking = false
       })
@@ -209,11 +217,19 @@ export function CinematicBackground({ src, rangeVH }: Props) {
       window.removeEventListener('scroll', onScroll)
       window.removeEventListener('resize', onScroll)
     }
-  }, [rangeVH])
+  }, [rangeVH, reducedMotion])
 
   const camera = getCameraState(t)
   const vignette = 0.24 + t * 0.12
   const imageOpacity = revealed ? 1 : 0
+
+  const scrollDrift = reducedMotion ? { x: 0, y: 0, rot: 0 } : { x: t, y: t, rot: t * 26 - 13 }
+  const warmAtX = 25 + scrollDrift.x * 14
+  const warmAtY = 22 + scrollDrift.y * 10
+  const coldAtX = 78 - scrollDrift.x * 12
+  const coldAtY = 75 - scrollDrift.y * 8
+  const beamAngle = 96 + t * 44
+  const beamAngle2 = 72 + t * 38
 
   return (
     <div
@@ -242,7 +258,7 @@ export function CinematicBackground({ src, rangeVH }: Props) {
         <div
           className="absolute inset-0"
           style={{
-            transform: `scale(${camera.scale})`,
+            transform: `scale(${camera.scale}) translate3d(${(t - 0.5) * 2.8}%, ${(t - 0.5) * -2.2}%, 0)`,
             transformOrigin: '50% 50%',
             willChange: 'transform',
           }}
@@ -271,21 +287,48 @@ export function CinematicBackground({ src, rangeVH }: Props) {
         }}
       />
 
-      {/* Liquid light — warm radial drifts continuously */}
+      {/* Scroll-linked drift + organic leak motion */}
       <div
-        className="absolute inset-0 light-leak-warm"
-        style={{
-          background:
-            'radial-gradient(ellipse 50% 40% at 25% 22%, rgba(255,238,210,0.14) 0%, transparent 60%)',
-        }}
-      />
+        className="absolute inset-0 pointer-events-none"
+        style={
+          reducedMotion
+            ? undefined
+            : {
+                transform: `translate3d(${(t - 0.5) * 5}vw, ${(t - 0.5) * -3.5}vh, 0) rotate(${scrollDrift.rot * 0.15}deg)`,
+                transformOrigin: '50% 40%',
+              }
+        }
+      >
+        <div
+          className="absolute inset-0 light-leak-warm"
+          style={{
+            background: `radial-gradient(ellipse 52% 42% at ${warmAtX}% ${warmAtY}%, rgba(255,238,210,0.16) 0%, transparent 62%)`,
+          }}
+        />
+        <div
+          className="absolute inset-0 light-leak-cold"
+          style={{
+            background: `radial-gradient(ellipse 44% 36% at ${coldAtX}% ${coldAtY}%, rgba(196,168,138,0.1) 0%, transparent 66%)`,
+          }}
+        />
+      </div>
 
-      {/* Cool subtle leak on opposite side */}
+      {/* Directional beams — sweep with scroll like window light */}
       <div
-        className="absolute inset-0 light-leak-cold"
+        className="absolute inset-[-15%] pointer-events-none mix-blend-screen"
+        aria-hidden="true"
         style={{
-          background:
-            'radial-gradient(ellipse 40% 35% at 78% 75%, rgba(196,168,138,0.09) 0%, transparent 65%)',
+          opacity: reducedMotion ? 0.05 : 0.07 + t * 0.14,
+          transform: reducedMotion
+            ? undefined
+            : `rotate(${-8 + t * 22}deg) translate3d(${(t - 0.5) * 6}%, 0, 0)`,
+          transformOrigin: `${18 + t * 6}% ${24 + t * 5}%`,
+          willChange: 'transform, opacity',
+          background: `
+            linear-gradient(${beamAngle}deg, transparent 40%, rgba(255, 244, 228, 0.11) 49.5%, rgba(255, 250, 240, 0.06) 51%, transparent 59%),
+            linear-gradient(${beamAngle2}deg, transparent 44%, rgba(255, 236, 214, 0.07) 50%, transparent 56%),
+            linear-gradient(${beamAngle + 18}deg, transparent 48%, rgba(255, 248, 235, 0.045) 52%, transparent 58%)
+          `,
         }}
       />
 

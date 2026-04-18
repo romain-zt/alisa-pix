@@ -163,6 +163,17 @@ export function OrbitGallery({ images }: OrbitGalleryProps) {
         cyl.style.transform = `translateZ(${perspectiveRef.current}px) rotateY(${-currentAngleRef.current}deg)`
       }
 
+      const stageEl = stageRef.current
+      if (stageEl) {
+        if (reducedMotionRef.current) {
+          stageEl.style.setProperty('--orbit-light-w', '0.5')
+        } else {
+          const rad = (currentAngleRef.current * Math.PI) / 180
+          const w = (Math.sin(rad) + 1) / 2
+          stageEl.style.setProperty('--orbit-light-w', w.toFixed(3))
+        }
+      }
+
       // Floor stage ring counter-rotates very subtly so it feels grounded
       // (small parallax against the cylinder, like seeing the marble below).
       const ring = stageRingRef.current

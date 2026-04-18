@@ -34,30 +34,39 @@ export function Surface({
 }: Props) {
   const weightStyles: Record<NonNullable<Props['weight']>, CSSProperties> = {
     whisper: {
-      background:
+      background: [
+        'linear-gradient(180deg, rgba(255,248,235,0.11) 0%, rgba(255,255,255,0.03) 22%, transparent 48%)',
+        'linear-gradient(125deg, rgba(255,255,255,0.04) 0%, transparent 42%)',
         'linear-gradient(135deg, rgba(13,11,9,0.32) 0%, rgba(10,9,8,0.22) 100%)',
+      ].join(', '),
       backdropFilter: 'blur(10px) saturate(1.05)',
       WebkitBackdropFilter: 'blur(10px) saturate(1.05)',
-      boxShadow: '0 30px 60px -25px rgba(0,0,0,0.45)',
-      border: '1px solid rgba(196,168,138,0.08)',
+      boxShadow:
+        '0 30px 60px -25px rgba(0,0,0,0.45), inset 0 1px 0 0 rgba(255,248,235,0.06)',
+      border: '1px solid rgba(196,168,138,0.1)',
     },
     soft: {
-      background:
+      background: [
+        'linear-gradient(180deg, rgba(255,248,235,0.13) 0%, rgba(255,240,220,0.04) 24%, transparent 50%)',
+        'linear-gradient(130deg, rgba(255,255,255,0.06) 0%, transparent 45%)',
         'linear-gradient(135deg, rgba(13,11,9,0.55) 0%, rgba(10,9,8,0.42) 100%)',
+      ].join(', '),
       backdropFilter: 'blur(16px) saturate(1.1)',
       WebkitBackdropFilter: 'blur(16px) saturate(1.1)',
       boxShadow:
-        '0 40px 80px -25px rgba(0,0,0,0.55), inset 0 1px 0 0 rgba(255,238,210,0.04)',
-      border: '1px solid rgba(196,168,138,0.12)',
+        '0 40px 80px -25px rgba(0,0,0,0.55), inset 0 1px 0 0 rgba(255,238,210,0.07)',
+      border: '1px solid rgba(196,168,138,0.14)',
     },
     solid: {
-      background:
+      background: [
+        'linear-gradient(180deg, rgba(255,248,235,0.1) 0%, transparent 38%)',
         'linear-gradient(135deg, rgba(15,13,11,0.72) 0%, rgba(10,9,8,0.62) 100%)',
+      ].join(', '),
       backdropFilter: 'blur(22px) saturate(1.15)',
       WebkitBackdropFilter: 'blur(22px) saturate(1.15)',
       boxShadow:
-        '0 50px 100px -25px rgba(0,0,0,0.65), inset 0 1px 0 0 rgba(255,238,210,0.05)',
-      border: '1px solid rgba(196,168,138,0.14)',
+        '0 50px 100px -25px rgba(0,0,0,0.65), inset 0 1px 0 0 rgba(255,238,210,0.08)',
+      border: '1px solid rgba(196,168,138,0.16)',
     },
   }
 
