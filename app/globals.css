@@ -435,18 +435,12 @@ body {
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
   will-change: transform, opacity, filter;
-  /* Smooth the focus-mode visual swap without slowing the rotation feel. */
   transition: filter 600ms var(--ease-emerge), opacity 600ms var(--ease-emerge);
-  /* Clickable so taps can focus an image. */
   pointer-events: auto;
   cursor: pointer;
 }
 .orbit-stage.orbit-dragging .orbit-item {
   cursor: grabbing;
-}
-.orbit-stage.orbit-focus-mode .orbit-item {
-  cursor: zoom-out;
-  pointer-events: none;
 }
 .orbit-frame {
   position: absolute;
@@ -572,124 +566,6 @@ body {
   }
 }
 
-/* FOCUS — single image, full bleed, contain */
-.orbit-focus-backdrop {
-  position: absolute;
-  inset: 0;
-  z-index: 5;
-  background: radial-gradient(
-      ellipse 100% 100% at 50% 50%,
-      rgba(8, 7, 6, 0.55) 0%,
-      rgba(5, 4, 3, 0.92) 100%
-    );
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
-  cursor: zoom-out;
-  animation: orbitFocusBackdropIn 900ms var(--ease-emerge) both;
-}
-@keyframes orbitFocusBackdropIn {
-  from { opacity: 0; }
-  to   { opacity: 1; }
-}
-
-.orbit-focus-layer {
-  position: absolute;
-  inset: 0;
-  z-index: 6;
-  display: grid;
-  place-items: center;
-  pointer-events: none; /* taps fall through to backdrop */
-  padding: clamp(1.5rem, 5vh, 4rem) clamp(1rem, 5vw, 4rem);
-}
-
-/* Stack: outgoing (under) + incoming (over) share one box */
-.orbit-focus-stack {
-  position: relative;
-  width: min(94vw, 1400px);
-  height: min(88vh, 1100px);
-  pointer-events: none;
-}
-
-.orbit-focus-image {
-  position: absolute;
-  inset: 0;
-  cursor: zoom-out;
-  will-change: transform, opacity, filter;
-  /* Halo — keyframes also set filter for blur passes */
-  filter: drop-shadow(0 30px 80px rgba(0, 0, 0, 0.55));
-}
-
-.orbit-focus-image--outgoing {
-  z-index: 1;
-  pointer-events: none;
-  animation: orbitFocusSwapOut 1.25s var(--ease-quiet) forwards;
-}
-
-.orbit-focus-image--incoming {
-  z-index: 2;
-  pointer-events: auto;
-}
-
-/* First open from orbit — slow zoom-in + de-blur */
-.orbit-focus-image--open {
-  animation: orbitFocusOpenIn 1.55s var(--ease-emerge) both;
-}
-
-/* Arrow step — new plate slides over the previous */
-.orbit-focus-image--swap-in {
-  animation: orbitFocusSwapIn 1.45s var(--ease-emerge) both;
-}
-
-@keyframes orbitFocusOpenIn {
-  from {
-    opacity: 0;
-    transform: scale(0.86) translateY(14px);
-    filter: blur(14px) drop-shadow(0 30px 80px rgba(0, 0, 0, 0.55));
-  }
-  to {
-    opacity: 1;
-    transform: scale(1) translateY(0);
-    filter: blur(0) drop-shadow(0 30px 80px rgba(0, 0, 0, 0.55));
-  }
-}
-
-@keyframes orbitFocusSwapIn {
-  from {
-    opacity: 0;
-    transform: scale(0.9);
-    filter: blur(16px) drop-shadow(0 24px 60px rgba(0, 0, 0, 0.45));
-  }
-  18% {
-    opacity: 1;
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-    filter: blur(0) drop-shadow(0 30px 80px rgba(0, 0, 0, 0.55));
-  }
-}
-
-@keyframes orbitFocusSwapOut {
-  from {
-    opacity: 1;
-    transform: scale(1);
-    filter: blur(0) drop-shadow(0 30px 80px rgba(0, 0, 0, 0.55));
-  }
-  to {
-    opacity: 0;
-    transform: scale(0.84);
-    filter: blur(22px) brightness(0.75)
-      drop-shadow(0 16px 40px rgba(0, 0, 0, 0.4));
-  }
-}
-
-@media (max-width: 768px) {
-  .orbit-focus-stack {
-    width: 100vw;
-    height: 78vh;
-  }
-}
-
 /* INTERFERENCE — global vignette over everything */
 .orbit-vignette {
   position: absolute;
@@ -805,17 +681,7 @@ body {
   .orbit-light,
   .orbit-shimmer,
   .orbit-hint,
-  .orbit-focus-backdrop,
-  .orbit-focus-image--open,
-  .orbit-focus-image--swap-in,
-  .orbit-focus-image--outgoing,
   .orbit-floor-ring {
     animation: none !important;
-  }
-
-  .orbit-focus-image--outgoing {
-    opacity: 0 !important;
-    transform: scale(0.96) !important;
-    filter: blur(10px) !important;
   }
 }

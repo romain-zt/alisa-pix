@@ -1,13 +1,11 @@
 'use client'
 
 import Image from 'next/image'
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 type OrbitGalleryProps = {
   images: string[]
 }
-
-type FocusVisual = { incoming: number; outgoing: number | null }
 
 /**
  * Geometry — INSIDE-CYLINDER view.
@@ -73,7 +71,6 @@ export function OrbitGallery({ images }: OrbitGalleryProps) {
   /** Quantize orbit target to the nearest image slot (scroll-snap–like). */
   const snapOrbitRef = useRef<() => void>(() => {})
   snapOrbitRef.current = () => {
-    if (focusedRef.current !== null) return
     const step = angleStepRef.current
     if (step <= 0) return
     const t = targetAngleRef.current
@@ -88,41 +85,6 @@ export function OrbitGallery({ images }: OrbitGalleryProps) {
   const activeIdxRef = useRef(0)
   const [entered, setEntered] = useState(false)
 
-  // Focus mode — null means orbit mode, otherwise the focused image index.
-  const [focused, setFocused] = useState<number | null>(null)
-  const focusedRef = useRef<number | null>(null)
-  useEffect(() => {
-    focusedRef.current = focused
-  }, [focused])
-
-  // Stacked focus visuals — outgoing stays under while incoming animates over.
-  const [focusVisual, setFocusVisual] = useState<FocusVisual | null>(null)
-  const FOCUS_SWAP_CLEAR_MS = 1500
-
-  useLayoutEffect(() => {
-    if (focused === null) {
-      setFocusVisual(null)
-      return
-    }
-    setFocusVisual((v) => {
-      if (!v) return { incoming: focused, outgoing: null }
-      if (v.incoming === focused) return v
-      return { incoming: focused, outgoing: v.incoming }
-    })
-  }, [focused])
-
-  useEffect(() => {
-    if (!focusVisual || focusVisual.outgoing === null) return
-    const t = window.setTimeout(() => {
-      setFocusVisual((v) =>
-        v && v.outgoing !== null
-          ? { incoming: v.incoming, outgoing: null }
-          : v
-      )
-    }, FOCUS_SWAP_CLEAR_MS)
-    return () => window.clearTimeout(t)
-  }, [focusVisual?.incoming, focusVisual?.outgoing])
-
   // ── Helpers: rotation math ──────────────────────────────────────────
   // Rotate the cylinder so image `i` ends up at the front, taking the
   // shortest arc (so it never spins the long way around).
@@ -135,30 +97,6 @@ export function OrbitGallery({ images }: OrbitGalleryProps) {
       targetAngleRef.current = i * angleStep + wraps * 360
     },
     [angleStep]
-  )
-
-  const openFocus = useCallback(
-    (i: number) => {
-      rotateTo(i)
-      setFocused(i)
-      lastInteractionRef.current = performance.now()
-    },
-    [rotateTo]
-  )
-
-  const closeFocus = useCallback(() => {
-    setFocused(null)
-    lastInteractionRef.current = performance.now()
-  }, [])
-
-  // Step focus to next/prev — also rotates the cylinder underneath.
-  const stepFocus = useCallback(
-    (delta: number) => {
-      const cur = focusedRef.current ?? activeIdxRef.current
-      const next = (((cur + delta) % N) + N) % N
-      openFocus(next)
-    },
-    [N, openFocus]
   )
 
   // ── Layout: place each item on the cylinder + set perspective ───────
@@ -205,10 +143,9 @@ export function OrbitGallery({ images }: OrbitGalleryProps) {
       const dt = lastFrameRef.current ? now - lastFrameRef.current : 16
       lastFrameRef.current = now
 
-      // Idle drift — only if the user has been quiet AND not focused.
+      // Idle drift — only if the user has been quiet.
       const idleFor = now - lastInteractionRef.current
       if (
-        focusedRef.current === null &&
         !reducedMotionRef.current &&
         lastInteractionRef.current > 0 &&
         idleFor > IDLE_DELAY
@@ -221,7 +158,7 @@ export function OrbitGallery({ images }: OrbitGalleryProps) {
       const diff = targetAngleRef.current - currentAngleRef.current
       const ad = Math.abs(diff)
       let lerp = reducedMotionRef.current ? 1 : LERP
-      if (!reducedMotionRef.current && focusedRef.current === null) {
+      if (!reducedMotionRef.current) {
         if (ad < 8) lerp = 0.2
         if (ad < 2.5) lerp = 0.38
         if (ad < 0.04) {
@@ -251,7 +188,6 @@ export function OrbitGallery({ images }: OrbitGalleryProps) {
       // Per-item visuals based on effective angle from the front.
       let bestI = 0
       let bestAbs = Infinity
-      const isFocused = focusedRef.current !== null
 
       const R = radiusRef.current
       for (let i = 0; i < itemsRef.current.length; i++) {
@@ -268,7 +204,7 @@ export function OrbitGallery({ images }: OrbitGalleryProps) {
 
         // Scale falloff — center dominates; slight boost when dead-on front.
         let scale = Math.max(0.16, Math.exp(-abs / SCALE_FALLOFF_DEG))
-        if (!isFocused && abs < 5) scale *= 1.04 + (1 - abs / 5) * 0.025
+        if (abs < 5) scale *= 1.04 + (1 - abs / 5) * 0.025
 
         // Inside view: items live at translateZ(-R) on the inner surface.
         // No extra zPush — all items are already equidistant from camera.
@@ -277,14 +213,8 @@ export function OrbitGallery({ images }: OrbitGalleryProps) {
         // Velocity-driven motion blur — faster spin smears off-axis frames.
         const velBlur = Math.min(5, angularVel * 0.6 * (abs / 25))
 
-        // In focus mode, sink the orbit further into the background.
-        if (isFocused) {
-          el.style.opacity = (opacity * 0.14).toFixed(3)
-          el.style.filter = `blur(${(blur + 11).toFixed(2)}px) brightness(${(0.35 - tint * 0.15).toFixed(2)})`
-        } else {
-          el.style.opacity = opacity.toFixed(3)
-          el.style.filter = `blur(${(blur + velBlur).toFixed(2)}px) brightness(${(1 - tint * 0.5).toFixed(2)})`
-        }
+        el.style.opacity = opacity.toFixed(3)
+        el.style.filter = `blur(${(blur + velBlur).toFixed(2)}px) brightness(${(1 - tint * 0.5).toFixed(2)})`
         // Past the FOV the item sits at/behind the camera depth — hide it.
         el.style.visibility = abs > VISIBILITY_CULL_DEG ? 'hidden' : 'visible'
 
@@ -295,12 +225,10 @@ export function OrbitGallery({ images }: OrbitGalleryProps) {
       }
 
       // Reflection: only the active image is reflected, the rest fade.
-      // (Mostly hidden behind the now-larger active photo, but still visible
-      // on tall viewports where the photo doesn't bleed to the floor.)
       for (let i = 0; i < reflectionRefs.current.length; i++) {
         const r = reflectionRefs.current[i]
         if (!r) continue
-        r.style.opacity = i === bestI ? (isFocused ? '0' : '1') : '0'
+        r.style.opacity = i === bestI ? '1' : '0'
       }
 
       // Crossfade backgrounds — only the active gas layer is opaque.
@@ -341,16 +269,15 @@ export function OrbitGallery({ images }: OrbitGalleryProps) {
   }
 
   // Wheel: rotate the cylinder; preventDefault so the page doesn't scroll.
-  // Disabled while focused (we keep the photo stable).
   useEffect(() => {
     const stage = stageRef.current
     if (!stage) return
     let wheelSnapTimer: ReturnType<typeof setTimeout> | null = null
     const onWheel = (e: WheelEvent) => {
-      if (focusedRef.current !== null) return
       e.preventDefault()
       const delta = Math.abs(e.deltaY) > Math.abs(e.deltaX) ? e.deltaY : e.deltaX
-      targetAngleRef.current += delta * WHEEL_SENSITIVITY
+      /* Invert so scroll direction matches natural gallery progression */
+      targetAngleRef.current -= delta * WHEEL_SENSITIVITY
       noteInteraction()
       if (wheelSnapTimer) clearTimeout(wheelSnapTimer)
       wheelSnapTimer = setTimeout(() => {
@@ -378,8 +305,7 @@ export function OrbitGallery({ images }: OrbitGalleryProps) {
 
     const onDown = (e: PointerEvent) => {
       if (e.button !== undefined && e.button !== 0) return
-      // In focus mode, pointer is just for tap-to-close — don't start a drag.
-      dragging = focusedRef.current === null
+      dragging = true
       startX = e.clientX
       startY = e.clientY
       startAngle = targetAngleRef.current
@@ -413,7 +339,7 @@ export function OrbitGallery({ images }: OrbitGalleryProps) {
       noteInteraction()
 
       if (moved >= TAP_THRESHOLD_PX) {
-        if (focusedRef.current === null) snapOrbitRef.current()
+        snapOrbitRef.current()
         return
       }
       handleTap(downTarget)
@@ -424,30 +350,9 @@ export function OrbitGallery({ images }: OrbitGalleryProps) {
       if (target?.closest('a, button')) return
 
       const item = target?.closest('.orbit-item') as HTMLDivElement | null
-      const onFocusImage = !!target?.closest('.orbit-focus-image')
-      const onFocusBackdrop = !!target?.closest('.orbit-focus-backdrop')
-
-      if (focusedRef.current !== null) {
-        // In focus: any tap closes (image, backdrop, or stage).
-        if (onFocusImage || onFocusBackdrop || !item) {
-          closeFocus()
-          return
-        }
-        // Tapped a faint orbit item behind focus → switch to that one.
-        const idx = itemsRef.current.indexOf(item)
-        if (idx >= 0) openFocus(idx)
-        return
-      }
-
-      // Orbit mode.
       if (item) {
         const idx = itemsRef.current.indexOf(item)
-        if (idx < 0) return
-        if (idx === activeIdxRef.current) {
-          openFocus(idx)
-        } else {
-          rotateTo(idx)
-        }
+        if (idx >= 0) rotateTo(idx)
       }
     }
 
@@ -461,50 +366,30 @@ export function OrbitGallery({ images }: OrbitGalleryProps) {
       stage.removeEventListener('pointerup', onUp)
       stage.removeEventListener('pointercancel', onUp)
     }
-  }, [closeFocus, openFocus, rotateTo])
+  }, [rotateTo])
 
   // Keyboard.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        if (focusedRef.current !== null) {
-          e.preventDefault()
-          closeFocus()
-        }
-        return
-      }
       if (['ArrowRight', 'ArrowDown', 'PageDown'].includes(e.key)) {
         e.preventDefault()
-        if (focusedRef.current !== null) stepFocus(1)
-        else {
-          targetAngleRef.current += angleStep
-          noteInteraction()
-        }
+        targetAngleRef.current += angleStep
+        noteInteraction()
       } else if (['ArrowLeft', 'ArrowUp', 'PageUp'].includes(e.key)) {
         e.preventDefault()
-        if (focusedRef.current !== null) stepFocus(-1)
-        else {
-          targetAngleRef.current -= angleStep
-          noteInteraction()
-        }
-      } else if (e.key === ' ' || e.key === 'Enter') {
-        e.preventDefault()
-        if (focusedRef.current !== null) {
-          closeFocus()
-        } else {
-          openFocus(activeIdxRef.current)
-        }
+        targetAngleRef.current -= angleStep
+        noteInteraction()
       }
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [angleStep, closeFocus, openFocus, stepFocus])
+  }, [angleStep])
 
   // ── Render ──────────────────────────────────────────────────────────
   return (
     <div
       ref={stageRef}
-      className={`orbit-stage ${entered ? 'orbit-entered' : ''} ${focused !== null ? 'orbit-focus-mode' : ''}`}
+      className={`orbit-stage ${entered ? 'orbit-entered' : ''}`}
       role="region"
       aria-roledescription="3D photo gallery"
       aria-label="Vasilisa — boudoir photography"
@@ -596,52 +481,6 @@ export function OrbitGallery({ images }: OrbitGalleryProps) {
       {/* INTERFERENCE — vignette */}
       <div className="orbit-vignette" aria-hidden="true" />
 
-      {/* FOCUS — single image, full bleed, with object-contain */}
-      {focused !== null && (
-        <div className="orbit-focus-backdrop" aria-hidden="true" />
-      )}
-      <div
-        className={`orbit-focus-layer ${focused !== null ? 'is-open' : ''}`}
-        aria-hidden={focused === null}
-      >
-        {focused !== null && focusVisual && (
-          <div className="orbit-focus-stack">
-            {focusVisual.outgoing !== null && (
-              <div
-                key={`focus-out-${focusVisual.outgoing}`}
-                className="orbit-focus-image orbit-focus-image--outgoing"
-                aria-hidden="true"
-              >
-                <Image
-                  src={images[focusVisual.outgoing]}
-                  alt=""
-                  fill
-                  sizes="100vw"
-                  className="object-contain"
-                />
-              </div>
-            )}
-            <div
-              key={`focus-in-${focusVisual.incoming}`}
-              className={`orbit-focus-image orbit-focus-image--incoming ${
-                focusVisual.outgoing === null
-                  ? 'orbit-focus-image--open'
-                  : 'orbit-focus-image--swap-in'
-              }`}
-            >
-              <Image
-                src={images[focusVisual.incoming]}
-                alt=""
-                fill
-                priority
-                sizes="100vw"
-                className="object-contain"
-              />
-            </div>
-          </div>
-        )}
-      </div>
-
       {/* UI */}
       <a href="/" className="orbit-brand" aria-label="Vasilisa — home">
         Vasilisa
@@ -649,7 +488,7 @@ export function OrbitGallery({ images }: OrbitGalleryProps) {
 
       <div className="orbit-counter" aria-live="polite">
         <span className="orbit-counter-num">
-          {String((focused ?? activeIdx) + 1).padStart(2, '0')}
+          {String(activeIdx + 1).padStart(2, '0')}
         </span>
         <span className="orbit-counter-sep">·</span>
         <span className="orbit-counter-tot">
@@ -658,21 +497,13 @@ export function OrbitGallery({ images }: OrbitGalleryProps) {
       </div>
 
       <div className="orbit-hint" aria-hidden="true">
-        {focused === null ? (
-          <>
-            <span>tap to focus</span>
-            <span className="orbit-dot" />
-            <span>drag</span>
-            <span className="orbit-dot" />
-            <span>← →</span>
-          </>
-        ) : (
-          <>
-            <span>← →</span>
-            <span className="orbit-dot" />
-            <span>esc to close</span>
-          </>
-        )}
+        <span>tap frame</span>
+        <span className="orbit-dot" />
+        <span>drag</span>
+        <span className="orbit-dot" />
+        <span>scroll</span>
+        <span className="orbit-dot" />
+        <span>← →</span>
       </div>
     </div>
   )
