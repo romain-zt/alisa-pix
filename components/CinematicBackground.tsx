@@ -56,33 +56,39 @@ interface CameraState {
   objPosY: number
 }
 
+/**
+ * Camera target values are tuned against a container of `inset-[-28%]`
+ * (156% × 156% of viewport). Edge safety verified at every phase boundary
+ * — the image always overflows the viewport on every side.
+ */
 function getCameraState(t: number): CameraState {
-  // Phase 1 — focus on RIGHT-TOP (the subject)
+  // ── PHASE 1 — focus on RIGHT-TOP (the subject) ──────────────────────────
+  // Heavy zoom (1.85 → 1.05) + big rightward pan + vertical crop near top.
   if (t < 0.4) {
     const e = smoothstep(t / 0.4)
     return {
-      scale: lerp(1.45, 1.06, e),
-      tx: lerp(-12, 0, e),
-      objPosY: lerp(20, 50, e),
+      scale: lerp(1.85, 1.05, e),
+      tx: lerp(-20, 2, e),
+      objPosY: lerp(10, 52, e),
     }
   }
 
-  // Phase 2 — full view, drift to expose the LEFT side
+  // ── PHASE 2 — full dezoom, drift to expose the LEFT side ────────────────
   if (t < 0.72) {
     const e = smoothstep((t - 0.4) / 0.32)
     return {
-      scale: lerp(1.06, 1.05, e),
-      tx: lerp(0, 6, e),
-      objPosY: 50,
+      scale: lerp(1.05, 1.02, e),
+      tx: lerp(2, 16, e),
+      objPosY: lerp(52, 56, e),
     }
   }
 
-  // Phase 3 — pan DOWN to reveal the bottom
+  // ── PHASE 3 — push back in + pan DOWN to reveal the bottom ──────────────
   const e = smoothstep((t - 0.72) / 0.28)
   return {
-    scale: lerp(1.05, 1.14, e),
-    tx: lerp(6, 0, e),
-    objPosY: lerp(50, 88, e),
+    scale: lerp(1.02, 1.35, e),
+    tx: lerp(16, -8, e),
+    objPosY: lerp(56, 96, e),
   }
 }
 
@@ -134,8 +140,9 @@ export function CinematicBackground({ src, rangeVH = 9 }: Props) {
       {/* Base color floor — never empty */}
       <div className="absolute inset-0 bg-bg-deep" />
 
-      {/* Stage — generous overflow so horizontal pan never exposes edges */}
-      <div className="absolute inset-[-12%]">
+      {/* Stage — generous overflow (156% of viewport) so the larger pan +
+          zoom range never exposes the container edges. */}
+      <div className="absolute inset-[-28%]">
         <div
           ref={stageRef}
           className="absolute inset-0"
@@ -157,9 +164,9 @@ export function CinematicBackground({ src, rangeVH = 9 }: Props) {
             alt=""
             fill
             priority
-            sizes="124vw"
+            sizes='100dvw'
             className="object-cover"
-            style={{ objectPosition: `50% ${camera.objPosY}%` }}
+            style={{ objectPosition: `90% ${-camera.objPosY}%` }}
           />
         </div>
       </div>

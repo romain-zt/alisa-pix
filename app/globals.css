@@ -550,11 +550,16 @@ body {
 }
 
 @media (max-width: 768px) {
+  /* On phones, photo nearly fills the screen — give it more room. */
+  .orbit-item {
+    --orbit-item-w: min(38vw, 50vh, 360px);
+  }
   .orbit-floor-glow {
     height: 50vh;
   }
   .orbit-floor-reflections {
-    height: clamp(100px, 26vw, 180px);
+    width: min(90vw, 460px);
+    height: clamp(120px, 18vh, 200px);
   }
 }
 
