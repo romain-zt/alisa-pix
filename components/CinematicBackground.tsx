@@ -28,19 +28,28 @@ interface Props {
  *   - Landscape viewport (desktop) → image overflows vertically, posY
  *     pans TOP↔BOTTOM, posX has no visible effect
  *
- * BOTH posX AND posY change in every phase so motion is visible on
- * BOTH orientations regardless of which axis happens to overflow.
+ * The journey has 3 distinct ACTS:
+ *
+ *   ACT I  — Zoom IN  (first 1/3 of scroll)
+ *     The camera pulls into the picture. Almost no pan; the world
+ *     gets bigger and more intimate.
+ *
+ *   ACT II — Pan RIGHT (middle 1/2 of scroll, fast)
+ *     The camera holds its zoom and slides across the picture from
+ *     left to right (and top to bottom on landscape). This is where
+ *     the bulk of the spatial movement happens.
+ *
+ *   ACT III — Zoom OUT (last 15% of scroll)
+ *     The camera releases back to natural cover-fit (scale 1.0).
  *
  * `scale` is a CSS transform applied on top of the cover-fit. It is
  * always >= 1.0 so coverage stays guaranteed (scaling outward from
- * the center never exposes edges). Phase 1 zooms IN gently (1.0 →
- * 1.15) to draw the eye in on first scroll, then it dezooms back to
- * natural cover-fit (1.0) by the end of the journey.
+ * the center never exposes edges).
  *
- *   t=0.00  posX=15 posY=12  scale=1.00  — top-left, natural
- *   t=0.40  posX=40 posY=85  scale=1.15  — bottom-drifted, zoomed in
- *   t=0.72  posX=85 posY=60  scale=1.05  — far right, releasing
- *   t=1.00  posX=55 posY=40  scale=1.00  — settled, at rest
+ *   t=0.00  posX=15 posY=15  scale=1.00  — top-left, natural
+ *   t=0.33  posX=18 posY=22  scale=1.18  — barely moved, zoomed in
+ *   t=0.85  posX=85 posY=75  scale=1.18  — swept far right + down
+ *   t=1.00  posX=75 posY=60  scale=1.00  — released, dezoomed
  *
  * Keyframes are interpolated with **PCHIP** (Piecewise Cubic Hermite
  * Interpolating Polynomial) for C¹-continuous motion (no velocity
@@ -48,10 +57,10 @@ interface Props {
  */
 
 const KEYFRAMES = [
-  { t: 0.0, posX: 15, posY: 12, scale: 1.0 },
-  { t: 0.4, posX: 40, posY: 85, scale: 1.15 },
-  { t: 0.72, posX: 85, posY: 60, scale: 1.05 },
-  { t: 1.0, posX: 55, posY: 40, scale: 1.0 },
+  { t: 0.0, posX: 15, posY: 15, scale: 1.0 },
+  { t: 0.33, posX: 18, posY: 22, scale: 1.18 },
+  { t: 0.85, posX: 85, posY: 75, scale: 1.18 },
+  { t: 1.0, posX: 75, posY: 60, scale: 1.0 },
 ] as const
 
 interface CameraState {

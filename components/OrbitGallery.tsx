@@ -43,6 +43,8 @@ const WHEEL_SENSITIVITY = 0.32
 const DRAG_SENSITIVITY = 0.42
 // Lerp factor — 0.08 is silky, 0.18 responsive.
 const LERP = 0.09
+// After wheel stops, snap target to a frame (scroll-snap–like).
+const WHEEL_SNAP_DEBOUNCE_MS = 140
 // How long after last interaction before idle drift resumes (ms).
 const IDLE_DELAY = 4200
 // Below this much pointer movement, treat as a tap, not a drag.
@@ -65,6 +67,18 @@ export function OrbitGallery({ images }: OrbitGalleryProps) {
   const lastFrameRef = useRef<number>(0)
   const lastInteractionRef = useRef<number>(0)
   const reducedMotionRef = useRef(false)
+  const angleStepRef = useRef(angleStep)
+  angleStepRef.current = angleStep
+
+  /** Quantize orbit target to the nearest image slot (scroll-snap–like). */
+  const snapOrbitRef = useRef<() => void>(() => {})
+  snapOrbitRef.current = () => {
+    if (focusedRef.current !== null) return
+    const step = angleStepRef.current
+    if (step <= 0) return
+    const t = targetAngleRef.current
+    targetAngleRef.current = Math.round(t / step) * step
+  }
 
   // Geometry state — re-measured on resize.
   const radiusRef = useRef(RADIUS_DESKTOP)
@@ -202,10 +216,22 @@ export function OrbitGallery({ images }: OrbitGalleryProps) {
         targetAngleRef.current += IDLE_DRIFT_DEG_PER_MS * dt
       }
 
-      // Lerp current toward target. Track angular velocity for motion blur.
+      // Lerp current toward target — stronger pull when nearly aligned (snap feel).
       const prevCurrent = currentAngleRef.current
       const diff = targetAngleRef.current - currentAngleRef.current
-      currentAngleRef.current += diff * (reducedMotionRef.current ? 1 : LERP)
+      const ad = Math.abs(diff)
+      let lerp = reducedMotionRef.current ? 1 : LERP
+      if (!reducedMotionRef.current && focusedRef.current === null) {
+        if (ad < 8) lerp = 0.2
+        if (ad < 2.5) lerp = 0.38
+        if (ad < 0.04) {
+          currentAngleRef.current = targetAngleRef.current
+          lerp = 0
+        }
+      }
+      if (lerp > 0) {
+        currentAngleRef.current += diff * lerp
+      }
       const angularVel = Math.abs(currentAngleRef.current - prevCurrent) // deg per frame
 
       const cyl = cylinderRef.current
@@ -240,9 +266,9 @@ export function OrbitGallery({ images }: OrbitGalleryProps) {
         const blur = Math.min(8, Math.pow(abs / 24, 1.4))
         const tint = Math.min(0.6, abs / 90)
 
-        // Scale falloff — center dominates the field of view.
-        // exp(-abs/50)  →  0°: 1.00 · 22.5°: 0.64 · 45°: 0.41 · 67°: 0.26
-        const scale = Math.max(0.16, Math.exp(-abs / SCALE_FALLOFF_DEG))
+        // Scale falloff — center dominates; slight boost when dead-on front.
+        let scale = Math.max(0.16, Math.exp(-abs / SCALE_FALLOFF_DEG))
+        if (!isFocused && abs < 5) scale *= 1.04 + (1 - abs / 5) * 0.025
 
         // Inside view: items live at translateZ(-R) on the inner surface.
         // No extra zPush — all items are already equidistant from camera.
@@ -319,15 +345,24 @@ export function OrbitGallery({ images }: OrbitGalleryProps) {
   useEffect(() => {
     const stage = stageRef.current
     if (!stage) return
+    let wheelSnapTimer: ReturnType<typeof setTimeout> | null = null
     const onWheel = (e: WheelEvent) => {
       if (focusedRef.current !== null) return
       e.preventDefault()
       const delta = Math.abs(e.deltaY) > Math.abs(e.deltaX) ? e.deltaY : e.deltaX
       targetAngleRef.current += delta * WHEEL_SENSITIVITY
       noteInteraction()
+      if (wheelSnapTimer) clearTimeout(wheelSnapTimer)
+      wheelSnapTimer = setTimeout(() => {
+        wheelSnapTimer = null
+        snapOrbitRef.current()
+      }, WHEEL_SNAP_DEBOUNCE_MS)
     }
     stage.addEventListener('wheel', onWheel, { passive: false })
-    return () => stage.removeEventListener('wheel', onWheel)
+    return () => {
+      if (wheelSnapTimer) clearTimeout(wheelSnapTimer)
+      stage.removeEventListener('wheel', onWheel)
+    }
   }, [])
 
   // Pointer drag (mouse + touch). Doubles as tap detection on release.
@@ -377,7 +412,10 @@ export function OrbitGallery({ images }: OrbitGalleryProps) {
       stage.classList.remove('orbit-dragging')
       noteInteraction()
 
-      if (moved >= TAP_THRESHOLD_PX) return // it was a drag, not a tap
+      if (moved >= TAP_THRESHOLD_PX) {
+        if (focusedRef.current === null) snapOrbitRef.current()
+        return
+      }
       handleTap(downTarget)
     }
 

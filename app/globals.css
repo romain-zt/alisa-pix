@@ -288,6 +288,8 @@ body {
 .orbit-stage {
   position: fixed;
   inset: 0;
+  /* Contain wheel/trackpad so the page doesn’t keep scrolling behind the gallery */
+  overscroll-behavior: none;
   background: radial-gradient(
       ellipse at 50% 55%,
       #0f0d0a 0%,
