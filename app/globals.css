@@ -395,9 +395,17 @@ body {
   z-index: 3;
   display: grid;
   place-items: center;
+  /* Lift the cylinder — perspective + floor read bottom-heavy otherwise */
+  transform: translate3d(0, -2.25vh, 0);
   transform-style: preserve-3d;
   /* Camera itself is not clickable; items below opt in. */
   pointer-events: none;
+}
+
+@media (min-width: 769px) {
+  .orbit-camera {
+    transform: translate3d(0, -3vh, 0);
+  }
 }
 .orbit-cylinder {
   position: relative;
@@ -409,12 +417,11 @@ body {
 .orbit-item {
   /* Intrinsic photo size on the cylinder wall.
    * Apparent on-screen width ≈ var * (perspective / R)
-   *   desktop: ratio = 1700/700 ≈ 2.43
-   *   mobile : ratio =  950/380 ≈ 2.50
-   * → desktop active photo lands around 70–75 % viewport width
-   *   mobile  active photo lands around 90 % viewport width
-   * vh is included so the photo can't bleed past the screen vertically. */
-  --orbit-item-w: min(30vw, 40vh, 520px);
+   *   desktop: ratio ≈ 1650/580 ≈ 2.84
+   *   mobile : ratio ≈  900/320 ≈ 2.81
+   * Larger frames + tighter R = less angular “air” between neighbours.
+   * vh caps vertical bleed on short viewports. */
+  --orbit-item-w: min(40vw, 50vh, 640px);
   position: absolute;
   top: 50%;
   left: 50%;
@@ -521,8 +528,8 @@ body {
   left: 50%;
   bottom: 0;
   transform: translateX(-50%);
-  width: min(72vw, 1100px);
-  height: clamp(160px, 24vh, 320px);
+  width: min(82vw, 1200px);
+  height: clamp(180px, 26vh, 360px);
   /* Flip vertically so it reads as a mirror reflection */
   scale: 1 -1;
   /* Fade from sharp at top (touching the photo) to nothing at bottom */
@@ -552,14 +559,14 @@ body {
 @media (max-width: 768px) {
   /* On phones, photo nearly fills the screen — give it more room. */
   .orbit-item {
-    --orbit-item-w: min(38vw, 50vh, 360px);
+    --orbit-item-w: min(46vw, 56vh, 440px);
   }
   .orbit-floor-glow {
     height: 50vh;
   }
   .orbit-floor-reflections {
-    width: min(90vw, 460px);
-    height: clamp(120px, 18vh, 200px);
+    width: min(94vw, 520px);
+    height: clamp(140px, 20vh, 220px);
   }
 }
 

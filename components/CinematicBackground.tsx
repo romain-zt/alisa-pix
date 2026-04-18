@@ -28,13 +28,13 @@ interface Props {
  *   - Landscape viewport (desktop) → image overflows vertically, posY
  *     pans TOP↔BOTTOM, posX has no visible effect
  *
- * The journey animates BOTH posX and posY so it reads on both
- * orientations:
+ * BOTH posX AND posY change in every phase so motion is visible on
+ * BOTH orientations regardless of which axis happens to overflow:
  *
- *   t=0.00  posX=22 posY=18   — top-left of the cropped frame
- *   t=0.40  posX=22 posY=82   — bottom-left
- *   t=0.72  posX=78 posY=62   — slid right + back up a bit
- *   t=1.00  posX=55 posY=50   — released, centered
+ *   t=0.00  posX=15 posY=12   — top-left of the cropped frame
+ *   t=0.40  posX=40 posY=85   — bottom + drifted right
+ *   t=0.72  posX=85 posY=60   — far right, back up a bit
+ *   t=1.00  posX=55 posY=40   — released, settled near center
  *
  * Keyframes are interpolated with **PCHIP** (Piecewise Cubic Hermite
  * Interpolating Polynomial) for C¹-continuous motion (no velocity
@@ -42,10 +42,10 @@ interface Props {
  */
 
 const KEYFRAMES = [
-  { t: 0.0, posX: 22, posY: 18 },
-  { t: 0.4, posX: 22, posY: 82 },
-  { t: 0.72, posX: 78, posY: 62 },
-  { t: 1.0, posX: 55, posY: 50 },
+  { t: 0.0, posX: 15, posY: 12 },
+  { t: 0.4, posX: 40, posY: 85 },
+  { t: 0.72, posX: 85, posY: 60 },
+  { t: 1.0, posX: 55, posY: 40 },
 ] as const
 
 interface CameraState {

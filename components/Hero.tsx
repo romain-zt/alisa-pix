@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
-import { animate, createTimeline, stagger } from 'animejs'
+import { animate, createTimeline, cubicBezier, stagger } from 'animejs'
 import { useSectionProgress } from '@/hooks/useSectionProgress'
 
 /**
@@ -60,8 +60,11 @@ export function Hero() {
       return
     }
 
+    const easeDefault = cubicBezier(0.87, 0, 0.13, 1)
+    const easeOutExpo = cubicBezier(0.16, 1, 0.3, 1)
+
     const tl = createTimeline({
-      defaults: { ease: 'cubicBezier(0.87, 0, 0.13, 1)' },
+      defaults: { ease: easeDefault },
     })
 
     // Eyebrow first — quiet annunciation
@@ -100,7 +103,7 @@ export function Hero() {
           opacity: [0, 1],
           scaleX: [0, 1],
           duration: 1300,
-          ease: 'cubicBezier(0.16, 1, 0.3, 1)',
+          ease: easeOutExpo,
         },
         3100
       )

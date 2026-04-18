@@ -23,15 +23,15 @@ type FocusVisual = { incoming: number; outgoing: number | null }
  *   Active item world z = perspective - R   (close, in front of camera)
  *   Items past ±90°    have z >= perspective (behind the camera)  → culled
  */
-const RADIUS_DESKTOP = 700
-const RADIUS_MOBILE = 380
-const PERSPECTIVE_DESKTOP = 1700
-const PERSPECTIVE_MOBILE = 950
+const RADIUS_DESKTOP = 580
+const RADIUS_MOBILE = 320
+const PERSPECTIVE_DESKTOP = 1650
+const PERSPECTIVE_MOBILE = 900
 // Scale falloff so neighbours clearly subordinate to the center.
-const SCALE_FALLOFF_DEG = 50
-// Camera tilt — perspective-origin Y. <50% looks down on the cylinder.
-// Inside the cylinder, we stay near eye-height (slight downward gaze).
-const PERSPECTIVE_ORIGIN_Y = 44
+const SCALE_FALLOFF_DEG = 42
+// Camera tilt — perspective-origin Y. <50% reads as looking down the wall;
+// ~50% keeps the cylinder mass closer to optical vertical center.
+const PERSPECTIVE_ORIGIN_Y = 50
 // Beyond this effective angle, items are behind the viewer (or very close
 // to camera depth). Hide them to avoid CSS perspective math going negative.
 const VISIBILITY_CULL_DEG = 84
