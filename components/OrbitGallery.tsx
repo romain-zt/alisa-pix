@@ -1,11 +1,13 @@
 'use client'
 
 import Image from 'next/image'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 
 type OrbitGalleryProps = {
   images: string[]
 }
+
+type FocusVisual = { incoming: number; outgoing: number | null }
 
 /**
  * Geometry — INSIDE-CYLINDER view.
@@ -78,6 +80,34 @@ export function OrbitGallery({ images }: OrbitGalleryProps) {
   useEffect(() => {
     focusedRef.current = focused
   }, [focused])
+
+  // Stacked focus visuals — outgoing stays under while incoming animates over.
+  const [focusVisual, setFocusVisual] = useState<FocusVisual | null>(null)
+  const FOCUS_SWAP_CLEAR_MS = 1500
+
+  useLayoutEffect(() => {
+    if (focused === null) {
+      setFocusVisual(null)
+      return
+    }
+    setFocusVisual((v) => {
+      if (!v) return { incoming: focused, outgoing: null }
+      if (v.incoming === focused) return v
+      return { incoming: focused, outgoing: v.incoming }
+    })
+  }, [focused])
+
+  useEffect(() => {
+    if (!focusVisual || focusVisual.outgoing === null) return
+    const t = window.setTimeout(() => {
+      setFocusVisual((v) =>
+        v && v.outgoing !== null
+          ? { incoming: v.incoming, outgoing: null }
+          : v
+      )
+    }, FOCUS_SWAP_CLEAR_MS)
+    return () => window.clearTimeout(t)
+  }, [focusVisual?.incoming, focusVisual?.outgoing])
 
   // ── Helpers: rotation math ──────────────────────────────────────────
   // Rotate the cylinder so image `i` ends up at the front, taking the
@@ -223,8 +253,8 @@ export function OrbitGallery({ images }: OrbitGalleryProps) {
 
         // In focus mode, sink the orbit further into the background.
         if (isFocused) {
-          el.style.opacity = (opacity * 0.18).toFixed(3)
-          el.style.filter = `blur(${(blur + 6).toFixed(2)}px) brightness(${(0.4 - tint * 0.2).toFixed(2)})`
+          el.style.opacity = (opacity * 0.14).toFixed(3)
+          el.style.filter = `blur(${(blur + 11).toFixed(2)}px) brightness(${(0.35 - tint * 0.15).toFixed(2)})`
         } else {
           el.style.opacity = opacity.toFixed(3)
           el.style.filter = `blur(${(blur + velBlur).toFixed(2)}px) brightness(${(1 - tint * 0.5).toFixed(2)})`
@@ -536,16 +566,40 @@ export function OrbitGallery({ images }: OrbitGalleryProps) {
         className={`orbit-focus-layer ${focused !== null ? 'is-open' : ''}`}
         aria-hidden={focused === null}
       >
-        {focused !== null && (
-          <div className="orbit-focus-image" key={`focus-${focused}`}>
-            <Image
-              src={images[focused]}
-              alt=""
-              fill
-              priority
-              sizes="100vw"
-              className="object-contain"
-            />
+        {focused !== null && focusVisual && (
+          <div className="orbit-focus-stack">
+            {focusVisual.outgoing !== null && (
+              <div
+                key={`focus-out-${focusVisual.outgoing}`}
+                className="orbit-focus-image orbit-focus-image--outgoing"
+                aria-hidden="true"
+              >
+                <Image
+                  src={images[focusVisual.outgoing]}
+                  alt=""
+                  fill
+                  sizes="100vw"
+                  className="object-contain"
+                />
+              </div>
+            )}
+            <div
+              key={`focus-in-${focusVisual.incoming}`}
+              className={`orbit-focus-image orbit-focus-image--incoming ${
+                focusVisual.outgoing === null
+                  ? 'orbit-focus-image--open'
+                  : 'orbit-focus-image--swap-in'
+              }`}
+            >
+              <Image
+                src={images[focusVisual.incoming]}
+                alt=""
+                fill
+                priority
+                sizes="100vw"
+                className="object-contain"
+              />
+            </div>
           </div>
         )}
       </div>

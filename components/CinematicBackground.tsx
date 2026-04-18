@@ -12,83 +12,127 @@ interface Props {
 /**
  * CinematicBackground
  *
- * A pinned "stage" element that holds the full source image (its aspect
- * ratio matches the bitmap so `object-cover` renders the whole picture
- * with no internal crop). The stage is sized **larger than the viewport
- * on both axes regardless of orientation** so the camera can pan freely
- * in any direction.
+ * Renders the source image at its **natural cover-fit size** — i.e. the
+ * smallest size that fully covers the viewport. The image is never
+ * scaled larger than that, so:
  *
- * Camera = focal point `(fx, fy)` in image-normalized coords + `scale`.
- * The transform that brings (fx, fy) to viewport center after scaling is:
+ *   - 100% viewport coverage is guaranteed by `object-fit: cover`
+ *   - The picture is never zoomed in beyond what's needed to cover
  *
- *   tx = (0.5 - fx) * scale * 100   (% of stage layout width)
- *   ty = (0.5 - fy) * scale * 100   (% of stage layout height)
+ * The "camera" is just `object-position` — a percentage pair that
+ * controls which part of the cropped image is visible. The browser
+ * handles the orientation logic automatically:
  *
- * THREE-PHASE JOURNEY — DEZOOM ONLY (scale ≤ 1.0 always):
+ *   - Portrait viewport (mobile) → image overflows horizontally, posX
+ *     pans LEFT↔RIGHT, posY has no visible effect
+ *   - Landscape viewport (desktop) → image overflows vertically, posY
+ *     pans TOP↔BOTTOM, posX has no visible effect
  *
- *   PHASE 1  (0 → 0.40)   "descent on the left"
- *     fx stays 0.30, fy 0.22 → 0.78, scale 1.00 (natural)
- *     Camera holds on the LEFT side at natural zoom and slowly travels
- *     from the TOP of the picture down to the BOTTOM.
+ * The journey animates BOTH posX and posY so it reads on both
+ * orientations:
  *
- *   PHASE 2  (0.40 → 0.72)  "step back, swing right"
- *     fx 0.30 → 0.65, fy 0.78 → 0.65, scale 1.00 → 0.88
- *     Camera dezooms while sliding to the RIGHT — more of the picture
- *     enters the frame as we move across.
+ *   t=0.00  posX=22 posY=18   — top-left of the cropped frame
+ *   t=0.40  posX=22 posY=82   — bottom-left
+ *   t=0.72  posX=78 posY=62   — slid right + back up a bit
+ *   t=1.00  posX=55 posY=50   — released, centered
  *
- *   PHASE 3  (0.72 → 1.00)  "release"
- *     fx 0.65 → 0.60, fy 0.65 → 0.55, scale 0.88 → 0.78
- *     Pure dezoom — nearly stationary focal point, the picture simply
- *     opens up further.
- *
- * Stage size `max(200vw, 240vh)` keeps the picture covering the viewport
- * at every phase boundary on every orientation (16:9, 16:10, 4:3, square,
- * 9:19.5 mobile, 21:9 ultrawide) with comfortable margins.
+ * Keyframes are interpolated with **PCHIP** (Piecewise Cubic Hermite
+ * Interpolating Polynomial) for C¹-continuous motion (no velocity
+ * stutter at keyframes) with monotonicity (no overshoot).
  */
 
-const IMAGE_W = 980
-const IMAGE_H = 1158
-
-function smoothstep(x: number) {
-  const t = Math.max(0, Math.min(1, x))
-  return t * t * (3 - 2 * t)
-}
-
-function lerp(a: number, b: number, t: number) {
-  return a + (b - a) * t
-}
+const KEYFRAMES = [
+  { t: 0.0, posX: 22, posY: 18 },
+  { t: 0.4, posX: 22, posY: 82 },
+  { t: 0.72, posX: 78, posY: 62 },
+  { t: 1.0, posX: 55, posY: 50 },
+] as const
 
 interface CameraState {
-  fx: number
-  fy: number
-  scale: number
+  posX: number
+  posY: number
+}
+
+/**
+ * PCHIP slope at an interior keyframe. Returns 0 when the secants on
+ * either side change sign (or one is zero) to enforce monotonicity.
+ * Otherwise uses the Fritsch–Carlson weighted-harmonic-mean formula.
+ */
+function pchipSlope(
+  ym1: number,
+  y0: number,
+  yp1: number,
+  hm1: number,
+  hp1: number
+): number {
+  const dm1 = (y0 - ym1) / hm1
+  const dp1 = (yp1 - y0) / hp1
+  if (dm1 === 0 || dp1 === 0 || Math.sign(dm1) !== Math.sign(dp1)) return 0
+  const w1 = 2 * hp1 + hm1
+  const w2 = hp1 + 2 * hm1
+  return (w1 + w2) / (w1 / dm1 + w2 / dp1)
+}
+
+/** Slope at every keyframe; endpoints forced to 0 (start/end at rest). */
+function buildSlopes(values: number[], times: number[]): number[] {
+  const n = values.length
+  const m = new Array(n).fill(0)
+  for (let i = 1; i < n - 1; i++) {
+    m[i] = pchipSlope(
+      values[i - 1],
+      values[i],
+      values[i + 1],
+      times[i] - times[i - 1],
+      times[i + 1] - times[i]
+    )
+  }
+  return m
+}
+
+const TIMES = KEYFRAMES.map((k) => k.t)
+const SLOPES_X = buildSlopes(
+  KEYFRAMES.map((k) => k.posX),
+  TIMES
+)
+const SLOPES_Y = buildSlopes(
+  KEYFRAMES.map((k) => k.posY),
+  TIMES
+)
+
+/** Cubic Hermite basis evaluated at u ∈ [0,1]. */
+function hermite(
+  u: number,
+  vi: number,
+  vf: number,
+  si: number,
+  sf: number,
+  dt: number
+): number {
+  const u2 = u * u
+  const u3 = u2 * u
+  const h00 = 2 * u3 - 3 * u2 + 1
+  const h10 = u3 - 2 * u2 + u
+  const h01 = -2 * u3 + 3 * u2
+  const h11 = u3 - u2
+  return h00 * vi + h10 * dt * si + h01 * vf + h11 * dt * sf
 }
 
 function getCameraState(t: number): CameraState {
-  // PHASE 1 — hold LEFT at natural zoom, descend from TOP to BOTTOM
-  if (t < 0.4) {
-    const e = smoothstep(t / 0.4)
-    return {
-      fx: 0.3,
-      fy: lerp(0.22, 0.78, e),
-      scale: 1.0,
+  const tc = Math.max(0, Math.min(1, t))
+  let i = 0
+  for (let k = 0; k < KEYFRAMES.length - 1; k++) {
+    if (tc <= KEYFRAMES[k + 1].t) {
+      i = k
+      break
     }
   }
-  // PHASE 2 — dezoom while sliding RIGHT
-  if (t < 0.72) {
-    const e = smoothstep((t - 0.4) / 0.32)
-    return {
-      fx: lerp(0.3, 0.65, e),
-      fy: lerp(0.78, 0.65, e),
-      scale: lerp(1.0, 0.88, e),
-    }
-  }
-  // PHASE 3 — pure dezoom, focal point barely moves
-  const e = smoothstep((t - 0.72) / 0.28)
+  const a = KEYFRAMES[i]
+  const b = KEYFRAMES[i + 1]
+  const dt = b.t - a.t
+  const u = (tc - a.t) / dt
   return {
-    fx: lerp(0.65, 0.6, e),
-    fy: lerp(0.65, 0.55, e),
-    scale: lerp(0.88, 0.78, e),
+    posX: hermite(u, a.posX, b.posX, SLOPES_X[i], SLOPES_X[i + 1], dt),
+    posY: hermite(u, a.posY, b.posY, SLOPES_Y[i], SLOPES_Y[i + 1], dt),
   }
 }
 
@@ -126,12 +170,7 @@ export function CinematicBackground({ src, rangeVH = 9 }: Props) {
   }, [rangeVH])
 
   const camera = getCameraState(t)
-  // Translate amounts (in % of element layout dims) that center the focal
-  // point (fx, fy) of the image at the viewport center after scaling.
-  const tx = (0.5 - camera.fx) * camera.scale * 100
-  const ty = (0.5 - camera.fy) * camera.scale * 100
-
-  const vignette = 0.28 + t * 0.14
+  const vignette = 0.24 + t * 0.12
   const imageOpacity = revealed ? 1 : 0
 
   return (
@@ -142,18 +181,11 @@ export function CinematicBackground({ src, rangeVH = 9 }: Props) {
       {/* Base color floor — never empty */}
       <div className="absolute inset-0 bg-bg-deep" />
 
-      {/* Stage — naturally larger than viewport on both axes regardless of
-          orientation. The aspect-ratio matches the bitmap so the FULL image
-          is rendered (no internal cropping); the camera is the transform. */}
+      {/* The picture itself — natural cover-fit, panned by object-position.
+          Coverage is guaranteed by the browser's object-fit: cover. */}
       <div
-        className="absolute"
+        className="absolute inset-0"
         style={{
-          width: 'max(200vw, 100vh)',
-          aspectRatio: `${IMAGE_W} / ${IMAGE_H}`,
-          // top: '50%',
-          // left: '50%',
-          transform: `translate(${tx}%, ${ty}%) scale(${camera.scale})`,
-          // transformOrigin: 'center center',
           opacity: imageOpacity,
           transition: revealed
             ? 'opacity 3200ms cubic-bezier(0.87, 0, 0.13, 1), filter 3800ms cubic-bezier(0.87, 0, 0.13, 1)'
@@ -161,7 +193,7 @@ export function CinematicBackground({ src, rangeVH = 9 }: Props) {
           filter: revealed
             ? 'blur(0px) brightness(1) saturate(1)'
             : 'blur(22px) brightness(0.5) saturate(0.5)',
-          willChange: 'transform, opacity, filter',
+          willChange: 'opacity, filter',
         }}
       >
         <Image
@@ -169,8 +201,12 @@ export function CinematicBackground({ src, rangeVH = 9 }: Props) {
           alt=""
           fill
           priority
-          sizes="200vw"
+          sizes="100vw"
           className="object-cover"
+          style={{
+            objectPosition: `${camera.posX}% ${camera.posY}%`,
+            willChange: 'object-position',
+          }}
         />
       </div>
 
@@ -188,7 +224,7 @@ export function CinematicBackground({ src, rangeVH = 9 }: Props) {
         className="absolute inset-0 light-leak-warm"
         style={{
           background:
-            'radial-gradient(ellipse 50% 40% at 25% 22%, rgba(255,238,210,0.16) 0%, transparent 60%)',
+            'radial-gradient(ellipse 50% 40% at 25% 22%, rgba(255,238,210,0.14) 0%, transparent 60%)',
         }}
       />
 
@@ -197,15 +233,15 @@ export function CinematicBackground({ src, rangeVH = 9 }: Props) {
         className="absolute inset-0 light-leak-cold"
         style={{
           background:
-            'radial-gradient(ellipse 40% 35% at 78% 75%, rgba(196,168,138,0.10) 0%, transparent 65%)',
+            'radial-gradient(ellipse 40% 35% at 78% 75%, rgba(196,168,138,0.09) 0%, transparent 65%)',
         }}
       />
 
-      {/* Cinematic vignette — deepens with scroll */}
+      {/* Cinematic vignette — gentle, deepens slightly with scroll */}
       <div
         className="absolute inset-0"
         style={{
-          background: `radial-gradient(ellipse 85% 80% at 50% 50%, transparent 40%, rgba(8,7,6,${vignette}) 100%)`,
+          background: `radial-gradient(ellipse 90% 85% at 50% 50%, transparent 45%, rgba(8,7,6,${vignette}) 100%)`,
         }}
       />
 
@@ -214,7 +250,7 @@ export function CinematicBackground({ src, rangeVH = 9 }: Props) {
         className="absolute inset-0"
         style={{
           background:
-            'linear-gradient(to bottom, rgba(10,9,8,0.32) 0%, transparent 18%, transparent 70%, rgba(10,9,8,0.5) 100%)',
+            'linear-gradient(to bottom, rgba(10,9,8,0.28) 0%, transparent 18%, transparent 72%, rgba(10,9,8,0.45) 100%)',
         }}
       />
 
@@ -223,7 +259,7 @@ export function CinematicBackground({ src, rangeVH = 9 }: Props) {
         className="absolute inset-0 shimmer-slow"
         style={{
           background:
-            'linear-gradient(to bottom, rgba(255,248,235,0.022) 0%, transparent 45%)',
+            'linear-gradient(to bottom, rgba(255,248,235,0.02) 0%, transparent 45%)',
         }}
       />
     </div>
