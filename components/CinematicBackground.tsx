@@ -24,20 +24,21 @@ interface Props {
  *   tx = (0.5 - fx) * scale * 100   (% of stage layout width)
  *   ty = (0.5 - fy) * scale * 100   (% of stage layout height)
  *
- * THREE-PHASE JOURNEY (gentle zoom, generous travel):
+ * THREE-PHASE JOURNEY — DEZOOM ONLY (scale ≤ 1.0 always):
  *
  *   PHASE 1  (0 → 0.40)   "the subject"
- *     fx 0.72 → 0.55, fy 0.25 → 0.45, scale 1.18 → 1.05
- *     Soft zoom on the right-top (the model in the mirror) — enough to
- *     focus, not so much that we lose context.
+ *     fx 0.65 → 0.52, fy 0.30 → 0.45, scale 1.00 → 0.92
+ *     Start at natural size on the upper-right subject, then pull back
+ *     toward center.
  *
  *   PHASE 2  (0.40 → 0.72)  "the room"
- *     fx 0.55 → 0.30, fy 0.45 → 0.55, scale 1.05 → 1.00
- *     Drift LEFT to reveal the woman in the white shirt and the loft.
+ *     fx 0.52 → 0.38, fy 0.45 → 0.55, scale 0.92 → 0.82
+ *     Continue dezooming to a panoramic feel while drifting LEFT to
+ *     reveal the loft and the woman in the white shirt.
  *
  *   PHASE 3  (0.72 → 1.00)  "the descent"
- *     fx 0.30 → 0.55, fy 0.55 → 0.80, scale 1.00 → 1.10
- *     Camera tilts DOWN to the legs and floor with a soft re-zoom.
+ *     fx 0.38 → 0.50, fy 0.55 → 0.65, scale 0.82 → 0.95
+ *     Re-center, tilt slightly DOWN, gently zoom back toward natural.
  *
  * Stage size `max(200vw, 240vh)` keeps the picture covering the viewport
  * at every phase boundary on every orientation (16:9, 16:10, 4:3, square,
@@ -63,30 +64,30 @@ interface CameraState {
 }
 
 function getCameraState(t: number): CameraState {
-  // PHASE 1 — soft zoom on the right-top subject
+  // PHASE 1 — start at natural size on the upper-right subject, pull back
   if (t < 0.4) {
     const e = smoothstep(t / 0.4)
     return {
-      fx: lerp(0.72, 0.55, e),
-      fy: lerp(0.25, 0.45, e),
-      scale: lerp(1.18, 1.05, e),
+      fx: lerp(0.65, 0.52, e),
+      fy: lerp(0.3, 0.45, e),
+      scale: lerp(1.0, 0.92, e),
     }
   }
-  // PHASE 2 — drift left to reveal the room, dezoom to natural size
+  // PHASE 2 — drift LEFT to reveal the room, continue dezooming
   if (t < 0.72) {
     const e = smoothstep((t - 0.4) / 0.32)
     return {
-      fx: lerp(0.55, 0.3, e),
+      fx: lerp(0.52, 0.38, e),
       fy: lerp(0.45, 0.55, e),
-      scale: lerp(1.05, 1.0, e),
+      scale: lerp(0.92, 0.82, e),
     }
   }
-  // PHASE 3 — descend to the floor with a soft re-zoom
+  // PHASE 3 — re-center, tilt down, gently zoom back toward natural
   const e = smoothstep((t - 0.72) / 0.28)
   return {
-    fx: lerp(0.3, 0.55, e),
-    fy: lerp(0.55, 0.8, e),
-    scale: lerp(1.0, 1.1, e),
+    fx: lerp(0.38, 0.5, e),
+    fy: lerp(0.55, 0.65, e),
+    scale: lerp(0.82, 0.95, e),
   }
 }
 
