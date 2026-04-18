@@ -216,10 +216,10 @@ function getSunLighting(t: number) {
   const tc = Math.max(0, Math.min(1, t))
   /* Upper-left first — matches natural window light in bg-home */
   const path = [
-    { x: 0.08, y: 0.88 },
-    { x: 0.05, y: 0.10 },
-    { x: 0.92, y: 0.08 },
-    { x: 0.90, y: 0.86 },
+    { x: -0.14, y: 0.92 },
+    { x: 0.06,  y: 0.10 },
+    { x: 0.92,  y: 0.08 },
+    { x: 1.14,  y: 0.90 },
   ] as const
   const n = path.length - 1
   const p = tc * n
