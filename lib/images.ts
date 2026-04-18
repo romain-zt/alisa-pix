@@ -68,6 +68,10 @@ export const GALLERY_IMAGES = [
   '/assets/images/boudoir/IMG_5234.jpeg',
   '/assets/images/boudoir/IMG_7550.jpeg',
   '/assets/images/boudoir/IMG_8002.jpeg',
+  '/assets/images/boudoir/IMG_7549.jpeg',
+  '/assets/images/boudoir/IMG_5231 2.jpeg',
+  '/assets/images/boudoir/IMG_7408.jpeg',
+  '/assets/images/boudoir/IMG_7823.jpeg',
 ]
 
 export type SceneImages = typeof SCENE_IMAGES

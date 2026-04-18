@@ -284,6 +284,428 @@ body {
   animation: fadeIn 1.5s cubic-bezier(0.16, 1, 0.3, 1) 2s forwards;
 }
 
+/* ── Orbit Gallery ── */
+.orbit-stage {
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(
+      ellipse at 50% 55%,
+      #0f0d0a 0%,
+      #0a0908 60%,
+      #070605 100%
+    );
+  overflow: hidden;
+  cursor: grab;
+  touch-action: none;
+  outline: none;
+  user-select: none;
+  -webkit-user-select: none;
+  opacity: 0;
+  transition: opacity 1600ms var(--ease-emerge);
+  /* perspective is set in JS based on viewport size */
+}
+.orbit-stage.orbit-entered {
+  opacity: 1;
+}
+.orbit-stage.orbit-dragging {
+  cursor: grabbing;
+}
+.orbit-stage:focus-visible {
+  outline: 1px solid var(--color-accent-soft);
+  outline-offset: -8px;
+}
+
+/* GAS — atmospheric blurred backgrounds, one per image, crossfading */
+.orbit-bg-stack {
+  position: absolute;
+  inset: -8%;
+  z-index: 1;
+  pointer-events: none;
+}
+.orbit-bg {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 1400ms var(--ease-emerge);
+  filter: blur(38px) saturate(1.05) brightness(0.55);
+  transform: scale(1.18);
+  will-change: opacity;
+  animation: gasDrift 32s ease-in-out infinite;
+}
+.orbit-bg img {
+  object-fit: cover;
+}
+.orbit-bg-veil {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(
+      ellipse 80% 70% at 50% 50%,
+      rgba(10, 9, 8, 0.25) 0%,
+      rgba(10, 9, 8, 0.85) 100%
+    ),
+    linear-gradient(
+      to bottom,
+      rgba(13, 11, 9, 0.55) 0%,
+      rgba(8, 7, 6, 0.45) 100%
+    );
+  pointer-events: none;
+}
+
+/* LIQUID — drifting warm light */
+.orbit-light {
+  position: absolute;
+  inset: -10%;
+  z-index: 2;
+  pointer-events: none;
+  mix-blend-mode: screen;
+}
+.orbit-light-a {
+  background: radial-gradient(
+    ellipse 55% 45% at 25% 30%,
+    rgba(255, 220, 180, 0.18),
+    transparent 65%
+  );
+  animation: lightLeakWarm 18s ease-in-out infinite;
+}
+.orbit-light-b {
+  background: radial-gradient(
+    ellipse 50% 40% at 80% 75%,
+    rgba(196, 168, 138, 0.14),
+    transparent 70%
+  );
+  animation: lightLeakCold 24s ease-in-out infinite;
+}
+.orbit-shimmer {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  background: radial-gradient(
+    ellipse 90% 80% at 50% 50%,
+    rgba(240, 235, 227, 0.05),
+    transparent 60%
+  );
+  pointer-events: none;
+}
+
+/* SOLID — the camera + cylinder */
+.orbit-camera {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  display: grid;
+  place-items: center;
+  transform-style: preserve-3d;
+  /* Camera itself is not clickable; items below opt in. */
+  pointer-events: none;
+}
+.orbit-cylinder {
+  position: relative;
+  width: 1px;
+  height: 1px;
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+.orbit-item {
+  --orbit-item-w: clamp(260px, 36vw, 460px);
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: var(--orbit-item-w);
+  aspect-ratio: 3 / 4;
+  margin-left: calc(var(--orbit-item-w) / -2);
+  margin-top: calc((var(--orbit-item-w) * 4 / 3) / -2);
+  transform-style: preserve-3d;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  will-change: transform, opacity, filter;
+  /* Smooth the focus-mode visual swap without slowing the rotation feel. */
+  transition: filter 600ms var(--ease-emerge), opacity 600ms var(--ease-emerge);
+  /* Clickable so taps can focus an image. */
+  pointer-events: auto;
+  cursor: pointer;
+}
+.orbit-stage.orbit-dragging .orbit-item {
+  cursor: grabbing;
+}
+.orbit-stage.orbit-focus-mode .orbit-item {
+  cursor: zoom-out;
+  pointer-events: none;
+}
+.orbit-frame {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: var(--color-bg-deep);
+  /* Soft edges so frames dissolve into the atmosphere instead of cutting */
+  -webkit-mask-image: radial-gradient(
+    ellipse 95% 95% at 50% 50%,
+    black 65%,
+    transparent 100%
+  );
+  mask-image: radial-gradient(
+    ellipse 95% 95% at 50% 50%,
+    black 65%,
+    transparent 100%
+  );
+}
+.orbit-frame img {
+  object-fit: cover;
+}
+.orbit-frame-veil {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(
+      ellipse 80% 70% at 50% 45%,
+      transparent 55%,
+      rgba(8, 7, 6, 0.55) 100%
+    );
+  pointer-events: none;
+}
+
+/* FLOOR — elliptical stage the cylinder appears to sit on */
+.orbit-floor {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  overflow: hidden;
+}
+/* Soft warm pool of light at the base — anchors the cylinder */
+.orbit-floor-glow {
+  position: absolute;
+  left: 50%;
+  bottom: -22%;
+  width: 130vw;
+  height: 70vh;
+  transform: translateX(-50%);
+  background: radial-gradient(
+    ellipse 50% 50% at 50% 50%,
+    rgba(196, 168, 138, 0.18) 0%,
+    rgba(196, 168, 138, 0.08) 35%,
+    transparent 70%
+  );
+  filter: blur(20px);
+  mix-blend-mode: screen;
+}
+/* Faint elliptical ring — the cylinder's actual footprint, slowly turning */
+.orbit-floor-ring {
+  position: absolute;
+  left: 50%;
+  bottom: 8%;
+  width: clamp(620px, 92vw, 1500px);
+  height: clamp(120px, 14vw, 210px);
+  border-radius: 50%;
+  border: 1px solid rgba(240, 235, 227, 0.06);
+  box-shadow:
+    inset 0 0 80px rgba(240, 235, 227, 0.04),
+    0 0 60px rgba(196, 168, 138, 0.05);
+  /* JS sets transform: translate(-50%, 0) rotate(...) every frame */
+  transform: translate(-50%, 0);
+  will-change: transform;
+}
+/* Inverted, blurred reflection of the active photo — proves the surface */
+.orbit-floor-reflections {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  transform: translateX(-50%);
+  width: clamp(260px, 36vw, 460px);
+  height: clamp(140px, 22vw, 280px);
+  /* Flip vertically so it reads as a mirror reflection */
+  scale: 1 -1;
+  /* Fade from sharp at top (touching the photo) to nothing at bottom */
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0.55) 0%,
+    transparent 75%
+  );
+  mask-image: linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0.55) 0%,
+    transparent 75%
+  );
+  filter: blur(8px) brightness(0.7);
+}
+.orbit-floor-reflection {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 1400ms var(--ease-emerge);
+}
+.orbit-floor-reflection img {
+  object-fit: cover;
+  object-position: 50% 0%; /* mirror the bottom of the original */
+}
+
+@media (max-width: 768px) {
+  .orbit-floor-glow {
+    height: 50vh;
+  }
+  .orbit-floor-reflections {
+    height: clamp(100px, 26vw, 180px);
+  }
+}
+
+/* FOCUS — single image, full bleed, contain */
+.orbit-focus-backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  background: radial-gradient(
+      ellipse 100% 100% at 50% 50%,
+      rgba(8, 7, 6, 0.55) 0%,
+      rgba(5, 4, 3, 0.92) 100%
+    );
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  cursor: zoom-out;
+  animation: orbitFocusBackdropIn 700ms var(--ease-emerge) both;
+}
+@keyframes orbitFocusBackdropIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.orbit-focus-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  display: grid;
+  place-items: center;
+  pointer-events: none; /* taps fall through to backdrop */
+  padding: clamp(1.5rem, 5vh, 4rem) clamp(1rem, 5vw, 4rem);
+}
+.orbit-focus-image {
+  position: relative;
+  width: min(94vw, 1400px);
+  height: min(88vh, 1100px);
+  cursor: zoom-out;
+  pointer-events: auto;
+  /* Soft entrance that feels like the photo emerging from the orbit */
+  animation: orbitFocusImageIn 1000ms var(--ease-emerge) both;
+  /* Drop a faint halo behind so the contained photo lifts off the bg */
+  filter: drop-shadow(0 30px 80px rgba(0, 0, 0, 0.55));
+}
+@keyframes orbitFocusImageIn {
+  from {
+    opacity: 0;
+    transform: scale(0.94) translateY(8px);
+    filter: blur(8px) drop-shadow(0 30px 80px rgba(0, 0, 0, 0.55));
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+    filter: blur(0) drop-shadow(0 30px 80px rgba(0, 0, 0, 0.55));
+  }
+}
+
+@media (max-width: 768px) {
+  .orbit-focus-image {
+    width: 100vw;
+    height: 78vh;
+  }
+}
+
+/* INTERFERENCE — global vignette over everything */
+.orbit-vignette {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse 75% 70% at 50% 55%,
+    transparent 45%,
+    rgba(7, 6, 5, 0.85) 100%
+  );
+}
+
+/* UI — brand, counter, hint */
+.orbit-brand {
+  position: absolute;
+  top: clamp(1.25rem, 3vh, 2rem);
+  left: clamp(1.25rem, 3vw, 2rem);
+  z-index: 10;
+  font-size: var(--text-micro);
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: rgba(240, 235, 227, 0.55);
+  text-decoration: none;
+  min-height: 44px;
+  min-width: 44px;
+  display: inline-flex;
+  align-items: center;
+  transition: color 700ms var(--ease-emerge);
+}
+.orbit-brand:hover {
+  color: rgba(240, 235, 227, 0.95);
+}
+
+.orbit-counter {
+  position: absolute;
+  bottom: clamp(1.25rem, 3vh, 2rem);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.6em;
+  font-size: var(--text-micro);
+  letter-spacing: 0.5em;
+  font-variant-numeric: tabular-nums;
+  color: rgba(240, 235, 227, 0.5);
+  pointer-events: none;
+  user-select: none;
+}
+.orbit-counter-num {
+  color: rgba(240, 235, 227, 0.85);
+}
+.orbit-counter-sep {
+  color: rgba(240, 235, 227, 0.18);
+}
+.orbit-counter-tot {
+  color: rgba(240, 235, 227, 0.35);
+}
+
+.orbit-hint {
+  position: absolute;
+  bottom: clamp(1.25rem, 3vh, 2rem);
+  right: clamp(1.25rem, 3vw, 2rem);
+  z-index: 10;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.7em;
+  font-size: var(--text-micro);
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: rgba(240, 235, 227, 0.32);
+  pointer-events: none;
+  user-select: none;
+  animation: orbitHintFade 14s ease-in-out infinite;
+}
+.orbit-hint .orbit-dot {
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.5;
+}
+
+@keyframes orbitHintFade {
+  0%, 100% { opacity: 0.55; }
+  50%      { opacity: 0.95; }
+}
+
+@media (max-width: 768px) {
+  .orbit-hint {
+    display: none;
+  }
+  .orbit-counter {
+    bottom: clamp(1rem, 2vh, 1.5rem);
+  }
+}
+
 /* ── Reduced Motion ── */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
@@ -295,5 +717,15 @@ body {
 
   .img-bw {
     filter: none;
+  }
+
+  .orbit-bg,
+  .orbit-light,
+  .orbit-shimmer,
+  .orbit-hint,
+  .orbit-focus-backdrop,
+  .orbit-focus-image,
+  .orbit-floor-ring {
+    animation: none !important;
   }
 }

@@ -1,4 +1,4 @@
-import { FullscreenGallery } from '@/components/FullscreenGallery'
+import { OrbitGallery } from '@/components/OrbitGallery'
 import { GALLERY_IMAGES } from '@/lib/images'
 import type { Metadata } from 'next'
 
@@ -8,5 +8,5 @@ export const metadata: Metadata = {
 }
 
 export default function GalleryPage() {
-  return <FullscreenGallery images={GALLERY_IMAGES} />
+  return <OrbitGallery images={GALLERY_IMAGES} />
 }
