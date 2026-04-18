@@ -189,8 +189,8 @@ function lerpColor(
 function getSunColor(t: number) {
   const morning: [number, number, number] = [255, 162, 60]
   const midday: [number, number, number]  = [255, 252, 210]
-  const sunset: [number, number, number]  = [255, 102, 38]
-  const dusk: [number, number, number]    = [190, 66, 135]
+  const sunset: [number, number, number]  = [220, 130, 80]
+  const dusk: [number, number, number]    = [168, 88, 165]
 
   if (t <= 0.5) {
     const u = smoothstep01(t * 2)
@@ -441,8 +441,8 @@ export function CinematicBackground({ src, rangeVH }: Props) {
           style={{
             opacity: sunColor.duskAlpha,
             background: `
-              radial-gradient(ellipse 55% 42% at ${sun.sunX}% ${sun.sunY}%, rgba(210,80,140,0.55) 0%, rgba(170,55,110,0.28) 42%, transparent 68%),
-              radial-gradient(ellipse 38% 30% at ${sun.sunX + 8}% ${sun.sunY + 6}%, rgba(240,100,60,0.35) 0%, transparent 55%)
+              radial-gradient(ellipse 55% 42% at ${sun.sunX}% ${sun.sunY}%, rgba(185,100,200,0.45) 0%, rgba(150,80,175,0.22) 42%, transparent 68%),
+              radial-gradient(ellipse 38% 30% at ${sun.sunX + 8}% ${sun.sunY + 6}%, rgba(210,140,90,0.28) 0%, transparent 55%)
             `,
             transition: 'opacity 800ms ease-out',
           }}
