@@ -337,6 +337,8 @@ export function CinematicBackground({ src, rangeVH }: Props) {
   const rayOpacity = (0.22 + sun.intensity * 0.22) * (reducedMotion ? 0.35 : 1)
   const shadowWash = (0.18 + sun.intensity * 0.22) * (reducedMotion ? 0.45 : 1)
   const shadowRadial = (0.32 + sun.intensity * 0.28) * (reducedMotion ? 0.5 : 1)
+  // Darkest at sunrise (t=0) and sunset (t=1), transparent at midday — power curve stays clear longer
+  const timeOfDayDark = Math.pow(Math.cos(t * Math.PI * 2) * 0.5 + 0.5, 4) * 0.50
 
   return (
     <div
@@ -500,6 +502,16 @@ export function CinematicBackground({ src, rangeVH }: Props) {
       />
 
       </div>{/* end sun lighting wrapper */}
+
+      {/* Time-of-day darkness — peaks at sunrise/sunset, lifts at midday */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background: 'rgba(6,4,3,1)',
+          opacity: timeOfDayDark,
+          transition: 'opacity 1200ms ease-out',
+        }}
+      />
 
       {/* Cinematic vignette — gentle, deepens slightly with scroll */}
       <div
