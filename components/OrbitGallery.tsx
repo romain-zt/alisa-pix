@@ -34,8 +34,6 @@ const PERSPECTIVE_ORIGIN_Y = 50
 // to camera depth). Hide them to avoid CSS perspective math going negative.
 const VISIBILITY_CULL_DEG = 84
 
-// Drift when idle — degrees per ms. ~ one image every 12s on desktop.
-const IDLE_DRIFT_DEG_PER_MS = 30 / 12000
 // Wheel & drag sensitivity (degrees per pixel of input).
 const WHEEL_SENSITIVITY = 0.32
 const DRAG_SENSITIVITY = 0.42
@@ -43,8 +41,6 @@ const DRAG_SENSITIVITY = 0.42
 const LERP = 0.09
 // After wheel stops, snap target to a frame (scroll-snap–like).
 const WHEEL_SNAP_DEBOUNCE_MS = 140
-// How long after last interaction before idle drift resumes (ms).
-const IDLE_DELAY = 4200
 // Below this much pointer movement, treat as a tap, not a drag.
 const TAP_THRESHOLD_PX = 6
 
@@ -62,8 +58,6 @@ export function OrbitGallery({ images }: OrbitGalleryProps) {
   // Angle state lives in refs so rAF can read/write without re-render.
   const targetAngleRef = useRef(0)
   const currentAngleRef = useRef(0)
-  const lastFrameRef = useRef<number>(0)
-  const lastInteractionRef = useRef<number>(0)
   const reducedMotionRef = useRef(false)
   const angleStepRef = useRef(angleStep)
   angleStepRef.current = angleStep
@@ -83,7 +77,11 @@ export function OrbitGallery({ images }: OrbitGalleryProps) {
 
   const [activeIdx, setActiveIdx] = useState(0)
   const activeIdxRef = useRef(0)
-  const [entered, setEntered] = useState(false)
+  const [fullViewIdx, setFullViewIdx] = useState<number | null>(null)
+  const fullViewIdxRef = useRef<number | null>(null)
+  fullViewIdxRef.current = fullViewIdx
+
+  const closeFullView = useCallback(() => setFullViewIdx(null), [])
 
   // ── Helpers: rotation math ──────────────────────────────────────────
   // Rotate the cylinder so image `i` ends up at the front, taking the
@@ -139,20 +137,7 @@ export function OrbitGallery({ images }: OrbitGalleryProps) {
     let rafId = 0
     let prevActive = -1
 
-    const tick = (now: number) => {
-      const dt = lastFrameRef.current ? now - lastFrameRef.current : 16
-      lastFrameRef.current = now
-
-      // Idle drift — only if the user has been quiet.
-      const idleFor = now - lastInteractionRef.current
-      if (
-        !reducedMotionRef.current &&
-        lastInteractionRef.current > 0 &&
-        idleFor > IDLE_DELAY
-      ) {
-        targetAngleRef.current += IDLE_DRIFT_DEG_PER_MS * dt
-      }
-
+    const tick = () => {
       // Lerp current toward target — stronger pull when nearly aligned (snap feel).
       const prevCurrent = currentAngleRef.current
       const diff = targetAngleRef.current - currentAngleRef.current
@@ -247,26 +232,16 @@ export function OrbitGallery({ images }: OrbitGalleryProps) {
       rafId = requestAnimationFrame(tick)
     }
 
-    rafId = requestAnimationFrame(tick)
+    currentAngleRef.current = 0
+    targetAngleRef.current = 0
 
-    // Entrance — soft fade + cylinder swings in from -45° to 0°.
-    if (!reducedMotionRef.current) {
-      currentAngleRef.current = -45
-      targetAngleRef.current = 0
-    }
-    const enterTimer = window.setTimeout(() => setEntered(true), 80)
+    rafId = requestAnimationFrame(tick)
 
     return () => {
       cancelAnimationFrame(rafId)
       window.removeEventListener('resize', onResize)
-      window.clearTimeout(enterTimer)
     }
   }, [layoutCylinder])
-
-  // ── Interactions ────────────────────────────────────────────────────
-  const noteInteraction = () => {
-    lastInteractionRef.current = performance.now()
-  }
 
   // Wheel: rotate the cylinder; preventDefault so the page doesn't scroll.
   useEffect(() => {
@@ -274,10 +249,10 @@ export function OrbitGallery({ images }: OrbitGalleryProps) {
     if (!stage) return
     let wheelSnapTimer: ReturnType<typeof setTimeout> | null = null
     const onWheel = (e: WheelEvent) => {
+      if (fullViewIdxRef.current !== null) return
       e.preventDefault()
       const delta = Math.abs(e.deltaY) > Math.abs(e.deltaX) ? e.deltaY : e.deltaX
       targetAngleRef.current += delta * WHEEL_SENSITIVITY
-      noteInteraction()
       if (wheelSnapTimer) clearTimeout(wheelSnapTimer)
       wheelSnapTimer = setTimeout(() => {
         wheelSnapTimer = null
@@ -316,13 +291,11 @@ export function OrbitGallery({ images }: OrbitGalleryProps) {
         } catch {}
         stage.classList.add('orbit-dragging')
       }
-      noteInteraction()
     }
     const onMove = (e: PointerEvent) => {
       if (!dragging) return
       const dx = e.clientX - startX
       targetAngleRef.current = startAngle + dx * DRAG_SENSITIVITY
-      noteInteraction()
     }
     const onUp = (e: PointerEvent) => {
       const dx = e.clientX - startX
@@ -335,7 +308,6 @@ export function OrbitGallery({ images }: OrbitGalleryProps) {
       }
       dragging = false
       stage.classList.remove('orbit-dragging')
-      noteInteraction()
 
       if (moved >= TAP_THRESHOLD_PX) {
         snapOrbitRef.current()
@@ -351,7 +323,10 @@ export function OrbitGallery({ images }: OrbitGalleryProps) {
       const item = target?.closest('.orbit-item') as HTMLDivElement | null
       if (item) {
         const idx = itemsRef.current.indexOf(item)
-        if (idx >= 0) rotateTo(idx)
+        if (idx >= 0) {
+          rotateTo(idx)
+          setFullViewIdx(idx)
+        }
       }
     }
 
@@ -370,14 +345,18 @@ export function OrbitGallery({ images }: OrbitGalleryProps) {
   // Keyboard.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && fullViewIdxRef.current !== null) {
+        e.preventDefault()
+        setFullViewIdx(null)
+        return
+      }
+      if (fullViewIdxRef.current !== null) return
       if (['ArrowRight', 'ArrowDown', 'PageDown'].includes(e.key)) {
         e.preventDefault()
         targetAngleRef.current += angleStep
-        noteInteraction()
       } else if (['ArrowLeft', 'ArrowUp', 'PageUp'].includes(e.key)) {
         e.preventDefault()
         targetAngleRef.current -= angleStep
-        noteInteraction()
       }
     }
     window.addEventListener('keydown', onKey)
@@ -388,7 +367,7 @@ export function OrbitGallery({ images }: OrbitGalleryProps) {
   return (
     <div
       ref={stageRef}
-      className={`orbit-stage ${entered ? 'orbit-entered' : ''}`}
+      className="orbit-stage"
       role="region"
       aria-roledescription="3D photo gallery"
       aria-label="Vasilisa — boudoir photography"
@@ -480,6 +459,32 @@ export function OrbitGallery({ images }: OrbitGalleryProps) {
       {/* INTERFERENCE — vignette */}
       <div className="orbit-vignette" aria-hidden="true" />
 
+      {fullViewIdx !== null && (
+        <div
+          className="orbit-fullview"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Full photo"
+        >
+          <button
+            type="button"
+            className="orbit-fullview-backdrop"
+            onClick={closeFullView}
+            aria-label="Close full photo"
+          />
+          <div className="orbit-fullview-frame relative">
+            <Image
+              src={images[fullViewIdx]}
+              alt=""
+              fill
+              priority
+              sizes="100vw"
+              className="object-contain"
+            />
+          </div>
+        </div>
+      )}
+
       {/* UI */}
       <a href="/" className="orbit-brand" aria-label="Vasilisa — home">
         Vasilisa
@@ -496,7 +501,7 @@ export function OrbitGallery({ images }: OrbitGalleryProps) {
       </div>
 
       <div className="orbit-hint" aria-hidden="true">
-        <span>tap frame</span>
+        <span>tap full photo</span>
         <span className="orbit-dot" />
         <span>drag</span>
         <span className="orbit-dot" />
