@@ -53,9 +53,9 @@ interface Props {
  * the center never exposes edges).
  *
  *   t=0.00  posX=15 posY=15  scale=1.00  — top-left, natural
- *   t=0.20  posX=18 posY=22  scale=1.18  — zoom-in done early
- *   t=0.80  posX=85 posY=75  scale=1.18  — swept far right + down
- *   t=1.00  posX=75 posY=60  scale=1.00  — released, dezoomed
+ *   t=0.20  posX=18 posY=22  scale=1.25  — zoom-in done early, deeper
+ *   t=0.45  posX=85 posY=75  scale=1.25  — swept far right + down
+ *   t=1.00  posX=75 posY=60  scale=1.00  — long graceful dezoom
  *
  * Keyframes are interpolated with **PCHIP** (Piecewise Cubic Hermite
  * Interpolating Polynomial) for C¹-continuous motion (no velocity
@@ -64,8 +64,8 @@ interface Props {
 
 const KEYFRAMES = [
   { t: 0.0, posX: 15, posY: 15, scale: 1.0 },
-  { t: 0.2, posX: 18, posY: 22, scale: 1.18 },
-  { t: 0.8, posX: 85, posY: 75, scale: 1.18 },
+  { t: 0.2, posX: 18, posY: 22, scale: 1.25 },
+  { t: 0.45, posX: 85, posY: 75, scale: 1.25 },
   { t: 1.0, posX: 75, posY: 60, scale: 1.0 },
 ] as const
 
