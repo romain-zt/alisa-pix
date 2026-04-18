@@ -29,12 +29,18 @@ interface Props {
  *     pans TOP↔BOTTOM, posX has no visible effect
  *
  * BOTH posX AND posY change in every phase so motion is visible on
- * BOTH orientations regardless of which axis happens to overflow:
+ * BOTH orientations regardless of which axis happens to overflow.
  *
- *   t=0.00  posX=15 posY=12   — top-left of the cropped frame
- *   t=0.40  posX=40 posY=85   — bottom + drifted right
- *   t=0.72  posX=85 posY=60   — far right, back up a bit
- *   t=1.00  posX=55 posY=40   — released, settled near center
+ * `scale` is a CSS transform applied on top of the cover-fit. It is
+ * always >= 1.0 so coverage stays guaranteed (scaling outward from
+ * the center never exposes edges). Phase 1 zooms IN gently (1.0 →
+ * 1.15) to draw the eye in on first scroll, then it dezooms back to
+ * natural cover-fit (1.0) by the end of the journey.
+ *
+ *   t=0.00  posX=15 posY=12  scale=1.00  — top-left, natural
+ *   t=0.40  posX=40 posY=85  scale=1.15  — bottom-drifted, zoomed in
+ *   t=0.72  posX=85 posY=60  scale=1.05  — far right, releasing
+ *   t=1.00  posX=55 posY=40  scale=1.00  — settled, at rest
  *
  * Keyframes are interpolated with **PCHIP** (Piecewise Cubic Hermite
  * Interpolating Polynomial) for C¹-continuous motion (no velocity
@@ -42,15 +48,16 @@ interface Props {
  */
 
 const KEYFRAMES = [
-  { t: 0.0, posX: 15, posY: 12 },
-  { t: 0.4, posX: 40, posY: 85 },
-  { t: 0.72, posX: 85, posY: 60 },
-  { t: 1.0, posX: 55, posY: 40 },
+  { t: 0.0, posX: 15, posY: 12, scale: 1.0 },
+  { t: 0.4, posX: 40, posY: 85, scale: 1.15 },
+  { t: 0.72, posX: 85, posY: 60, scale: 1.05 },
+  { t: 1.0, posX: 55, posY: 40, scale: 1.0 },
 ] as const
 
 interface CameraState {
   posX: number
   posY: number
+  scale: number
 }
 
 /**
@@ -98,6 +105,10 @@ const SLOPES_Y = buildSlopes(
   KEYFRAMES.map((k) => k.posY),
   TIMES
 )
+const SLOPES_S = buildSlopes(
+  KEYFRAMES.map((k) => k.scale),
+  TIMES
+)
 
 /** Cubic Hermite basis evaluated at u ∈ [0,1]. */
 function hermite(
@@ -133,6 +144,7 @@ function getCameraState(t: number): CameraState {
   return {
     posX: hermite(u, a.posX, b.posX, SLOPES_X[i], SLOPES_X[i + 1], dt),
     posY: hermite(u, a.posY, b.posY, SLOPES_Y[i], SLOPES_Y[i + 1], dt),
+    scale: hermite(u, a.scale, b.scale, SLOPES_S[i], SLOPES_S[i + 1], dt),
   }
 }
 
@@ -181,8 +193,9 @@ export function CinematicBackground({ src, rangeVH = 9 }: Props) {
       {/* Base color floor — never empty */}
       <div className="absolute inset-0 bg-bg-deep" />
 
-      {/* The picture itself — natural cover-fit, panned by object-position.
-          Coverage is guaranteed by the browser's object-fit: cover. */}
+      {/* The picture itself — natural cover-fit, panned by object-position,
+          gently scaled by transform. Coverage is guaranteed by object-fit:
+          cover and scale >= 1.0 (transform never shrinks the canvas). */}
       <div
         className="absolute inset-0"
         style={{
@@ -196,18 +209,27 @@ export function CinematicBackground({ src, rangeVH = 9 }: Props) {
           willChange: 'opacity, filter',
         }}
       >
-        <Image
-          src={src}
-          alt=""
-          fill
-          priority
-          sizes="100vw"
-          className="object-cover"
+        <div
+          className="absolute inset-0"
           style={{
-            objectPosition: `${camera.posX}% ${camera.posY}%`,
-            willChange: 'object-position',
+            transform: `scale(${camera.scale})`,
+            transformOrigin: '50% 50%',
+            willChange: 'transform',
           }}
-        />
+        >
+          <Image
+            src={src}
+            alt=""
+            fill
+            priority
+            sizes="100vw"
+            className="object-cover"
+            style={{
+              objectPosition: `${camera.posX}% ${camera.posY}%`,
+              willChange: 'object-position',
+            }}
+          />
+        </div>
       </div>
 
       {/* Veil — pure darkness that lifts on entry */}
