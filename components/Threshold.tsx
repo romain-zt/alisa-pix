@@ -7,11 +7,9 @@ import { Surface } from './Surface'
 /**
  * Threshold — second act of the homepage.
  *
- * No section background — the cinematic stage shows through. A single portrait
- * (the subject) emerges from blur, framed softly. Beside it, a glass surface
- * holds the headline copy.
- *
- * Sticky scroll-driven: the portrait scales/drifts, the text fades in.
+ * The section enters fully opaque, sticks while the user scrolls a short
+ * distance, animates *inside* (subtle scale + drift on the portrait, gentle
+ * Y shift on the card), then releases with the scroll. No fades.
  */
 
 function clamp01(value: number) {
@@ -20,10 +18,6 @@ function clamp01(value: number) {
 
 function lerp(start: number, end: number, amount: number) {
   return start + (end - start) * amount
-}
-
-function easeOutCubic(t: number) {
-  return 1 - Math.pow(1 - t, 3)
 }
 
 function easeInOutSine(t: number) {
@@ -36,53 +30,14 @@ export function Threshold({ src }: { src: string }) {
   const sectionHeight = 2.6
   const stickyStart = 1 / (1 + sectionHeight)
   const stickyEnd = sectionHeight / (1 + sectionHeight)
-  const progress = clamp01(
+  const stuck = clamp01(
     (sectionProgress - stickyStart) / (stickyEnd - stickyStart)
   )
+  const eased = easeInOutSine(stuck)
 
-  const introEnd = 0.34
-  const holdEnd = 0.7
-  const intro = clamp01(progress / introEnd)
-  const hold = clamp01((progress - introEnd) / (holdEnd - introEnd))
-  const exit = clamp01((progress - holdEnd) / (1 - holdEnd))
-  const introEase = easeOutCubic(intro)
-  const exitEase = easeInOutSine(exit)
-  const holdBreath = Math.sin(hold * Math.PI)
-
-  // Portrait
-  const portraitScale =
-    progress < introEnd
-      ? lerp(0.94, 1.005, introEase)
-      : progress < holdEnd
-        ? 1.005 + holdBreath * 0.012
-        : lerp(1.005, 1.075, exitEase)
-  const portraitY =
-    progress < introEnd
-      ? lerp(34, 0, introEase)
-      : progress < holdEnd
-        ? -holdBreath * 4
-        : lerp(0, -72, exitEase)
-  const portraitOpacity =
-    progress < 0.18
-      ? Math.max(0, (progress - 0.05) / 0.13)
-      : progress > 0.88
-        ? Math.max(0, 1 - (progress - 0.88) * 5)
-        : 1
-  const portraitBlur = progress < introEnd ? lerp(7, 0, introEase) : 0
-
-  // Text card
-  const cardOpacity =
-    progress > 0.16 && progress < holdEnd
-      ? Math.min(1, (progress - 0.16) / 0.16)
-      : progress >= holdEnd
-        ? Math.max(0, 1 - (progress - holdEnd) * 4.5)
-        : 0
-  const cardY =
-    progress < introEnd
-      ? lerp(28, 0, introEase)
-      : progress < holdEnd
-        ? holdBreath * -2
-        : lerp(0, -28, exitEase)
+  const portraitScale = lerp(1, 1.045, eased)
+  const portraitY = lerp(0, -18, eased)
+  const cardY = lerp(20, -10, eased)
 
   return (
     <section ref={ref} className="relative z-10 h-[260svh]">
@@ -92,14 +47,12 @@ export function Threshold({ src }: { src: string }) {
           className="absolute inset-0 flex items-center justify-end pr-[5vw] md:pr-[8vw] pl-6"
           style={{
             transform: `translate3d(0, ${portraitY}px, 0) scale(${portraitScale})`,
-            opacity: portraitOpacity,
-            willChange: 'transform, opacity',
+            willChange: 'transform',
           }}
         >
           <div
             className="relative h-[64vh] md:h-[78vh] aspect-[3/4] overflow-hidden rounded-[1.5rem]"
             style={{
-              filter: `blur(${portraitBlur}px) brightness(0.97)`,
               boxShadow:
                 '0 60px 120px -30px rgba(0,0,0,0.7), 0 0 0 1px rgba(196,168,138,0.08)',
             }}
@@ -111,7 +64,6 @@ export function Threshold({ src }: { src: string }) {
               sizes="(max-width: 768px) 90vw, 45vw"
               className="object-cover"
             />
-            {/* Inner soft vignette so edges dissolve into the scene */}
             <div
               className="absolute inset-0 pointer-events-none"
               style={{
@@ -127,9 +79,8 @@ export function Threshold({ src }: { src: string }) {
           <div
             className="px-6 md:pl-[6vw] md:pr-0 max-w-md md:max-w-[34vw] w-full"
             style={{
-              opacity: cardOpacity,
               transform: `translate3d(0, ${cardY}px, 0)`,
-              willChange: 'transform, opacity',
+              willChange: 'transform',
             }}
           >
             <Surface weight="soft" padding="loose" radius="lg" className="pointer-events-auto">
