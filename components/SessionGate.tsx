@@ -47,7 +47,7 @@ export function SessionGate() {
           <h2 className="font-serif font-light text-[var(--text-display)] text-text-primary leading-[1.05] mb-6">
             700<span className="text-accent">€</span>
             <br />
-            <span className="italic text-text-primary/85" style={{ fontSize: '0.62em' }}>
+            <span className="italic text-text-primary/85" style={{ fontSize: '0.85em' }}>
               one session, yours entirely.
             </span>
           </h2>
