@@ -8,22 +8,31 @@ type OrbitGalleryProps = {
 }
 
 /**
- * Geometry constants — tuned so that:
- *  - desktop: 5 images visible in front, generous overlap, deep field
- *  - mobile : 3 images visible in front, tighter cylinder
+ * Geometry — INSIDE-CYLINDER view.
+ * The camera sits AT the cylinder's axis. Photos line the inner surface
+ * around us, facing inward. We don't look AT a wheel of pictures; we
+ * stand in the middle of one.
  *
- * angleStep is always 360 / N so the cylinder closes into a true loop.
+ *   cylinder transform: translateZ(perspective) rotateY(-A)
+ *     → moves the cylinder origin to the camera position
+ *   item transform   : rotateY(i*step) translateZ(-R) scale(s)
+ *     → each item sits R units out from the camera, naturally facing inward
+ *
+ *   Active item world z = perspective - R   (close, in front of camera)
+ *   Items past ±90°    have z >= perspective (behind the camera)  → culled
  */
-const RADIUS_DESKTOP = 940
-const RADIUS_MOBILE = 460
+const RADIUS_DESKTOP = 700
+const RADIUS_MOBILE = 380
 const PERSPECTIVE_DESKTOP = 1700
 const PERSPECTIVE_MOBILE = 950
-// How fast neighbours shrink as they leave the front. Higher = gentler.
-// At abs=22.5° (one step away) this gives ~0.69 — neighbours stay readable
-// while still clearly receding behind the centered image.
-const SCALE_FALLOFF_DEG = 60
-// Camera tilt — perspective-origin Y position. <50% looks down on cylinder.
-const PERSPECTIVE_ORIGIN_Y = 36
+// Scale falloff so neighbours clearly subordinate to the center.
+const SCALE_FALLOFF_DEG = 50
+// Camera tilt — perspective-origin Y. <50% looks down on the cylinder.
+// Inside the cylinder, we stay near eye-height (slight downward gaze).
+const PERSPECTIVE_ORIGIN_Y = 44
+// Beyond this effective angle, items are behind the viewer (or very close
+// to camera depth). Hide them to avoid CSS perspective math going negative.
+const VISIBILITY_CULL_DEG = 84
 
 // Drift when idle — degrees per ms. ~ one image every 12s on desktop.
 const IDLE_DRIFT_DEG_PER_MS = 30 / 12000
@@ -129,7 +138,9 @@ export function OrbitGallery({ images }: OrbitGalleryProps) {
       if (!el) return
       const a = i * angleStep
       // Initial transform — rAF takes over with dynamic scale every frame.
-      el.style.transform = `rotateY(${a}deg) translateZ(${radiusRef.current}px)`
+      // translateZ(-R) places the item INSIDE the cylinder, R units out
+      // from the (camera-centered) cylinder axis.
+      el.style.transform = `rotateY(${a}deg) translateZ(${-radiusRef.current}px)`
     })
   }, [angleStep])
 
@@ -169,7 +180,9 @@ export function OrbitGallery({ images }: OrbitGalleryProps) {
 
       const cyl = cylinderRef.current
       if (cyl) {
-        cyl.style.transform = `translateZ(${-radiusRef.current * 0.15}px) rotateY(${-currentAngleRef.current}deg)`
+        // Push the cylinder origin OUT to the camera depth so the camera
+        // sits at the cylinder's axis — looking outward from inside.
+        cyl.style.transform = `translateZ(${perspectiveRef.current}px) rotateY(${-currentAngleRef.current}deg)`
       }
 
       // Floor stage ring counter-rotates very subtly so it feels grounded

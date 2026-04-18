@@ -16,30 +16,86 @@ interface Props {
  * never fades — every section above it is transparent so this stage is the
  * single visual constant the visitor experiences.
  *
- * Two independent motions tied to scroll:
- *   - Pan: right → left across the image (the visible window starts on the
- *     RIGHT portion of the image and drifts to the LEFT portion).
- *   - Zoom: a soft sine breath — push in slightly, then release.
+ * THREE-PHASE VIRTUAL CAMERA tied to scroll:
  *
- * Continuous CSS "gas-drift" animation gives the stage life even when the
- * user is still. On mount: a dark veil lifts and the image focus-pulls from
- * blur → sharp.
+ *   PHASE 1 (0 → 0.40)  "the subject"
+ *     — zoomed into the RIGHT-TOP third of the image (the model in the mirror)
+ *     — start: scale 1.45, image shifted left, vertical crop near top
+ *     — end:   scale 1.05, centered, vertical crop centered
+ *
+ *   PHASE 2 (0.40 → 0.72)  "the room"
+ *     — full dezoom, drift right to reveal the LEFT side of the image (the
+ *       woman in the white shirt)
+ *
+ *   PHASE 3 (0.72 → 1.00)  "the descent"
+ *     — slight push back in + pan DOWN via objectPosition to reveal the
+ *       bottom of the image (legs, floor)
+ *
+ * Vertical motion uses `object-position` so it can never expose the container
+ * background (no edge cropping). Horizontal motion uses `translateX` within a
+ * safe overflow margin guaranteed by the container `inset-[-12%]` and the
+ * minimum scale of 1.05.
+ *
+ * On mount: a dark veil lifts and the image focus-pulls from blur → sharp.
  */
-export function CinematicBackground({
-  src,
-  rangeVH = 8,
-}: Props) {
+
+function smoothstep(x: number) {
+  const t = Math.max(0, Math.min(1, x))
+  return t * t * (3 - 2 * t)
+}
+
+function lerp(a: number, b: number, t: number) {
+  return a + (b - a) * t
+}
+
+interface CameraState {
+  scale: number
+  /** translateX in % of the inner element's own width */
+  tx: number
+  /** object-position Y in % */
+  objPosY: number
+}
+
+function getCameraState(t: number): CameraState {
+  // Phase 1 — focus on RIGHT-TOP (the subject)
+  if (t < 0.4) {
+    const e = smoothstep(t / 0.4)
+    return {
+      scale: lerp(1.45, 1.06, e),
+      tx: lerp(-12, 0, e),
+      objPosY: lerp(20, 50, e),
+    }
+  }
+
+  // Phase 2 — full view, drift to expose the LEFT side
+  if (t < 0.72) {
+    const e = smoothstep((t - 0.4) / 0.32)
+    return {
+      scale: lerp(1.06, 1.05, e),
+      tx: lerp(0, 6, e),
+      objPosY: 50,
+    }
+  }
+
+  // Phase 3 — pan DOWN to reveal the bottom
+  const e = smoothstep((t - 0.72) / 0.28)
+  return {
+    scale: lerp(1.05, 1.14, e),
+    tx: lerp(6, 0, e),
+    objPosY: lerp(50, 88, e),
+  }
+}
+
+export function CinematicBackground({ src, rangeVH = 9 }: Props) {
   const [t, setT] = useState(0)
   const [revealed, setRevealed] = useState(false)
   const stageRef = useRef<HTMLDivElement>(null)
 
-  // Initial reveal: triggers focus pull + veil lift on mount
   useEffect(() => {
     const id = requestAnimationFrame(() => setRevealed(true))
     return () => cancelAnimationFrame(id)
   }, [])
 
-  // Global scroll progress (0..1 over the rangeVH)
   useEffect(() => {
     let ticking = false
     const reduce = window.matchMedia(
@@ -64,19 +120,10 @@ export function CinematicBackground({
     return () => window.removeEventListener('scroll', onScroll)
   }, [rangeVH])
 
-  // ── Right → Left pan ────────────────────────────────────────────────────
-  // Subtle: ±5% range so the framing stays generous and most of the picture
-  // remains visible at all times.
-  const panX = 5 + t * -100
+  const camera = getCameraState(t)
 
-  // ── Zoom breath (push in, release) ─────────────────────────────────────
-  // Sine peaks at midway. 1.04 → 1.10 → 1.04. Soft, never imposes itself.
-  const zoomCurve = Math.sin(t * Math.PI)
-  const scale = 1.04 + zoomCurve * 0.06
-
-  // ── Vignette deepens very gently with progress ─────────────────────────
-  const vignette = 0.42 + t * 0.18
-
+  // Vignette deepens very gently with progress (kept soft)
+  const vignette = 0.38 + t * 0.18
   const imageOpacity = revealed ? 1 : 0
 
   return (
@@ -87,14 +134,14 @@ export function CinematicBackground({
       {/* Base color floor — never empty */}
       <div className="absolute inset-0 bg-bg-deep" />
 
-      {/* Outer wrapper — continuous breathing (independent of scroll) */}
-      <div className="absolute inset-[-7%] gas-drift">
-        {/* Inner wrapper — scroll-driven pan + zoom */}
+      {/* Stage — generous overflow so horizontal pan never exposes edges */}
+      <div className="absolute inset-[-12%]">
         <div
           ref={stageRef}
           className="absolute inset-0"
           style={{
-            transform: `translate3d(${panX}%, 0, 0) scale(${scale})`,
+            transform: `translate3d(${camera.tx}%, 0, 0) scale(${camera.scale})`,
+            transformOrigin: 'center center',
             opacity: imageOpacity,
             transition: revealed
               ? 'opacity 3200ms cubic-bezier(0.87, 0, 0.13, 1), filter 3800ms cubic-bezier(0.87, 0, 0.13, 1)'
@@ -110,8 +157,9 @@ export function CinematicBackground({
             alt=""
             fill
             priority
-            className="object-cover w-full h-full"
-            sizes='100%'
+            sizes="124vw"
+            className="object-cover"
+            style={{ objectPosition: `50% ${camera.objPosY}%` }}
           />
         </div>
       </div>
@@ -130,7 +178,7 @@ export function CinematicBackground({
         className="absolute inset-0 light-leak-warm"
         style={{
           background:
-            'radial-gradient(ellipse 50% 40% at 25% 22%, rgba(255,238,210,0.18) 0%, transparent 60%)',
+            'radial-gradient(ellipse 50% 40% at 25% 22%, rgba(255,238,210,0.16) 0%, transparent 60%)',
         }}
       />
 
@@ -139,7 +187,7 @@ export function CinematicBackground({
         className="absolute inset-0 light-leak-cold"
         style={{
           background:
-            'radial-gradient(ellipse 40% 35% at 78% 75%, rgba(196,168,138,0.12) 0%, transparent 65%)',
+            'radial-gradient(ellipse 40% 35% at 78% 75%, rgba(196,168,138,0.10) 0%, transparent 65%)',
         }}
       />
 
@@ -147,7 +195,7 @@ export function CinematicBackground({
       <div
         className="absolute inset-0"
         style={{
-          background: `radial-gradient(ellipse 80% 75% at 50% 50%, transparent 35%, rgba(8,7,6,${vignette}) 100%)`,
+          background: `radial-gradient(ellipse 85% 80% at 50% 50%, transparent 40%, rgba(8,7,6,${vignette}) 100%)`,
         }}
       />
 
@@ -156,7 +204,7 @@ export function CinematicBackground({
         className="absolute inset-0"
         style={{
           background:
-            'linear-gradient(to bottom, rgba(10,9,8,0.35) 0%, transparent 18%, transparent 70%, rgba(10,9,8,0.55) 100%)',
+            'linear-gradient(to bottom, rgba(10,9,8,0.32) 0%, transparent 18%, transparent 70%, rgba(10,9,8,0.5) 100%)',
         }}
       />
 
@@ -165,7 +213,7 @@ export function CinematicBackground({
         className="absolute inset-0 shimmer-slow"
         style={{
           background:
-            'linear-gradient(to bottom, rgba(255,248,235,0.025) 0%, transparent 45%)',
+            'linear-gradient(to bottom, rgba(255,248,235,0.022) 0%, transparent 45%)',
         }}
       />
     </div>
