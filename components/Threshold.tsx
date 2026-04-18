@@ -7,9 +7,9 @@ import { Surface } from './Surface'
 /**
  * Threshold — second act of the homepage.
  *
- * The section enters fully opaque, sticks while the user scrolls a short
- * distance, animates *inside* (subtle scale + drift on the portrait, gentle
- * Y shift on the card), then releases with the scroll. No fades.
+ * The section enters fully opaque, sticks briefly while the user scrolls
+ * (just enough to feel a beat), and during that pin only the *text card*
+ * animates. The portrait stays perfectly still; the background keeps moving.
  */
 
 function clamp01(value: number) {
@@ -20,36 +20,35 @@ function lerp(start: number, end: number, amount: number) {
   return start + (end - start) * amount
 }
 
-function easeInOutSine(t: number) {
-  return -(Math.cos(Math.PI * t) - 1) / 2
+function easeOutCubic(t: number) {
+  return 1 - Math.pow(1 - t, 3)
 }
+
+const SECTION_VH = 3.2
+const TEXT_REVEAL_END = 0.28
 
 export function Threshold({ src }: { src: string }) {
   const { ref, progress: sectionProgress } = useSectionProgress<HTMLElement>()
 
-  const sectionHeight = 2.6
-  const stickyStart = 1 / (1 + sectionHeight)
-  const stickyEnd = sectionHeight / (1 + sectionHeight)
+  const stickyStart = 1 / (1 + SECTION_VH)
+  const stickyEnd = SECTION_VH / (1 + SECTION_VH)
   const stuck = clamp01(
     (sectionProgress - stickyStart) / (stickyEnd - stickyStart)
   )
-  const eased = easeInOutSine(stuck)
 
-  const portraitScale = lerp(1, 1.045, eased)
-  const portraitY = lerp(0, -18, eased)
-  const cardY = lerp(20, -10, eased)
+  const cardReveal = clamp01(stuck / TEXT_REVEAL_END)
+  const eased = easeOutCubic(cardReveal)
+  const cardY = lerp(28, 0, eased)
 
   return (
-    <section ref={ref} className="relative z-10 h-[260svh]">
+    <section
+      ref={ref}
+      className="relative z-10"
+      style={{ height: `${(1 + SECTION_VH) * 100}svh` }}
+    >
       <div className="sticky top-0 h-[100svh] w-full overflow-hidden">
-        {/* PORTRAIT — floats over the cinematic bg, off-center right */}
-        <div
-          className="absolute inset-0 flex items-center justify-end pr-[5vw] md:pr-[8vw] pl-6"
-          style={{
-            transform: `translate3d(0, ${portraitY}px, 0) scale(${portraitScale})`,
-            willChange: 'transform',
-          }}
-        >
+        {/* PORTRAIT — static, fully opaque */}
+        <div className="absolute inset-0 flex items-center justify-end pr-[5vw] md:pr-[8vw] pl-6">
           <div
             className="relative h-[64vh] md:h-[78vh] aspect-[3/4] overflow-hidden rounded-[1.5rem]"
             style={{
@@ -74,7 +73,7 @@ export function Threshold({ src }: { src: string }) {
           </div>
         </div>
 
-        {/* TEXT — glass card on the left, deliberately asymmetric */}
+        {/* TEXT — only this animates during the sticky beat */}
         <div className="absolute inset-0 flex items-center pointer-events-none">
           <div
             className="px-6 md:pl-[6vw] md:pr-0 max-w-md md:max-w-[34vw] w-full"
