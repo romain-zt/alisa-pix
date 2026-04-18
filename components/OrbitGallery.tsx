@@ -355,7 +355,7 @@ export function OrbitGallery({ images }: OrbitGalleryProps) {
       // Respect interactive elements (brand link, future buttons).
       if (target?.closest('a, button')) return
 
-      const item = target?.closest('.orbit-item') as HTMLElement | null
+      const item = target?.closest('.orbit-item') as HTMLDivElement | null
       const onFocusImage = !!target?.closest('.orbit-focus-image')
       const onFocusBackdrop = !!target?.closest('.orbit-focus-backdrop')
 
