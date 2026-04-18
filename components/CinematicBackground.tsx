@@ -416,16 +416,16 @@ export function CinematicBackground({ src, rangeVH }: Props) {
         className="absolute inset-[-18%] pointer-events-none mix-blend-screen"
         aria-hidden="true"
         style={{
-          opacity: reducedMotion ? beamBase * 0.65 : beamBase * 1.15,
+          opacity: reducedMotion ? beamBase * 0.6 : beamBase * 0.88,
           transform: reducedMotion
             ? undefined
             : `rotate(${sun.lightAngleDeg * 0.12}deg)`,
           transformOrigin: `${sun.sunX}% ${sun.sunY}%`,
           willChange: 'transform, opacity',
           background: `
-            linear-gradient(${sun.lightAngleDeg}deg, rgba(255,244,228,${0.08 + sun.intensity * 0.1}) 0%, transparent 32%, transparent 52%, rgba(255,248,235,${0.04 + sun.intensity * 0.06}) 72%, transparent 100%),
-            linear-gradient(${sun.lightAngleDeg + 22}deg, transparent 36%, rgba(255, 236, 214, ${0.09 + sun.intensity * 0.12}) 48.8%, rgba(255, 250, 240, ${0.05 + sun.intensity * 0.07}) 50.8%, transparent 62%),
-            linear-gradient(${sun.lightAngleDeg - 18}deg, transparent 40%, rgba(255, 248, 235, ${0.06 + sun.intensity * 0.09}) 50%, transparent 60%)
+            linear-gradient(${sun.lightAngleDeg}deg, rgba(255,244,228,${0.035 + sun.intensity * 0.05}) 0%, transparent 34%, transparent 54%, rgba(255,248,235,${0.018 + sun.intensity * 0.03}) 74%, transparent 100%),
+            linear-gradient(${sun.lightAngleDeg + 22}deg, transparent 38%, rgba(255, 236, 214, ${0.04 + sun.intensity * 0.055}) 49%, rgba(255, 250, 240, ${0.022 + sun.intensity * 0.035}) 51%, transparent 63%),
+            linear-gradient(${sun.lightAngleDeg - 18}deg, transparent 42%, rgba(255, 248, 235, ${0.028 + sun.intensity * 0.045}) 50%, transparent 61%)
           `,
         }}
       />

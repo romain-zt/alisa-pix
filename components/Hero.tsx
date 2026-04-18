@@ -207,7 +207,7 @@ export function Hero() {
             className="hero-tagline font-serif italic text-[var(--text-lead)] text-text-muted max-w-md leading-relaxed mx-auto opacity-0"
             style={{ opacity: tagOpacity }}
           >
-            A bright trace of your personality.
+            At ease — the best light on who you already are.
           </p>
         </div>
       </div>
