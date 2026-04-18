@@ -171,8 +171,9 @@ function smoothstep01(u: number): number {
 /** Scroll-driven “sun”: travels corner-to-corner; intensity swings like time of day. */
 function getSunLighting(t: number) {
   const tc = Math.max(0, Math.min(1, t))
+  /* Upper-left first — matches natural window light in bg-home */
   const path = [
-    { x: 0.07, y: 0.16 },
+    { x: 0.05, y: 0.08 },
     { x: 0.93, y: 0.1 },
     { x: 0.88, y: 0.78 },
     { x: 0.12, y: 0.84 },
@@ -205,6 +206,10 @@ function getSunLighting(t: number) {
   const oppX = (1 - sunX * 0.92) * 100
   const oppY = (1 - sunY * 0.88) * 100
 
+  /** Conic “from” angle so wedges aim from the sun toward the frame interior. */
+  const rayFromDeg =
+    (Math.atan2(cy - sunY, cx - sunX) * 180) / Math.PI
+
   return {
     sunX: sxPct,
     sunY: syPct,
@@ -213,6 +218,7 @@ function getSunLighting(t: number) {
     shadowAngleDeg,
     oppX,
     oppY,
+    rayFromDeg,
   }
 }
 
@@ -278,9 +284,10 @@ export function CinematicBackground({ src, rangeVH }: Props) {
     0.22 + t * 0.1 + (1 - sun.intensity) * 0.06 * (reducedMotion ? 0 : 1)
   const imageOpacity = revealed ? 1 : 0
 
-  const warmAlpha = (0.11 + sun.intensity * 0.2) * (reducedMotion ? 0.55 : 1)
-  const coolAlpha = (0.05 + sun.intensity * 0.09) * (reducedMotion ? 0.55 : 1)
-  const beamBase = 0.06 + sun.intensity * 0.16
+  const warmAlpha = (0.22 + sun.intensity * 0.26) * (reducedMotion ? 0.55 : 1)
+  const coolAlpha = (0.07 + sun.intensity * 0.12) * (reducedMotion ? 0.55 : 1)
+  const beamBase = 0.12 + sun.intensity * 0.22
+  const rayOpacity = (0.28 + sun.intensity * 0.32) * (reducedMotion ? 0.4 : 1)
   const shadowWash = (0.18 + sun.intensity * 0.22) * (reducedMotion ? 0.45 : 1)
   const shadowRadial = (0.32 + sun.intensity * 0.28) * (reducedMotion ? 0.5 : 1)
 
@@ -365,38 +372,60 @@ export function CinematicBackground({ src, rangeVH }: Props) {
               }
         }
       >
+        {/* No light-leak-* classes here — their keyframes cap opacity and hide the sun pool */}
         <div
-          className="absolute inset-0 light-leak-warm"
+          className="absolute inset-0 pointer-events-none"
           style={{
             background: `
-              radial-gradient(ellipse ${48 + sun.intensity * 14}% ${38 + sun.intensity * 10}% at ${sun.sunX}% ${sun.sunY}%, rgba(255,238,210,${warmAlpha}) 0%, rgba(255,228,196,${warmAlpha * 0.35}) 38%, transparent 62%),
-              radial-gradient(ellipse 28% 24% at ${sun.sunX + 4}% ${sun.sunY - 3}%, rgba(255,252,245,${warmAlpha * 0.55}) 0%, transparent 55%)
+              radial-gradient(ellipse ${48 + sun.intensity * 14}% ${38 + sun.intensity * 10}% at ${sun.sunX}% ${sun.sunY}%, rgba(255,238,210,${warmAlpha}) 0%, rgba(255,228,196,${warmAlpha * 0.45}) 36%, transparent 64%),
+              radial-gradient(ellipse 32% 28% at ${sun.sunX + 5}% ${sun.sunY - 4}%, rgba(255,252,245,${warmAlpha * 0.65}) 0%, transparent 58%)
             `,
           }}
         />
         <div
-          className="absolute inset-0 light-leak-cold"
+          className="absolute inset-0 pointer-events-none"
           style={{
-            background: `radial-gradient(ellipse 50% 44% at ${100 - sun.sunX * 0.75}% ${100 - sun.sunY * 0.7}%, rgba(196,168,138,${coolAlpha}) 0%, transparent 68%)`,
+            background: `radial-gradient(ellipse 52% 46% at ${100 - sun.sunX * 0.75}% ${100 - sun.sunY * 0.7}%, rgba(196,168,138,${coolAlpha}) 0%, transparent 70%)`,
           }}
         />
       </div>
 
-      {/* Directional beams — originate from sun; intensity follows sun.intensity */}
+      {/* Corner sun rays — conic fan from window direction (visible vs keyframes on .light-leak-*) */}
+      <div
+        className="absolute inset-[-25%] pointer-events-none mix-blend-screen"
+        aria-hidden="true"
+        style={{
+          opacity: rayOpacity,
+          background: `
+            repeating-conic-gradient(
+              from ${sun.rayFromDeg}deg at ${sun.sunX}% ${sun.sunY}%,
+              transparent 0deg,
+              transparent 5deg,
+              rgba(255, 244, 228, 0.14) 5.4deg,
+              rgba(255, 248, 235, 0.2) 5.9deg,
+              rgba(255, 244, 228, 0.12) 6.4deg,
+              transparent 7.2deg,
+              transparent 14deg
+            )
+          `,
+        }}
+      />
+
+      {/* Directional beams — broad wash + streaks */}
       <div
         className="absolute inset-[-18%] pointer-events-none mix-blend-screen"
         aria-hidden="true"
         style={{
-          opacity: reducedMotion ? beamBase * 0.65 : beamBase * 1.05,
+          opacity: reducedMotion ? beamBase * 0.65 : beamBase * 1.15,
           transform: reducedMotion
             ? undefined
             : `rotate(${sun.lightAngleDeg * 0.12}deg)`,
           transformOrigin: `${sun.sunX}% ${sun.sunY}%`,
           willChange: 'transform, opacity',
           background: `
-            linear-gradient(${sun.lightAngleDeg}deg, rgba(255,244,228,${0.04 + sun.intensity * 0.07}) 0%, transparent 34%, transparent 52%, rgba(255,248,235,${0.02 + sun.intensity * 0.04}) 72%, transparent 100%),
-            linear-gradient(${sun.lightAngleDeg + 22}deg, transparent 38%, rgba(255, 236, 214, ${0.05 + sun.intensity * 0.08}) 49.2%, rgba(255, 250, 240, ${0.025 + sun.intensity * 0.04}) 50.5%, transparent 61%),
-            linear-gradient(${sun.lightAngleDeg - 18}deg, transparent 42%, rgba(255, 248, 235, ${0.035 + sun.intensity * 0.06}) 50%, transparent 58%)
+            linear-gradient(${sun.lightAngleDeg}deg, rgba(255,244,228,${0.08 + sun.intensity * 0.1}) 0%, transparent 32%, transparent 52%, rgba(255,248,235,${0.04 + sun.intensity * 0.06}) 72%, transparent 100%),
+            linear-gradient(${sun.lightAngleDeg + 22}deg, transparent 36%, rgba(255, 236, 214, ${0.09 + sun.intensity * 0.12}) 48.8%, rgba(255, 250, 240, ${0.05 + sun.intensity * 0.07}) 50.8%, transparent 62%),
+            linear-gradient(${sun.lightAngleDeg - 18}deg, transparent 40%, rgba(255, 248, 235, ${0.06 + sun.intensity * 0.09}) 50%, transparent 60%)
           `,
         }}
       />
