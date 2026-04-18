@@ -31,7 +31,14 @@ function easeInOutSine(t: number) {
 }
 
 export function Threshold({ src }: { src: string }) {
-  const { ref, progress } = useSectionProgress<HTMLElement>()
+  const { ref, progress: sectionProgress } = useSectionProgress<HTMLElement>()
+
+  const sectionHeight = 2.6
+  const stickyStart = 1 / (1 + sectionHeight)
+  const stickyEnd = sectionHeight / (1 + sectionHeight)
+  const progress = clamp01(
+    (sectionProgress - stickyStart) / (stickyEnd - stickyStart)
+  )
 
   const introEnd = 0.34
   const holdEnd = 0.7
