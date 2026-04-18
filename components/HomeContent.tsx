@@ -44,7 +44,7 @@ export function HomeContent() {
       <Navigation />
 
       {/* Pinned cinematic stage — visible for the entire page. */}
-      <CinematicBackground src="/assets/images/bg-home.jpg" rangeVH={9} />
+      <CinematicBackground src="/assets/images/bg-home.jpg" />
 
       {/* 1. HERO — wordmark, no card */}
       <Hero />

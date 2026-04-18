@@ -5,7 +5,13 @@ import Image from 'next/image'
 
 interface Props {
   src: string
-  /** How many viewport heights of scroll the bg keeps animating. */
+  /**
+   * Optional fixed range in viewport heights. When omitted (default),
+   * the camera maps to the full scrollable height of the document so
+   * t=0 is the very top and t=1 is the very bottom of the page —
+   * guaranteeing the user reaches the final dezoom by the end of
+   * scroll regardless of how tall the page is.
+   */
   rangeVH?: number
 }
 
@@ -157,7 +163,7 @@ function getCameraState(t: number): CameraState {
   }
 }
 
-export function CinematicBackground({ src, rangeVH = 9 }: Props) {
+export function CinematicBackground({ src, rangeVH }: Props) {
   const [t, setT] = useState(0)
   const [revealed, setRevealed] = useState(false)
 
@@ -172,13 +178,24 @@ export function CinematicBackground({ src, rangeVH = 9 }: Props) {
       '(prefers-reduced-motion: reduce)'
     ).matches
 
+    function computeRange(): number {
+      if (rangeVH != null) return window.innerHeight * rangeVH
+      const doc = document.documentElement
+      const docHeight = Math.max(
+        doc.scrollHeight,
+        doc.offsetHeight,
+        document.body.scrollHeight,
+        document.body.offsetHeight
+      )
+      return Math.max(1, docHeight - window.innerHeight)
+    }
+
     function onScroll() {
       if (ticking) return
       ticking = true
       requestAnimationFrame(() => {
         const y = window.scrollY
-        const vh = window.innerHeight
-        const range = vh * rangeVH
+        const range = computeRange()
         const local = reduce ? 0 : Math.min(1, Math.max(0, y / range))
         setT(local)
         ticking = false
@@ -186,8 +203,12 @@ export function CinematicBackground({ src, rangeVH = 9 }: Props) {
     }
 
     window.addEventListener('scroll', onScroll, { passive: true })
+    window.addEventListener('resize', onScroll, { passive: true })
     onScroll()
-    return () => window.removeEventListener('scroll', onScroll)
+    return () => {
+      window.removeEventListener('scroll', onScroll)
+      window.removeEventListener('resize', onScroll)
+    }
   }, [rangeVH])
 
   const camera = getCameraState(t)
