@@ -35,7 +35,7 @@ export function SessionGate() {
         }}
       >
         <Surface weight="solid" padding="loose" radius="lg">
-          <p className="text-[var(--text-micro)] tracking-[0.4em] uppercase text-text-muted/65 mb-10">
+          <p className="text-[var(--text-micro)] tracking-[0.4em] uppercase text-text-primary/70 mb-10">
             Private sessions · Paris
           </p>
 
@@ -47,12 +47,12 @@ export function SessionGate() {
           <h2 className="font-serif font-light text-[var(--text-display)] text-text-primary leading-[1.05] mb-6">
             700<span className="text-accent">€</span>
             <br />
-            <span className="italic text-text-muted/80" style={{ fontSize: '0.62em' }}>
+            <span className="italic text-text-primary/85" style={{ fontSize: '0.62em' }}>
               one session, yours entirely.
             </span>
           </h2>
 
-          <p className="text-[var(--text-caption)] text-text-muted/70 leading-relaxed mb-12 max-w-xs">
+          <p className="text-[var(--text-caption)] text-text-primary/80 leading-relaxed mb-12 max-w-xs">
             Two hours. Your complete retouched set.
             Natural beauty — nothing rewritten.
           </p>

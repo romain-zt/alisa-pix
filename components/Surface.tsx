@@ -59,14 +59,14 @@ export function Surface({
     },
     solid: {
       background: [
-        'linear-gradient(180deg, rgba(255,248,235,0.1) 0%, transparent 38%)',
-        'linear-gradient(135deg, rgba(15,13,11,0.72) 0%, rgba(10,9,8,0.62) 100%)',
+        'linear-gradient(180deg, rgba(255,248,235,0.08) 0%, transparent 38%)',
+        'linear-gradient(135deg, rgba(10,9,8,0.92) 0%, rgba(6,5,4,0.86) 100%)',
       ].join(', '),
-      backdropFilter: 'blur(22px) saturate(1.15)',
-      WebkitBackdropFilter: 'blur(22px) saturate(1.15)',
+      backdropFilter: 'blur(28px) saturate(1.2)',
+      WebkitBackdropFilter: 'blur(28px) saturate(1.2)',
       boxShadow:
-        '0 50px 100px -25px rgba(0,0,0,0.65), inset 0 1px 0 0 rgba(255,238,210,0.08)',
-      border: '1px solid rgba(196,168,138,0.16)',
+        '0 50px 100px -25px rgba(0,0,0,0.75), inset 0 1px 0 0 rgba(255,238,210,0.08)',
+      border: '1px solid rgba(196,168,138,0.18)',
     },
   }
 
