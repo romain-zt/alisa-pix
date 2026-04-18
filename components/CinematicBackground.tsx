@@ -26,19 +26,20 @@ interface Props {
  *
  * THREE-PHASE JOURNEY — DEZOOM ONLY (scale ≤ 1.0 always):
  *
- *   PHASE 1  (0 → 0.40)   "the subject"
- *     fx 0.65 → 0.52, fy 0.30 → 0.45, scale 1.00 → 0.92
- *     Start at natural size on the upper-right subject, then pull back
- *     toward center.
+ *   PHASE 1  (0 → 0.40)   "descent on the left"
+ *     fx stays 0.30, fy 0.22 → 0.78, scale 1.00 (natural)
+ *     Camera holds on the LEFT side at natural zoom and slowly travels
+ *     from the TOP of the picture down to the BOTTOM.
  *
- *   PHASE 2  (0.40 → 0.72)  "the room"
- *     fx 0.52 → 0.38, fy 0.45 → 0.55, scale 0.92 → 0.82
- *     Continue dezooming to a panoramic feel while drifting LEFT to
- *     reveal the loft and the woman in the white shirt.
+ *   PHASE 2  (0.40 → 0.72)  "step back, swing right"
+ *     fx 0.30 → 0.65, fy 0.78 → 0.65, scale 1.00 → 0.88
+ *     Camera dezooms while sliding to the RIGHT — more of the picture
+ *     enters the frame as we move across.
  *
- *   PHASE 3  (0.72 → 1.00)  "the descent"
- *     fx 0.38 → 0.50, fy 0.55 → 0.65, scale 0.82 → 0.95
- *     Re-center, tilt slightly DOWN, gently zoom back toward natural.
+ *   PHASE 3  (0.72 → 1.00)  "release"
+ *     fx 0.65 → 0.60, fy 0.65 → 0.55, scale 0.88 → 0.78
+ *     Pure dezoom — nearly stationary focal point, the picture simply
+ *     opens up further.
  *
  * Stage size `max(200vw, 240vh)` keeps the picture covering the viewport
  * at every phase boundary on every orientation (16:9, 16:10, 4:3, square,
@@ -64,30 +65,30 @@ interface CameraState {
 }
 
 function getCameraState(t: number): CameraState {
-  // PHASE 1 — start at natural size on the upper-right subject, pull back
+  // PHASE 1 — hold LEFT at natural zoom, descend from TOP to BOTTOM
   if (t < 0.4) {
     const e = smoothstep(t / 0.4)
     return {
-      fx: lerp(0.65, 0.52, e),
-      fy: lerp(0.3, 0.45, e),
-      scale: lerp(1.0, 0.92, e),
+      fx: 0.3,
+      fy: lerp(0.22, 0.78, e),
+      scale: 1.0,
     }
   }
-  // PHASE 2 — drift LEFT to reveal the room, continue dezooming
+  // PHASE 2 — dezoom while sliding RIGHT
   if (t < 0.72) {
     const e = smoothstep((t - 0.4) / 0.32)
     return {
-      fx: lerp(0.52, 0.38, e),
-      fy: lerp(0.45, 0.55, e),
-      scale: lerp(0.92, 0.82, e),
+      fx: lerp(0.3, 0.65, e),
+      fy: lerp(0.78, 0.65, e),
+      scale: lerp(1.0, 0.88, e),
     }
   }
-  // PHASE 3 — re-center, tilt down, gently zoom back toward natural
+  // PHASE 3 — pure dezoom, focal point barely moves
   const e = smoothstep((t - 0.72) / 0.28)
   return {
-    fx: lerp(0.38, 0.5, e),
-    fy: lerp(0.55, 0.65, e),
-    scale: lerp(0.82, 0.95, e),
+    fx: lerp(0.65, 0.6, e),
+    fy: lerp(0.65, 0.55, e),
+    scale: lerp(0.88, 0.78, e),
   }
 }
 
@@ -147,12 +148,12 @@ export function CinematicBackground({ src, rangeVH = 9 }: Props) {
       <div
         className="absolute"
         style={{
-          width: 'max(200vw, 240vh)',
+          width: 'max(200vw, 100vh)',
           aspectRatio: `${IMAGE_W} / ${IMAGE_H}`,
-          top: '50%',
-          left: '50%',
-          transform: `translate(-50%, -50%) translate(${tx}%, ${ty}%) scale(${camera.scale})`,
-          transformOrigin: 'center center',
+          // top: '50%',
+          // left: '50%',
+          transform: `translate(${tx}%, ${ty}%) scale(${camera.scale})`,
+          // transformOrigin: 'center center',
           opacity: imageOpacity,
           transition: revealed
             ? 'opacity 3200ms cubic-bezier(0.87, 0, 0.13, 1), filter 3800ms cubic-bezier(0.87, 0, 0.13, 1)'
