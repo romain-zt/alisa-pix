@@ -13,39 +13,35 @@ interface Props {
  * CinematicBackground
  *
  * A pinned "stage" element that holds the full source image (its aspect
- * ratio matches the bitmap, so `object-cover` renders the whole picture
- * with no internal crop). The element is sized **larger than the viewport
- * on both axes regardless of orientation** — landscape OR portrait — so the
- * camera can pan freely in any direction.
+ * ratio matches the bitmap so `object-cover` renders the whole picture
+ * with no internal crop). The stage is sized **larger than the viewport
+ * on both axes regardless of orientation** so the camera can pan freely
+ * in any direction.
  *
- * The camera is described by a focal point (fx, fy) in image-normalized
- * coordinates [0..1] and a zoom `scale`. The transform that brings that
- * focal point to the viewport center is computed exactly:
+ * Camera = focal point `(fx, fy)` in image-normalized coords + `scale`.
+ * The transform that brings (fx, fy) to viewport center after scaling is:
  *
- *   tx = (0.5 - fx) * scale * 100   (% of the element's layout width)
- *   ty = (0.5 - fy) * scale * 100   (% of the element's layout height)
+ *   tx = (0.5 - fx) * scale * 100   (% of stage layout width)
+ *   ty = (0.5 - fy) * scale * 100   (% of stage layout height)
  *
- * THREE-PHASE JOURNEY tied to scroll:
+ * THREE-PHASE JOURNEY (gentle zoom, generous travel):
  *
  *   PHASE 1  (0 → 0.40)   "the subject"
- *     fx 0.78 → 0.50, fy 0.18 → 0.45, scale 1.65 → 1.10
- *     Strong zoom into the right-top of the image (the model in the mirror).
+ *     fx 0.72 → 0.55, fy 0.25 → 0.45, scale 1.18 → 1.05
+ *     Soft zoom on the right-top (the model in the mirror) — enough to
+ *     focus, not so much that we lose context.
  *
  *   PHASE 2  (0.40 → 0.72)  "the room"
- *     fx 0.50 → 0.22, fy 0.45 → 0.55, scale 1.10 → 1.05
- *     Slow drift toward the LEFT side of the image — the woman in the
- *     white shirt and the loft come into view.
+ *     fx 0.55 → 0.30, fy 0.45 → 0.55, scale 1.05 → 1.00
+ *     Drift LEFT to reveal the woman in the white shirt and the loft.
  *
  *   PHASE 3  (0.72 → 1.00)  "the descent"
- *     fx 0.22 → 0.45, fy 0.55 → 0.85, scale 1.05 → 1.30
- *     Camera tilts DOWN to reveal the bottom of the image (legs, floor).
+ *     fx 0.30 → 0.55, fy 0.55 → 0.80, scale 1.00 → 1.10
+ *     Camera tilts DOWN to the legs and floor with a soft re-zoom.
  *
- * Stage size `max(200vw, 240vh)` guarantees enough overflow on every
- * orientation that the largest pan/scale combination still fully covers
- * the viewport — verified at every phase boundary on 16:9, 9:19.5 (mobile)
- * and 21:9 (ultrawide) viewports.
- *
- * Veil + focus pull on mount; reduced-motion respected.
+ * Stage size `max(200vw, 240vh)` keeps the picture covering the viewport
+ * at every phase boundary on every orientation (16:9, 16:10, 4:3, square,
+ * 9:19.5 mobile, 21:9 ultrawide) with comfortable margins.
  */
 
 const IMAGE_W = 980
@@ -67,27 +63,30 @@ interface CameraState {
 }
 
 function getCameraState(t: number): CameraState {
+  // PHASE 1 — soft zoom on the right-top subject
   if (t < 0.4) {
     const e = smoothstep(t / 0.4)
     return {
-      fx: lerp(0.78, 0.5, e),
-      fy: lerp(0.18, 0.45, e),
-      scale: lerp(1.65, 1.1, e),
+      fx: lerp(0.72, 0.55, e),
+      fy: lerp(0.25, 0.45, e),
+      scale: lerp(1.18, 1.05, e),
     }
   }
+  // PHASE 2 — drift left to reveal the room, dezoom to natural size
   if (t < 0.72) {
     const e = smoothstep((t - 0.4) / 0.32)
     return {
-      fx: lerp(0.5, 0.22, e),
+      fx: lerp(0.55, 0.3, e),
       fy: lerp(0.45, 0.55, e),
-      scale: lerp(1.1, 1.05, e),
+      scale: lerp(1.05, 1.0, e),
     }
   }
+  // PHASE 3 — descend to the floor with a soft re-zoom
   const e = smoothstep((t - 0.72) / 0.28)
   return {
-    fx: lerp(0.22, 0.45, e),
-    fy: lerp(0.55, 0.85, e),
-    scale: lerp(1.05, 1.3, e),
+    fx: lerp(0.3, 0.55, e),
+    fy: lerp(0.55, 0.8, e),
+    scale: lerp(1.0, 1.1, e),
   }
 }
 
@@ -130,7 +129,7 @@ export function CinematicBackground({ src, rangeVH = 9 }: Props) {
   const tx = (0.5 - camera.fx) * camera.scale * 100
   const ty = (0.5 - camera.fy) * camera.scale * 100
 
-  const vignette = 0.38 + t * 0.18
+  const vignette = 0.28 + t * 0.14
   const imageOpacity = revealed ? 1 : 0
 
   return (
