@@ -64,8 +64,8 @@ interface Props {
 
 const KEYFRAMES = [
   { t: 0.0, posX: 15, posY: 15, scale: 1.0 },
-  { t: 0.2, posX: 18, posY: 22, scale: 1.25 },
-  { t: 0.45, posX: 85, posY: 75, scale: 1.25 },
+  { t: 0.2, posX: 18, posY: 22, scale: 1.38 },
+  { t: 0.45, posX: 85, posY: 75, scale: 1.38 },
   { t: 1.0, posX: 75, posY: 60, scale: 1.0 },
 ] as const
 
@@ -284,51 +284,51 @@ export function CinematicBackground({ src, rangeVH }: Props) {
   }, [])
 
   useEffect(() => {
-    let ticking = false
+    let rafId: number
+    let lastT = -1
+    let range = 1
 
-    function computeRange(): number {
-      if (rangeVH != null) return window.innerHeight * rangeVH
+    function updateRange() {
+      if (rangeVH != null) {
+        range = window.innerHeight * rangeVH
+        return
+      }
       const doc = document.documentElement
-      const docHeight = Math.max(
-        doc.scrollHeight,
-        doc.offsetHeight,
-        document.body.scrollHeight,
-        document.body.offsetHeight
+      range = Math.max(
+        1,
+        Math.max(doc.scrollHeight, doc.offsetHeight, document.body.scrollHeight, document.body.offsetHeight) - window.innerHeight
       )
-      return Math.max(1, docHeight - window.innerHeight)
     }
 
-    function onScroll() {
-      if (ticking) return
-      ticking = true
-      requestAnimationFrame(() => {
-        const y = window.scrollY
-        const range = computeRange()
-        const local = reducedMotion
-          ? 0
-          : Math.min(1, Math.max(0, y / range))
-        setT(local)
-        ticking = false
-      })
+    function tick() {
+      const newT = reducedMotion ? 0 : Math.min(1, Math.max(0, window.scrollY / range))
+      if (Math.abs(newT - lastT) > 0.00005) {
+        lastT = newT
+        setT(newT)
+      }
+      rafId = requestAnimationFrame(tick)
     }
 
-    window.addEventListener('scroll', onScroll, { passive: true })
-    window.addEventListener('resize', onScroll, { passive: true })
-    onScroll()
+    updateRange()
+    window.addEventListener('resize', updateRange, { passive: true })
+    rafId = requestAnimationFrame(tick)
+
     return () => {
-      window.removeEventListener('scroll', onScroll)
-      window.removeEventListener('resize', onScroll)
+      cancelAnimationFrame(rafId)
+      window.removeEventListener('resize', updateRange)
     }
   }, [rangeVH, reducedMotion])
 
-  const camera = getCameraState(t)
-  const sun = getSunLighting(t)
-  const sunColor = getSunColor(t)
+  // Front-load both camera and light so they move in unison
+  const tDriven = Math.pow(t, 0.62)
+  const camera = getCameraState(tDriven)
+  const sun = getSunLighting(tDriven)
+  const sunColor = getSunColor(tDriven)
   const [cr, cg, cb] = sunColor.core
   const [gr, gg, gb] = sunColor.glow
   const [ar, ag, ab] = sunColor.accent
   const vignette =
-    0.22 + t * 0.1 + (1 - sun.intensity) * 0.06 * (reducedMotion ? 0 : 1)
+    0.22 + tDriven * 0.1 + (1 - sun.intensity) * 0.06 * (reducedMotion ? 0 : 1)
   const imageOpacity = revealed ? 1 : 0
 
   const warmAlpha = (0.24 + sun.intensity * 0.28) * (reducedMotion ? 0.55 : 1)
@@ -338,7 +338,7 @@ export function CinematicBackground({ src, rangeVH }: Props) {
   const shadowWash = (0.18 + sun.intensity * 0.22) * (reducedMotion ? 0.45 : 1)
   const shadowRadial = (0.32 + sun.intensity * 0.28) * (reducedMotion ? 0.5 : 1)
   // Darkest at sunrise (t=0) and sunset (t=1), transparent at midday — power curve stays clear longer
-  const timeOfDayDark = Math.pow(Math.cos(t * Math.PI * 2) * 0.5 + 0.5, 4) * 0.50
+  const timeOfDayDark = Math.pow(Math.cos(tDriven * Math.PI * 2) * 0.5 + 0.5, 4) * 0.50
 
   return (
     <div
