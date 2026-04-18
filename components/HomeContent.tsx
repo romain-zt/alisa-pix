@@ -84,17 +84,17 @@ export function HomeContent() {
           className="font-serif font-light text-text-primary leading-[1.15]"
           style={{ fontSize: 'clamp(1.625rem, 4vw, 2.5rem)' }}
         >
-          Light finds the best version of you.
+          She&apos;ll find the light
           <br />
-          <span className="italic text-text-muted/85">
-            At home in the room — then on the wall.
-          </span>
+          <span className="italic text-text-muted/85">on the best of you.</span>
         </p>
         <div className="mt-9 h-px w-12 bg-accent-soft" />
         <p className="mt-7 text-[var(--text-caption)] text-text-muted/75 leading-relaxed max-w-sm">
-          One subject, one room, two hours.
+          You&apos;ll feel at home in the room.
           <br />
-          Thoughtful retouch when it helps — never a rewrite of who you are.
+          And together, you&apos;ll capture who you already are —
+          <br />
+          with your natural beauty, nothing rewritten.
         </p>
       </OverlayChapter>
 
@@ -105,13 +105,17 @@ export function HomeContent() {
         height="90svh"
         surface="whisper"
         surfacePadding="normal"
-        maxWidth="26rem"
+        maxWidth="28rem"
       >
         <p
           className="font-serif italic text-text-primary leading-tight text-center"
           style={{ fontSize: 'clamp(1.875rem, 4.5vw, 2.75rem)' }}
         >
-          closer than expected
+          you don&apos;t need to prepare.
+          <br />
+          <span className="text-text-muted/70" style={{ fontSize: 'clamp(1.25rem, 2.8vw, 1.75rem)' }}>
+            just show up.
+          </span>
         </p>
       </OverlayChapter>
 
@@ -120,7 +124,7 @@ export function HomeContent() {
 
       {/* 6. MICROSTORY — three short lines */}
       <MicroStory
-        lines={['she arrived nervous', 'left different', "didn't say why"]}
+        lines={['she arrived unsure', 'left carrying something', "she couldn't name it yet"]}
       />
 
       {/* 7. SESSION GATE — conversion */}

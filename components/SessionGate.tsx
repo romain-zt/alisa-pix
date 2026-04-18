@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { useSectionProgress } from '@/hooks/useSectionProgress'
 import { Surface } from './Surface'
 
@@ -35,39 +36,36 @@ export function SessionGate() {
       >
         <Surface weight="solid" padding="loose" radius="lg">
           <p className="text-[var(--text-micro)] tracking-[0.4em] uppercase text-text-muted/65 mb-10">
-            Private sessions
+            Private sessions · Paris
           </p>
 
           <div
             className="w-10 h-px bg-accent-soft mb-10 origin-left"
-            style={{
-              transform: `scaleX(${lineScale})`,
-            }}
+            style={{ transform: `scaleX(${lineScale})` }}
           />
 
-          <h2 className="font-serif font-light text-[var(--text-display)] text-text-primary leading-[1.05] mb-8">
-            By appointment
+          <h2 className="font-serif font-light text-[var(--text-display)] text-text-primary leading-[1.05] mb-6">
+            700<span className="text-accent">€</span>
             <br />
-            <span className="italic text-text-muted/80">only</span>
-            <span className="text-accent">.</span>
+            <span className="italic text-text-muted/80" style={{ fontSize: '0.62em' }}>
+              one session, yours entirely.
+            </span>
           </h2>
 
-          <p className="text-[var(--text-caption)] text-text-muted/70 leading-relaxed mb-2">
-            Boudoir sessions in Paris.
-          </p>
-          <p className="text-[var(--text-caption)] text-text-muted/70 leading-relaxed mb-12">
-            Starting from €700.
+          <p className="text-[var(--text-caption)] text-text-muted/70 leading-relaxed mb-12 max-w-xs">
+            Two hours. Your complete retouched set.
+            Natural beauty — nothing rewritten.
           </p>
 
-          <a
-            href="mailto:hello@vasilisa.com"
+          <Link
+            href="/book"
             className="inline-flex items-center gap-4 group min-h-[44px]"
           >
             <span className="text-[var(--text-caption)] tracking-[0.2em] uppercase text-accent transition-all duration-700 group-hover:tracking-[0.28em]">
-              Request access
+              See the details
             </span>
             <span className="w-8 h-px bg-accent/60 transition-all duration-700 origin-left group-hover:w-12 group-hover:bg-accent" />
-          </a>
+          </Link>
         </Surface>
       </div>
     </section>

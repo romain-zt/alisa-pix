@@ -160,14 +160,18 @@ export function Hero() {
         }}
       >
         <div
-          className="hero-type-plate w-full rounded-[1.5rem] sm:rounded-[1.75rem] border border-[rgba(196,168,138,0.14)] px-6 py-9 sm:px-9 sm:py-10 md:px-11 md:py-12"
+          className="hero-type-plate w-full rounded-[1.5rem] sm:rounded-[1.75rem] px-6 py-9 sm:px-9 sm:py-10 md:px-11 md:py-12"
           style={{
-            background:
-              'linear-gradient(165deg, rgba(10,9,8,0.52) 0%, rgba(6,5,4,0.62) 45%, rgba(5,4,3,0.68) 100%)',
-            backdropFilter: 'blur(14px) saturate(1.08)',
-            WebkitBackdropFilter: 'blur(14px) saturate(1.08)',
+            background: [
+              'linear-gradient(180deg, rgba(255,248,235,0.14) 0%, rgba(255,240,220,0.05) 28%, transparent 52%)',
+              'linear-gradient(130deg, rgba(255,255,255,0.07) 0%, transparent 46%)',
+              'linear-gradient(155deg, rgba(13,11,9,0.38) 0%, rgba(10,9,8,0.28) 100%)',
+            ].join(', '),
+            backdropFilter: 'blur(18px) saturate(1.08)',
+            WebkitBackdropFilter: 'blur(18px) saturate(1.08)',
+            border: '1px solid rgba(196,168,138,0.1)',
             boxShadow:
-              '0 36px 72px -28px rgba(0,0,0,0.55), inset 0 1px 0 0 rgba(255,248,235,0.06)',
+              '0 32px 64px -30px rgba(0,0,0,0.38), inset 0 1px 0 0 rgba(255,248,235,0.055)',
           }}
         >
           <p

@@ -2,26 +2,36 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 
-export function Navigation() {
-  const [visible, setVisible] = useState(false)
+interface Props {
+  /** When true, the nav is visible immediately (no scroll trigger). */
+  alwaysVisible?: boolean
+}
+
+export function Navigation({ alwaysVisible = false }: Props) {
+  const [scrolled, setScrolled] = useState(false)
+  const pathname = usePathname()
 
   useEffect(() => {
+    if (alwaysVisible) return
+
     let ticking = false
 
     function onScroll() {
       if (ticking) return
       ticking = true
       requestAnimationFrame(() => {
-        const y = window.scrollY
-        setVisible(y > window.innerHeight * 0.8)
+        setScrolled(window.scrollY > window.innerHeight * 0.8)
         ticking = false
       })
     }
 
     window.addEventListener('scroll', onScroll, { passive: true })
     return () => window.removeEventListener('scroll', onScroll)
-  }, [])
+  }, [alwaysVisible])
+
+  const visible = alwaysVisible || scrolled
 
   return (
     <nav
@@ -35,22 +45,24 @@ export function Navigation() {
     >
       <Link
         href="/gallery"
-        className="text-[var(--text-micro)] tracking-[0.2em] uppercase text-text-muted/40 transition-all duration-500 hover:text-text-primary/80 hover:tracking-[0.25em] min-h-[44px] flex items-center"
+        className={`text-[var(--text-micro)] tracking-[0.2em] uppercase transition-all duration-500 hover:tracking-[0.25em] min-h-[44px] flex items-center ${
+          pathname === '/gallery'
+            ? 'text-text-primary/80'
+            : 'text-text-muted/40 hover:text-text-primary/80'
+        }`}
       >
         Gallery
       </Link>
-      <a
-        href="#sessions"
-        className="text-[var(--text-micro)] tracking-[0.2em] uppercase text-text-muted/40 transition-all duration-500 hover:text-text-primary/80 hover:tracking-[0.25em] min-h-[44px] flex items-center"
+      <Link
+        href="/book"
+        className={`text-[var(--text-micro)] tracking-[0.2em] uppercase transition-all duration-500 hover:tracking-[0.25em] min-h-[44px] flex items-center ${
+          pathname === '/book'
+            ? 'text-accent'
+            : 'text-accent/50 hover:text-accent'
+        }`}
       >
-        Sessions
-      </a>
-      <a
-        href="mailto:hello@vasilisa.com"
-        className="text-[var(--text-micro)] tracking-[0.2em] uppercase text-accent/50 transition-all duration-500 hover:text-accent min-h-[44px] flex items-center"
-      >
-        Contact
-      </a>
+        Book
+      </Link>
     </nav>
   )
 }

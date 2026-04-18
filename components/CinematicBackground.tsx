@@ -168,6 +168,49 @@ function smoothstep01(u: number): number {
   return t * t * (3 - 2 * t)
 }
 
+function lerpColor(
+  a: [number, number, number],
+  b: [number, number, number],
+  u: number
+): [number, number, number] {
+  return [
+    Math.round(a[0] + (b[0] - a[0]) * u),
+    Math.round(a[1] + (b[1] - a[1]) * u),
+    Math.round(a[2] + (b[2] - a[2]) * u),
+  ]
+}
+
+/**
+ * Scroll-driven sun color.
+ * t=0   → morning  : amber-orange
+ * t=0.5 → midday   : warm white-yellow
+ * t=1   → sunset   : orange-red bleeding into purple-rose
+ */
+function getSunColor(t: number) {
+  const morning: [number, number, number] = [255, 162, 60]
+  const midday: [number, number, number]  = [255, 252, 210]
+  const sunset: [number, number, number]  = [255, 102, 38]
+  const dusk: [number, number, number]    = [190, 66, 135]
+
+  if (t <= 0.5) {
+    const u = smoothstep01(t * 2)
+    return {
+      core:      lerpColor(morning, midday, u),
+      glow:      lerpColor([255, 195, 105] as [number, number, number], [255, 248, 195] as [number, number, number], u),
+      accent:    lerpColor([255, 182, 85]  as [number, number, number], [255, 240, 170] as [number, number, number], u),
+      duskAlpha: 0,
+    }
+  } else {
+    const u = smoothstep01((t - 0.5) * 2)
+    return {
+      core:      lerpColor(midday, sunset, u),
+      glow:      lerpColor([255, 248, 195] as [number, number, number], dusk, u),
+      accent:    lerpColor([255, 240, 170] as [number, number, number], dusk, u),
+      duskAlpha: u * 0.42,
+    }
+  }
+}
+
 /** Scroll-driven “sun”: travels corner-to-corner; intensity swings like time of day. */
 function getSunLighting(t: number) {
   const tc = Math.max(0, Math.min(1, t))
@@ -280,14 +323,18 @@ export function CinematicBackground({ src, rangeVH }: Props) {
 
   const camera = getCameraState(t)
   const sun = getSunLighting(t)
+  const sunColor = getSunColor(t)
+  const [cr, cg, cb] = sunColor.core
+  const [gr, gg, gb] = sunColor.glow
+  const [ar, ag, ab] = sunColor.accent
   const vignette =
     0.22 + t * 0.1 + (1 - sun.intensity) * 0.06 * (reducedMotion ? 0 : 1)
   const imageOpacity = revealed ? 1 : 0
 
-  const warmAlpha = (0.22 + sun.intensity * 0.26) * (reducedMotion ? 0.55 : 1)
+  const warmAlpha = (0.24 + sun.intensity * 0.28) * (reducedMotion ? 0.55 : 1)
   const coolAlpha = (0.07 + sun.intensity * 0.12) * (reducedMotion ? 0.55 : 1)
-  const beamBase = 0.045 + sun.intensity * 0.09
-  const rayOpacity = (0.07 + sun.intensity * 0.1) * (reducedMotion ? 0.35 : 1)
+  const beamBase = 0.065 + sun.intensity * 0.11
+  const rayOpacity = (0.22 + sun.intensity * 0.22) * (reducedMotion ? 0.35 : 1)
   const shadowWash = (0.18 + sun.intensity * 0.22) * (reducedMotion ? 0.45 : 1)
   const shadowRadial = (0.32 + sun.intensity * 0.28) * (reducedMotion ? 0.5 : 1)
 
@@ -377,8 +424,8 @@ export function CinematicBackground({ src, rangeVH }: Props) {
           className="absolute inset-0 pointer-events-none"
           style={{
             background: `
-              radial-gradient(ellipse ${48 + sun.intensity * 14}% ${38 + sun.intensity * 10}% at ${sun.sunX}% ${sun.sunY}%, rgba(255,238,210,${warmAlpha}) 0%, rgba(255,228,196,${warmAlpha * 0.45}) 36%, transparent 64%),
-              radial-gradient(ellipse 32% 28% at ${sun.sunX + 5}% ${sun.sunY - 4}%, rgba(255,252,245,${warmAlpha * 0.65}) 0%, transparent 58%)
+              radial-gradient(ellipse ${48 + sun.intensity * 14}% ${38 + sun.intensity * 10}% at ${sun.sunX}% ${sun.sunY}%, rgba(${cr},${cg},${cb},${warmAlpha}) 0%, rgba(${gr},${gg},${gb},${warmAlpha * 0.48}) 36%, transparent 64%),
+              radial-gradient(ellipse 32% 28% at ${sun.sunX + 5}% ${sun.sunY - 4}%, rgba(${ar},${ag},${ab},${warmAlpha * 0.68}) 0%, transparent 58%)
             `,
           }}
         />
@@ -386,6 +433,18 @@ export function CinematicBackground({ src, rangeVH }: Props) {
           className="absolute inset-0 pointer-events-none"
           style={{
             background: `radial-gradient(ellipse 52% 46% at ${100 - sun.sunX * 0.75}% ${100 - sun.sunY * 0.7}%, rgba(196,168,138,${coolAlpha}) 0%, transparent 70%)`,
+          }}
+        />
+        {/* Sunset bloom — purple-rose halo that bleeds in from t=0.5 */}
+        <div
+          className="absolute inset-0 pointer-events-none mix-blend-screen"
+          style={{
+            opacity: sunColor.duskAlpha,
+            background: `
+              radial-gradient(ellipse 55% 42% at ${sun.sunX}% ${sun.sunY}%, rgba(210,80,140,0.55) 0%, rgba(170,55,110,0.28) 42%, transparent 68%),
+              radial-gradient(ellipse 38% 30% at ${sun.sunX + 8}% ${sun.sunY + 6}%, rgba(240,100,60,0.35) 0%, transparent 55%)
+            `,
+            transition: 'opacity 800ms ease-out',
           }}
         />
       </div>
@@ -400,12 +459,12 @@ export function CinematicBackground({ src, rangeVH }: Props) {
             repeating-conic-gradient(
               from ${sun.rayFromDeg}deg at ${sun.sunX}% ${sun.sunY}%,
               transparent 0deg,
-              transparent 7deg,
-              rgba(255, 244, 228, 0.04) 7.6deg,
-              rgba(255, 248, 235, 0.055) 8.2deg,
-              rgba(255, 244, 228, 0.035) 8.9deg,
-              transparent 10deg,
-              transparent 22deg
+              transparent 6deg,
+              rgba(${ar},${ag},${ab}, 0.13) 7deg,
+              rgba(${cr},${cg},${cb}, 0.19) 8deg,
+              rgba(${ar},${ag},${ab}, 0.11) 9.2deg,
+              transparent 11deg,
+              transparent 20deg
             )
           `,
         }}
@@ -423,9 +482,9 @@ export function CinematicBackground({ src, rangeVH }: Props) {
           transformOrigin: `${sun.sunX}% ${sun.sunY}%`,
           willChange: 'transform, opacity',
           background: `
-            linear-gradient(${sun.lightAngleDeg}deg, rgba(255,244,228,${0.035 + sun.intensity * 0.05}) 0%, transparent 34%, transparent 54%, rgba(255,248,235,${0.018 + sun.intensity * 0.03}) 74%, transparent 100%),
-            linear-gradient(${sun.lightAngleDeg + 22}deg, transparent 38%, rgba(255, 236, 214, ${0.04 + sun.intensity * 0.055}) 49%, rgba(255, 250, 240, ${0.022 + sun.intensity * 0.035}) 51%, transparent 63%),
-            linear-gradient(${sun.lightAngleDeg - 18}deg, transparent 42%, rgba(255, 248, 235, ${0.028 + sun.intensity * 0.045}) 50%, transparent 61%)
+            linear-gradient(${sun.lightAngleDeg}deg, rgba(${cr},${cg},${cb},${0.05 + sun.intensity * 0.07}) 0%, transparent 34%, transparent 54%, rgba(${gr},${gg},${gb},${0.025 + sun.intensity * 0.04}) 74%, transparent 100%),
+            linear-gradient(${sun.lightAngleDeg + 22}deg, transparent 38%, rgba(${ar},${ag},${ab}, ${0.055 + sun.intensity * 0.07}) 49%, rgba(${cr},${cg},${cb}, ${0.03 + sun.intensity * 0.045}) 51%, transparent 63%),
+            linear-gradient(${sun.lightAngleDeg - 18}deg, transparent 42%, rgba(${gr},${gg},${gb}, ${0.04 + sun.intensity * 0.06}) 50%, transparent 61%)
           `,
         }}
       />
