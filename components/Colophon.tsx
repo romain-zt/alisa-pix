@@ -12,7 +12,7 @@ export function Colophon() {
   return (
     <footer
       ref={ref}
-      className="relative pt-32 md:pt-48 pb-16 md:pb-20 px-6 md:px-10 min-h-[35vh] overflow-hidden"
+      className="relative px-6 md:px-10  overflow-hidden"
     >
       <div
         className="relative z-10 max-w-xs"
