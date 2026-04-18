@@ -276,8 +276,7 @@ export function OrbitGallery({ images }: OrbitGalleryProps) {
     const onWheel = (e: WheelEvent) => {
       e.preventDefault()
       const delta = Math.abs(e.deltaY) > Math.abs(e.deltaX) ? e.deltaY : e.deltaX
-      /* Invert so scroll direction matches natural gallery progression */
-      targetAngleRef.current -= delta * WHEEL_SENSITIVITY
+      targetAngleRef.current += delta * WHEEL_SENSITIVITY
       noteInteraction()
       if (wheelSnapTimer) clearTimeout(wheelSnapTimer)
       wheelSnapTimer = setTimeout(() => {
@@ -322,7 +321,7 @@ export function OrbitGallery({ images }: OrbitGalleryProps) {
     const onMove = (e: PointerEvent) => {
       if (!dragging) return
       const dx = e.clientX - startX
-      targetAngleRef.current = startAngle - dx * DRAG_SENSITIVITY
+      targetAngleRef.current = startAngle + dx * DRAG_SENSITIVITY
       noteInteraction()
     }
     const onUp = (e: PointerEvent) => {
