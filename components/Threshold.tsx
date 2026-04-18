@@ -13,35 +13,69 @@ import { Surface } from './Surface'
  *
  * Sticky scroll-driven: the portrait scales/drifts, the text fades in.
  */
-function curve(t: number, exp: number) {
-  return Math.pow(t, exp)
+
+function clamp01(value: number) {
+  return Math.max(0, Math.min(1, value))
+}
+
+function lerp(start: number, end: number, amount: number) {
+  return start + (end - start) * amount
+}
+
+function easeOutCubic(t: number) {
+  return 1 - Math.pow(1 - t, 3)
+}
+
+function easeInOutSine(t: number) {
+  return -(Math.cos(Math.PI * t) - 1) / 2
 }
 
 export function Threshold({ src }: { src: string }) {
   const { ref, progress } = useSectionProgress<HTMLElement>()
 
-  const p = curve(progress, 1.4)
+  const introEnd = 0.34
+  const holdEnd = 0.7
+  const intro = clamp01(progress / introEnd)
+  const hold = clamp01((progress - introEnd) / (holdEnd - introEnd))
+  const exit = clamp01((progress - holdEnd) / (1 - holdEnd))
+  const introEase = easeOutCubic(intro)
+  const exitEase = easeInOutSine(exit)
+  const holdBreath = Math.sin(hold * Math.PI)
 
   // Portrait
-  const portraitScale = 0.94 + p * 0.1
-  const portraitY = 30 - p * 70
+  const portraitScale =
+    progress < introEnd
+      ? lerp(0.94, 1.005, introEase)
+      : progress < holdEnd
+        ? 1.005 + holdBreath * 0.012
+        : lerp(1.005, 1.075, exitEase)
+  const portraitY =
+    progress < introEnd
+      ? lerp(34, 0, introEase)
+      : progress < holdEnd
+        ? -holdBreath * 4
+        : lerp(0, -72, exitEase)
   const portraitOpacity =
     progress < 0.18
       ? Math.max(0, (progress - 0.05) / 0.13)
-      : progress > 0.84
-        ? Math.max(0, 1 - (progress - 0.84) * 4)
+      : progress > 0.88
+        ? Math.max(0, 1 - (progress - 0.88) * 5)
         : 1
-  const portraitBlur =
-    progress < 0.32 ? Math.max(0, 7 - progress * 22) : 0
+  const portraitBlur = progress < introEnd ? lerp(7, 0, introEase) : 0
 
   // Text card
   const cardOpacity =
-    progress > 0.22 && progress < 0.86
-      ? Math.min(1, (progress - 0.22) * 1.8)
-      : progress >= 0.86
-        ? Math.max(0, 1 - (progress - 0.86) * 5)
+    progress > 0.16 && progress < holdEnd
+      ? Math.min(1, (progress - 0.16) / 0.16)
+      : progress >= holdEnd
+        ? Math.max(0, 1 - (progress - holdEnd) * 4.5)
         : 0
-  const cardY = (1 - Math.min(1, progress * 1.4)) * 24
+  const cardY =
+    progress < introEnd
+      ? lerp(28, 0, introEase)
+      : progress < holdEnd
+        ? holdBreath * -2
+        : lerp(0, -28, exitEase)
 
   return (
     <section ref={ref} className="relative z-10 h-[260svh]">
