@@ -174,80 +174,83 @@ interface RendererProps {
   segments: ReadonlyArray<ReadonlyArray<number>>
 }
 
-// Each strand has its own amplitude, wavelength, phase and drift speed so the
-// three lines move on *unrelated* rhythms — they pass close, cross, then drift
-// far apart again, never tracing a mechanical helix. This is what gives the
-// braid an organic, "three independent currents" feel rather than a clean
-// spring. Wavelengths are deliberately non-commensurate so they almost never
-// realign exactly.
+// Each strand is the sum of TWO sine waves at incommensurate wavelengths.
+// One strand is no longer a clean sinusoid — it drifts, leans, never quite
+// repeats. Combined with a tiny per-strand amplitude modulation, this is
+// what makes the line feel like a hair or a silk thread instead of a wave.
+//
+// Verticality is implicit: the spine through stacked surfaces is mostly
+// vertical, so "perpendicular offset" *is* horizontal sway. Smaller
+// amplitudes ⇒ tighter to the spine ⇒ more vertical, more sensual.
 interface StrandConfig {
-  /** Base perpendicular amplitude in px. */
+  /** Base perpendicular amplitude in px (kept small — 25–45). */
   amplitude: number
   /**
-   * Slow modulation envelope on top of the base amplitude. The actual
+   * Gentle modulation envelope on top of the base amplitude. Actual
    * amplitude swings between `amplitude` and `amplitude * (1 + ampSwing)`
-   * over a wavelength of `ampWavelength`. With ampSwing > ~3 the strand will
-   * occasionally fly off the left/right edge of the viewport and disappear,
-   * naturally re-entering when the modulation cycles down.
+   * over a wavelength of `ampWavelength`. Kept low (≤ 0.9) so the strand
+   * never flies past the edges — it stays present and intimate.
    */
   ampSwing: number
   ampWavelength: number
   ampPhase: number
-  /** Wavelength of the strand's main perpendicular sine, in px. */
+  /** Primary wavelength — long, calligraphic. ~1.5–2.4 viewports. */
   wavelength: number
   phase: number
-  /** Time drift in Hz — how fast the wave slides along the spine. */
+  /**
+   * Secondary harmonic — adds organic irregularity. Should be
+   * incommensurate with the primary wavelength. Mixed at ~30–45% weight
+   * so the line never traces a clean sine.
+   */
+  wavelength2: number
+  phase2: number
+  weight2: number
+  /** Time drift in Hz — slow, almost imperceptible. */
   drift: number
   stroke: string
   width: number
 }
 
-// Long soft sweeping S-curves: each main wavelength spans roughly one to two
-// viewports, so the visible strands look like slow, calligraphic strokes.
-// On top of that, each strand has its own *amplitude modulation* with a much
-// longer wavelength (multiple viewports). At its peak the line swings far past
-// the viewport edge and disappears for a while; at its trough it hugs the
-// spine. The two modulations are deliberately incommensurate per strand and
-// across strands, so the disappearance/return rhythm always feels organic.
+// Two strands, not three. A duet, not a braid. Hair and silk falling near
+// each other along the spine — close enough to almost touch at moments,
+// far enough that you never read them as a pair.
+//
+// Palette: champagne (warm gold) + ivory (cream-white). Both are warmer
+// than the warmest pixel in the scene, so they read as light *on* the
+// surface, never as a foreign mark.
 const STRAND_CONFIGS: StrandConfig[] = [
-  // Black — only visible against the brighter regions of the cinematic
-  // background; "appears and disappears" with the light naturally.
+  // Champagne — the leading thread; warm gold, slightly thicker presence.
   {
-    amplitude: 110,
-    ampSwing: 4.2,
-    ampWavelength: 2900,
-    ampPhase: 0.4,
-    wavelength: 820,
+    amplitude: 38,
+    ampSwing: 0.7,
+    ampWavelength: 3400,
+    ampPhase: 0.8,
+    wavelength: 1900,
     phase: 0,
-    drift: 0.018,
-    stroke: 'rgba(0,0,0,0.55)',
-    width: 0.5,
+    wavelength2: 730,
+    phase2: 1.3,
+    weight2: 0.32,
+    drift: 0.009,
+    stroke: 'rgba(196,168,138,0.55)',
+    width: 0.55,
   },
-  // White — the brightest line, the most visible thread.
+  // Ivory — the answering thread; cool-warm cream, hairline.
   {
-    amplitude: 90,
-    ampSwing: 5.0,
-    ampWavelength: 3700,
-    ampPhase: 2.1,
-    wavelength: 1180,
-    phase: 1.7,
-    drift: -0.013,
-    stroke: 'rgba(255,255,255,0.55)',
-    width: 0.5,
-  },
-  // Silver — cool neutral, sits between the two.
-  {
-    amplitude: 140,
-    ampSwing: 3.4,
-    ampWavelength: 2300,
-    ampPhase: 4.7,
-    wavelength: 680,
-    phase: 3.4,
-    drift: 0.024,
-    stroke: 'rgba(196,200,210,0.50)',
-    width: 0.5,
+    amplitude: 28,
+    ampSwing: 0.55,
+    ampWavelength: 4100,
+    ampPhase: 3.4,
+    wavelength: 2300,
+    phase: 2.1,
+    wavelength2: 880,
+    phase2: 4.6,
+    weight2: 0.38,
+    drift: -0.0065,
+    stroke: 'rgba(245,232,210,0.50)',
+    width: 0.45,
   },
 ]
+const STRAND_COUNT = STRAND_CONFIGS.length
 
 const SAMPLE_STEP_PX = 8
 const SAMPLE_MIN = 32
@@ -292,6 +295,9 @@ function LightThread({ anchorsRef, version, segments }: RendererProps) {
     const strandOmega = STRAND_CONFIGS.map(
       (c) => (2 * Math.PI) / c.wavelength
     )
+    const strandOmega2 = STRAND_CONFIGS.map(
+      (c) => (2 * Math.PI) / c.wavelength2
+    )
     const strandAmpOmega = STRAND_CONFIGS.map(
       (c) => (2 * Math.PI) / c.ampWavelength
     )
@@ -322,7 +328,8 @@ function LightThread({ anchorsRef, version, segments }: RendererProps) {
       if (points.length < 2) {
         // Empty / not enough anchors — clear the slot.
         if (lastSpineD[segIdx] !== '') {
-          for (let s = 0; s < 3; s++) strandSet[s]?.setAttribute('d', '')
+          for (let s = 0; s < STRAND_COUNT; s++)
+            strandSet[s]?.setAttribute('d', '')
           measure.setAttribute('d', '')
           lastSpineD[segIdx] = ''
         }
@@ -345,7 +352,8 @@ function LightThread({ anchorsRef, version, segments }: RendererProps) {
         Math.min(SAMPLE_MAX, Math.floor(totalLen / SAMPLE_STEP_PX))
       )
 
-      const strandParts: string[][] = [[], [], []]
+      const strandParts: string[][] = []
+      for (let s = 0; s < STRAND_COUNT; s++) strandParts.push([])
 
       for (let i = 0; i < sampleCount; i++) {
         const t = i / (sampleCount - 1)
@@ -361,17 +369,19 @@ function LightThread({ anchorsRef, version, segments }: RendererProps) {
         const nx = -ty / tlen
         const ny = tx / tlen
 
-        // Wider taper (~12% each end) so the strands collapse cleanly into
-        // the surface borders themselves — no off-screen ghost endpoints.
-        const TAPER = 0.12
+        // Wider taper (~14% each end) — the strand dissolves into the
+        // surface border slowly, like a hair losing the light.
+        const TAPER = 0.14
         let envelope = 1
         if (t < TAPER) envelope = Math.sin((t / TAPER) * (Math.PI / 2))
         else if (t > 1 - TAPER)
           envelope = Math.sin(((1 - t) / TAPER) * (Math.PI / 2))
 
-        for (let s = 0; s < 3; s++) {
+        for (let s = 0; s < STRAND_COUNT; s++) {
           const cfg = STRAND_CONFIGS[s]
           const drift = elapsed * strandDriftRate[s]
+          // Gentle amplitude breath (≤ 1 + ampSwing) — never enough to
+          // lose the strand off-screen.
           const ampMul =
             1 +
             cfg.ampSwing *
@@ -381,15 +391,28 @@ function LightThread({ anchorsRef, version, segments }: RendererProps) {
                   len * strandAmpOmega[s] + cfg.ampPhase + drift * 0.35
                 ))
           const localAmp = cfg.amplitude * envelope * ampMul
-          const offset =
-            localAmp * Math.sin(len * strandOmega[s] + cfg.phase + drift)
+
+          // Two superimposed harmonics, normalized so the peak combined
+          // offset stays at ~localAmp. The secondary harmonic drifts at
+          // a different rate, so the line never quite repeats — what
+          // makes it read as natural rather than mechanical.
+          const w1 = 1 - cfg.weight2
+          const w2 = cfg.weight2
+          const wave =
+            w1 * Math.sin(len * strandOmega[s] + cfg.phase + drift) +
+            w2 *
+              Math.sin(
+                len * strandOmega2[s] + cfg.phase2 + drift * 1.6
+              )
+          const offset = localAmp * wave
+
           const x = (p.x + nx * offset).toFixed(1)
           const y = (p.y + ny * offset).toFixed(1)
           strandParts[s].push(i === 0 ? `M ${x} ${y}` : `L ${x} ${y}`)
         }
       }
 
-      for (let s = 0; s < 3; s++) {
+      for (let s = 0; s < STRAND_COUNT; s++) {
         strandSet[s]?.setAttribute('d', strandParts[s].join(' '))
       }
     }
