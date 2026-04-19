@@ -39,7 +39,7 @@ function easeInOutCubic(t: number) {
 // SECTION_VH controls how long the portrait stays pinned (in viewports).
 // At 5 viewports of pin, the user gets ~2vh of reveal + ~3vh of "hold full
 // state" before the pin releases — that's the beat we want.
-const SECTION_VH = 5
+const SECTION_VH = 3
 
 // Sub-stage windows, expressed as fractions of the *sticky* progress (0→1).
 // Everything is packed into the first ~55% of the pin so the user gets a

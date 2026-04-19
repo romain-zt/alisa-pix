@@ -71,8 +71,8 @@ const KEYFRAMES = [
 
 // Window over which the camera dezooms to the full ("contain") view.
 // Pushed late so the slow zoom-out only plays while SessionGate is on screen.
-const FIT_START = 0.78
-const FIT_END = 1.0
+const FIT_START = .8
+const FIT_END = 1
 
 function clamp01(value: number): number {
   return Math.max(0, Math.min(1, value))
