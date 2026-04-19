@@ -173,32 +173,35 @@ interface StrandConfig {
   width: number
 }
 
+// Long soft sweeping S-curves: each wavelength spans roughly one to two
+// viewports, so the visible strands look like slow, calligraphic strokes —
+// not springs. Drift speeds are slowed so the gentle curves never whip.
 const STRAND_CONFIGS: StrandConfig[] = [
   // Black — only visible against the brighter regions of the cinematic
   // background; "appears and disappears" with the light naturally.
   {
-    amplitude: 70,
-    wavelength: 180,
+    amplitude: 110,
+    wavelength: 820,
     phase: 0,
-    drift: 0.055,
+    drift: 0.018,
     stroke: 'rgba(0,0,0,0.55)',
     width: 0.5,
   },
   // White — the brightest line, the most visible thread.
   {
-    amplitude: 56,
-    wavelength: 260,
+    amplitude: 90,
+    wavelength: 1180,
     phase: 1.7,
-    drift: -0.039,
+    drift: -0.013,
     stroke: 'rgba(255,255,255,0.55)',
     width: 0.5,
   },
   // Silver — cool neutral, sits between the two.
   {
-    amplitude: 82,
-    wavelength: 145,
+    amplitude: 140,
+    wavelength: 680,
     phase: 3.4,
-    drift: 0.068,
+    drift: 0.024,
     stroke: 'rgba(196,200,210,0.50)',
     width: 0.5,
   },
