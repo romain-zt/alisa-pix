@@ -35,18 +35,14 @@ const ENTRY_CONFIGS: Record<
 
 interface MicroStoryProps {
   lines: string[]
-  /** First LightThread order index. Each of the three lines occupies the next slot. */
-  threadStartOrder?: number
 }
-
-const THREAD_SIDES: Array<'left' | 'right' | 'center'> = ['right', 'center', 'left']
 
 /**
  * MicroStory — three short lines, each entering from a different direction,
  * each in its own whisper-weight glass surface. No section background; the
  * cinematic stage shows through.
  */
-export function MicroStory({ lines, threadStartOrder }: MicroStoryProps) {
+export function MicroStory({ lines }: MicroStoryProps) {
   const { ref, progress } = useSectionProgress<HTMLElement>()
 
   return (
@@ -88,10 +84,6 @@ export function MicroStory({ lines, threadStartOrder }: MicroStoryProps) {
                 weight="whisper"
                 padding="tight"
                 radius="md"
-                threadOrder={
-                  threadStartOrder != null ? threadStartOrder + i : undefined
-                }
-                threadSide={THREAD_SIDES[i % THREAD_SIDES.length]}
               >
                 <p
                   className="font-serif italic text-text-primary/95 select-none leading-snug"

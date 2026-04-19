@@ -3,7 +3,6 @@
 import { useEffect, useRef } from 'react'
 import { animate, createTimeline, cubicBezier, stagger } from 'animejs'
 import { useSectionProgress } from '@/hooks/useSectionProgress'
-import { useLightThreadAnchor } from './LightThread'
 
 /**
  * Hero — first viewport of the cinematic act.
@@ -22,18 +21,10 @@ import { useLightThreadAnchor } from './LightThread'
 
 const BRAND = 'Vasilisa'.split('')
 
-interface HeroProps {
-  threadOrder?: number
-}
-
-export function Hero({ threadOrder }: HeroProps = {}) {
+export function Hero() {
   const rootRef = useRef<HTMLElement>(null)
   const hasPlayed = useRef(false)
   const { ref: sectionRef, progress } = useSectionProgress<HTMLElement>()
-  const threadRef = useLightThreadAnchor<HTMLDivElement>({
-    order: threadOrder,
-    side: 'center',
-  })
 
   // Type drifts up + dissolves as we scroll past
   const wordY = -progress * 90
@@ -211,7 +202,6 @@ export function Hero({ threadOrder }: HeroProps = {}) {
         }}
       >
         <div
-          ref={threadRef}
           className="hero-type-plate w-full rounded-[1.5rem] sm:rounded-[1.75rem] px-6 py-9 sm:px-9 sm:py-10 md:px-11 md:py-12"
           style={{
             background: [

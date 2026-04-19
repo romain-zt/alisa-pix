@@ -807,21 +807,6 @@ body {
   }
 }
 
-/* ── Light Thread ──
-   The luminous filament that connects every Surface across the page.
-   The SVG itself is rendered by <LightThread/>; this stylesheet only
-   controls its slow opacity breath so the line feels alive while the
-   user is idle (no scroll, no resize). Reduced motion freezes it. */
-@keyframes light-thread-breathe {
-  0%, 100% { opacity: 0.78; }
-  50%      { opacity: 1; }
-}
-
-.light-thread {
-  animation: light-thread-breathe 11s ease-in-out infinite;
-  will-change: opacity;
-}
-
 /* ── Reduced Motion ── */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
@@ -840,8 +825,7 @@ body {
   .orbit-shimmer,
   .orbit-hint,
   .orbit-floor-ring,
-  .orbit-camera,
-  .light-thread {
+  .orbit-camera {
     animation: none !important;
   }
 }

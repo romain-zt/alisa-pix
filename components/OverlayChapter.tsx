@@ -20,9 +20,6 @@ interface Props {
   surfacePadding?: 'tight' | 'normal' | 'loose'
   /** Max-width override for the inner content. */
   maxWidth?: string
-  /** When set, the inner Surface registers as a LightThread anchor at this order. */
-  threadOrder?: number
-  threadSide?: 'left' | 'right' | 'center'
   /**
    * Direction the chapter drifts in from. Defaults to derive from `align`:
    *   - align="left"   → enters from the left (slides in horizontally)
@@ -57,8 +54,6 @@ export function OverlayChapter({
   surface = false,
   surfacePadding = 'normal',
   maxWidth = '36rem',
-  threadOrder,
-  threadSide,
   enterFrom,
   enterDistance,
 }: Props) {
@@ -118,8 +113,6 @@ export function OverlayChapter({
       padding={surfacePadding}
       radius="lg"
       className={className}
-      threadOrder={threadOrder}
-      threadSide={threadSide}
     >
       {children}
     </Surface>

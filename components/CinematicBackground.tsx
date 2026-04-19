@@ -615,7 +615,7 @@ export function CinematicBackground({
             left: 'var(--frame-left)',
             top: 'var(--frame-top)',
             transform: 'scale(var(--camera-scale))',
-            transformOrigin: '50% 50%',
+            transformOrigin: 'var(--camera-x) var(--camera-y)',
             willChange: 'transform, width, height, left, top',
           }}
         >

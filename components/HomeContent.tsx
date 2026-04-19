@@ -5,7 +5,6 @@ import { Hero } from './Hero'
 import { Navigation } from './Navigation'
 import { CinematicBackground } from './CinematicBackground'
 import { OverlayChapter } from './OverlayChapter'
-import { LightThreadProvider } from './LightThread'
 
 /**
  * Homepage — one cinematic stage that never disappears.
@@ -40,24 +39,8 @@ const SessionGate = dynamic(
 )
 
 export function HomeContent() {
-  // LightThread segments — short, intimate filaments between *some* surfaces.
-  // Not a continuous river through the page. Each sub-array lists the anchor
-  // `order` values that one braid connects, in order. Anchors not listed are
-  // simply not threaded — those sections breathe on their own.
-  //
-  //   [2, 3]      — Whisper I to the Manifesto: the question reaches the answer.
-  //   [5, 6]      — Threshold to the first MicroStory line: the portrait
-  //                  hands the thread to her story.
-  //   [8, 9]      — Last MicroStory line to SessionGate: the story closes
-  //                  by inviting the visitor in.
-  const threadSegments: ReadonlyArray<ReadonlyArray<number>> = [
-    [2, 3],
-    [5, 6],
-    [8, 9],
-  ]
-
   return (
-    <LightThreadProvider segments={threadSegments}>
+    <>
       <Navigation />
 
       {/* Pinned cinematic stage — visible for the entire page. */}
@@ -70,7 +53,7 @@ export function HomeContent() {
       />
 
       {/* 1. HERO — wordmark, no card */}
-      <Hero threadOrder={1} />
+      <Hero />
 
       {/* 2. WHISPER I */}
       <OverlayChapter
@@ -80,8 +63,6 @@ export function HomeContent() {
         surface="whisper"
         surfacePadding="normal"
         maxWidth="22rem"
-        threadOrder={2}
-        threadSide="left"
       >
         <p
           className="font-serif italic text-text-primary leading-[1.05] text-right"
@@ -101,8 +82,6 @@ export function HomeContent() {
         surface="soft"
         surfacePadding="loose"
         maxWidth="32rem"
-        threadOrder={3}
-        threadSide="right"
       >
         <p className="text-[var(--text-micro)] tracking-[0.45em] uppercase text-accent/85 mb-7">
           On the work
@@ -133,8 +112,6 @@ export function HomeContent() {
         surface="whisper"
         surfacePadding="normal"
         maxWidth="28rem"
-        threadOrder={4}
-        threadSide="center"
       >
         <p
           className="font-serif italic text-text-primary leading-tight text-center"
@@ -149,16 +126,15 @@ export function HomeContent() {
       </OverlayChapter>
 
       {/* 5. THRESHOLD — portrait floats over the bg */}
-      <Threshold src="/assets/images/portrait.webp" threadOrder={5} />
+      <Threshold src="/assets/images/portrait.webp" />
 
-      {/* 6. MICROSTORY — three short lines (anchors 6, 7, 8) */}
+      {/* 6. MICROSTORY — three short lines */}
       <MicroStory
         lines={['she arrived unsure', 'left carrying something', "she couldn't name it yet"]}
-        threadStartOrder={6}
       />
 
       {/* 7. SESSION GATE — conversion */}
-      <SessionGate threadOrder={9} />
-    </LightThreadProvider>
+      <SessionGate />
+    </>
   )
 }

@@ -1,5 +1,5 @@
 import { ReactNode, CSSProperties } from 'react'
-import { useLightThreadAnchor } from './LightThread'
+import { useScrollLag } from '@/hooks/useScrollLag'
 
 interface Props {
   children: ReactNode
@@ -12,13 +12,12 @@ interface Props {
   className?: string
   style?: CSSProperties
   /**
-   * If set, this Surface registers as an anchor on the LightThread, at the
-   * given order. The cinematic filament will pass through the chosen edge
-   * (left | right | center) of this surface.
+   * Apply the global scroll-lag transform — the surface drifts a little
+   * behind the rest of the page as you scroll, then catches up. Defaults
+   * to true. Pass false for surfaces that must stay glued to scroll
+   * (e.g. inside a sticky/pinned stage).
    */
-  threadOrder?: number
-  threadSide?: 'left' | 'right' | 'center'
-  threadInset?: number
+  lag?: boolean
 }
 
 /**
@@ -32,6 +31,12 @@ interface Props {
  * No hard borders; only the faintest champagne hairline. No box shadow that
  * looks "tech" — only diffuse warm ambient. Always backed by backdrop-blur so
  * the picture remains visible through it as a soft impression.
+ *
+ * Movement: each Surface inherits a global scroll-lag transform via the
+ * `--scroll-lag` CSS variable (set up by `useScrollLag`). When the page
+ * scrolls, the surface drifts a few pixels behind, then settles — the same
+ * silken inertia the cinematic filaments used to draw, now expressed as
+ * the motion of the surfaces themselves.
  */
 export function Surface({
   children,
@@ -40,15 +45,9 @@ export function Surface({
   radius = 'lg',
   className = '',
   style,
-  threadOrder,
-  threadSide,
-  threadInset,
+  lag = true,
 }: Props) {
-  const threadRef = useLightThreadAnchor<HTMLDivElement>({
-    order: threadOrder,
-    side: threadSide,
-    inset: threadInset,
-  })
+  useScrollLag()
 
   const weightStyles: Record<NonNullable<Props['weight']>, CSSProperties> = {
     whisper: {
@@ -137,11 +136,24 @@ export function Surface({
   const sheenAnimationClass =
     weight === 'solid' ? 'surface-sheen surface-sheen--slow' : 'surface-sheen'
 
+  // Compose the lag transform with whatever the caller already passed in.
+  // When `lag` is on, the surface translates by the live `--scroll-lag`
+  // value; otherwise it stays put. We honor a caller-provided transform by
+  // chaining it after the lag, so both compose visually.
+  const lagTransform = lag ? 'translate3d(0, var(--scroll-lag, 0px), 0)' : undefined
+  const composedTransform = [lagTransform, style?.transform]
+    .filter(Boolean)
+    .join(' ') || undefined
+
   return (
     <div
-      ref={threadRef}
       className={`relative overflow-hidden ${paddingClass} ${radiusClass} ${className}`}
-      style={{ ...weightStyles[weight], ...style }}
+      style={{
+        ...weightStyles[weight],
+        ...style,
+        transform: composedTransform,
+        willChange: lag ? 'transform' : style?.willChange,
+      }}
     >
       <div
         aria-hidden="true"
