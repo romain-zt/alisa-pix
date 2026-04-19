@@ -36,19 +36,23 @@ function easeInOutCubic(t: number) {
 }
 
 // Total section height = (1 + SECTION_VH) * 100svh.
-// SECTION_VH controls how long the portrait stays pinned. Bumped up so the
-// staged reveal has room to breathe before we release the pin.
-const SECTION_VH = 4
+// SECTION_VH controls how long the portrait stays pinned (in viewports).
+// At 5 viewports of pin, the user gets ~2vh of reveal + ~3vh of "hold full
+// state" before the pin releases — that's the beat we want.
+const SECTION_VH = 5
 
 // Sub-stage windows, expressed as fractions of the *sticky* progress (0→1).
-// Order: card slides in, then content reveals top-down, then a hold.
-const STAGE_CARD_IN = [0.0, 0.18] as const
-const STAGE_EYEBROW = [0.12, 0.3] as const
-const STAGE_HEADLINE_1 = [0.22, 0.46] as const
-const STAGE_HEADLINE_2 = [0.34, 0.58] as const
-const STAGE_DIVIDER = [0.5, 0.66] as const
-const STAGE_BODY = [0.58, 0.78] as const
-// Above 0.85 we hold the full state until the pin releases.
+// Everything is packed into the first ~55% of the pin so the user gets a
+// clear hold of the full composition before the section releases and starts
+// scrolling away.
+const STAGE_CARD_IN = [0.02, 0.16] as const
+const STAGE_EYEBROW = [0.1, 0.22] as const
+const STAGE_HEADLINE_1 = [0.18, 0.32] as const
+const STAGE_HEADLINE_2 = [0.28, 0.42] as const
+const STAGE_DIVIDER = [0.4, 0.5] as const
+const STAGE_BODY = [0.46, 0.58] as const
+// Above 0.58 → full hold. The pin releases at stuck = 1 and the section
+// scrolls off as part of the normal page flow.
 
 function progressIn(value: number, [start, end]: readonly [number, number]) {
   if (end <= start) return value >= end ? 1 : 0
@@ -71,20 +75,25 @@ function reveal(p: number, dy = 18, ease = easeOutCubic): RevealStyle {
 export function Threshold({ src }: { src: string }) {
   const { ref, progress: sectionProgress } = useSectionProgress<HTMLElement>()
 
-  // Map the global section progress to the sticky window: the portrait pins
-  // as soon as the section reaches the top, and unpins right before the
-  // section bottom leaves the viewport.
-  const stickyStart = 1 / (1 + SECTION_VH)
-  const stickyEnd = SECTION_VH / (1 + SECTION_VH)
+  // Map the global section progress to the sticky window.
+  //   useSectionProgress (start=1, end=0) gives:
+  //     - sectionProgress = 1 / (2 + SECTION_VH)  when the section top hits
+  //       the viewport top (i.e. CSS `position: sticky` engages).
+  //     - sectionProgress = 1                     when the section bottom
+  //       hits the viewport top (the pin releases).
+  //   We remap that whole window to stuck ∈ [0, 1] so all the staged reveals
+  //   are spent *during* the pin, not before it.
+  const stickyStart = 1 / (2 + SECTION_VH)
+  const stickyEnd = 1
   const stuck = clamp01(
     (sectionProgress - stickyStart) / (stickyEnd - stickyStart)
   )
 
-  // Card transport — slides in from the right and lifts up while it does.
+  // Card transport — rises into view from below (works mobile-first, where
+  // the card sits below the portrait, and stays graceful on desktop too).
   const cardIn = progressIn(stuck, STAGE_CARD_IN)
   const cardEase = easeInOutCubic(cardIn)
-  const cardX = lerp(48, 0, cardEase)
-  const cardY = lerp(20, 0, cardEase)
+  const cardY = lerp(36, 0, cardEase)
   const cardOpacity = cardEase
 
   const eyebrow = reveal(progressIn(stuck, STAGE_EYEBROW), 14)
@@ -105,10 +114,14 @@ export function Threshold({ src }: { src: string }) {
       style={{ height: `${(1 + SECTION_VH) * 100}svh` }}
     >
       <div className="sticky top-0 h-[100svh] w-full overflow-hidden">
-        {/* PORTRAIT — centered in the viewport, b/w, completely still. */}
-        <div className="absolute inset-0 flex items-center justify-center px-6">
+        {/* PORTRAIT — pinned, b/w, still.
+            On mobile we anchor it to the upper third so the card has its
+            own breathing room in the lower half once it animates in.
+            On desktop the card lives off to the right, so the portrait
+            can sit perfectly centered. */}
+        <div className="absolute inset-0 flex items-start md:items-center justify-center px-6 pt-[8svh] md:pt-0">
           <div
-            className="relative h-[58vh] sm:h-[64vh] md:h-[74vh] aspect-[3/4] overflow-hidden rounded-[1.5rem]"
+            className="relative h-[44svh] sm:h-[52svh] md:h-[74svh] aspect-[3/4] overflow-hidden rounded-[1.5rem]"
             style={{
               transform: `scale(${breath})`,
               transformOrigin: '50% 50%',
@@ -138,12 +151,13 @@ export function Threshold({ src }: { src: string }) {
           </div>
         </div>
 
-        {/* CARD — overlays from the right, content reveals in stages. */}
+        {/* CARD — slides in from the right (desktop) / from below (mobile).
+            Content reveals stage by stage during the pin. */}
         <div className="absolute inset-0 flex items-end md:items-center justify-center md:justify-end pointer-events-none">
           <div
-            className="px-6 pb-10 md:pb-0 md:pr-[5vw] lg:pr-[8vw] w-full max-w-md md:max-w-[30rem]"
+            className="px-6 pb-[6svh] md:pb-0 md:pr-[5vw] lg:pr-[8vw] w-full max-w-md md:max-w-[30rem]"
             style={{
-              transform: `translate3d(${cardX}px, ${cardY}px, 0)`,
+              transform: `translate3d(0, ${cardY}px, 0)`,
               opacity: cardOpacity,
               willChange: 'transform, opacity',
             }}
