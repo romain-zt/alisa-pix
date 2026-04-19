@@ -121,7 +121,7 @@ export function Threshold({ src }: { src: string }) {
             can sit perfectly centered. */}
         <div className="absolute inset-0 flex items-start md:items-center justify-center px-6 pt-[8svh] md:pt-0">
           <div
-            className="relative h-[44svh] sm:h-[52svh] md:h-[74svh] aspect-[3/4] overflow-hidden rounded-[1.5rem]"
+            className="relative h-[74svh] aspect-[3/4] overflow-hidden rounded-[1.5rem]"
             style={{
               transform: `scale(${breath})`,
               transformOrigin: '50% 50%',
@@ -135,7 +135,7 @@ export function Threshold({ src }: { src: string }) {
               src={src}
               alt="A boudoir portrait — quiet, composed, intimate"
               fill
-              sizes="(max-width: 768px) 80vw, (max-width: 1024px) 50vw, 38vw"
+              // sizes="(max-width: 768px) 80vw, (max-width: 1024px) 50vw, 38vw"
               className="object-cover"
               style={{
                 filter: 'grayscale(1) contrast(1.04) brightness(0.96)',
