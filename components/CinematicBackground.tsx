@@ -54,18 +54,25 @@ interface SceneState {
 type SceneVars = Record<`--${string}`, string>
 
 // Camera choreography:
-//   1) Open zoomed-in on the upper-left of the scene (more intimate framing).
-//   2) Fast pan to the right edge while holding the same elevation and zoom.
+//   1) Open zoomed-in on the upper-left of the scene (intimate framing).
+//   2) Fast pan to the right edge while holding the same elevation/zoom.
 //   3) Fast descent to the lower-right while easing the zoom out a touch.
-//   4) Final dezoom recenters the frame so the full image is revealed.
+//   4) Hold the bottom-right framing through the middle sections.
+//   5) Slow dezoom to the full image, only during the final section
+//      (SessionGate). The window starts at FIT_START and ends at 1.0.
 const KEYFRAMES = [
   { t: 0.0, posX: 18, posY: 28, scale: 1.42 },
   { t: 0.18, posX: 50, posY: 30, scale: 1.44 },
   { t: 0.36, posX: 88, posY: 32, scale: 1.42 },
-  { t: 0.54, posX: 90, posY: 70, scale: 1.36 },
-  { t: 0.7, posX: 86, posY: 86, scale: 1.28 },
+  { t: 0.54, posX: 90, posY: 70, scale: 1.4 },
+  { t: 0.78, posX: 88, posY: 86, scale: 1.38 },
   { t: 1.0, posX: 50, posY: 50, scale: 1.0 },
 ] as const
+
+// Window over which the camera dezooms to the full ("contain") view.
+// Pushed late so the slow zoom-out only plays while SessionGate is on screen.
+const FIT_START = 0.78
+const FIT_END = 1.0
 
 function clamp01(value: number): number {
   return Math.max(0, Math.min(1, value))
@@ -273,10 +280,18 @@ function buildSceneState(progress: number, reducedMotion: boolean): SceneState {
   }
 }
 
+// ease-in-out-quint — slower at start and end than smoothstep, gives the final
+// dezoom a relaxed, "settling" feeling instead of a mechanical pull-out.
+function easeInOutQuint(u: number): number {
+  const t = clamp01(u)
+  return t < 0.5 ? 16 * t * t * t * t * t : 1 - Math.pow(-2 * t + 2, 5) / 2
+}
+
 function getFrameVars(progress: number, camera: CameraState, viewport: Size, image: Size): SceneVars {
   const imageRatio = image.width / image.height
   const viewportRatio = viewport.width / viewport.height
-  const fitMix = smoothstep01((clamp01(progress) - 0.6) / 0.4)
+  const fitWindow = Math.max(0.001, FIT_END - FIT_START)
+  const fitMix = easeInOutQuint((clamp01(progress) - FIT_START) / fitWindow)
 
   let coverWidth = viewport.width
   let coverHeight = viewport.height
