@@ -192,7 +192,7 @@ interface RendererProps {
 // vertical, so "perpendicular offset" *is* horizontal sway. Smaller
 // amplitudes ⇒ tighter to the spine ⇒ more vertical, more sensual.
 interface StrandConfig {
-  /** Base perpendicular amplitude in px (kept small — 25–45). */
+  /** Base perpendicular amplitude in px. Larger = rounder, looser arcs. */
   amplitude: number
   /**
    * Gentle modulation envelope on top of the base amplitude. Actual
@@ -214,6 +214,12 @@ interface StrandConfig {
   wavelength2: number
   phase2: number
   weight2: number
+  /**
+   * Static lateral offset in px applied on top of the wave. Pushes each
+   * strand to one side of the spine so the duet reads as two distinct,
+   * spaced lines instead of two sines crossing the same axis.
+   */
+  baseline: number
   /** Time drift in Hz — slow, almost imperceptible. */
   drift: number
   stroke: string
@@ -229,31 +235,38 @@ interface StrandConfig {
 // surface, never as a foreign mark.
 const STRAND_CONFIGS: StrandConfig[] = [
   // Champagne — the leading thread; warm gold, slightly thicker presence.
+  // Sits to the left of the spine (negative baseline) and sweeps in big,
+  // rounded arcs.
   {
-    amplitude: 38,
-    ampSwing: 0.7,
-    ampWavelength: 3400,
+    amplitude: 56,
+    ampSwing: 0.55,
+    ampWavelength: 3800,
     ampPhase: 0.8,
-    wavelength: 1900,
+    wavelength: 2400,
     phase: 0,
-    wavelength2: 730,
+    wavelength2: 980,
     phase2: 1.3,
-    weight2: 0.32,
+    weight2: 0.22,
+    baseline: -11,
     drift: 0.009,
     stroke: 'rgba(196,168,138,0.55)',
     width: 0.55,
   },
   // Ivory — the answering thread; cool-warm cream, hairline.
+  // Sits to the right of the spine (positive baseline). Its bigger
+  // baseline and slightly different wavelength keep it visually
+  // separated from the champagne strand for most of the journey.
   {
-    amplitude: 28,
-    ampSwing: 0.55,
-    ampWavelength: 4100,
+    amplitude: 42,
+    ampSwing: 0.45,
+    ampWavelength: 4500,
     ampPhase: 3.4,
-    wavelength: 2300,
+    wavelength: 2750,
     phase: 2.1,
-    wavelength2: 880,
+    wavelength2: 1140,
     phase2: 4.6,
-    weight2: 0.38,
+    weight2: 0.26,
+    baseline: 13,
     drift: -0.0065,
     stroke: 'rgba(245,232,210,0.50)',
     width: 0.45,
@@ -267,7 +280,7 @@ const STRAND_COUNT = STRAND_CONFIGS.length
 // tiny so the vein still reads as a piece of the surface border itself.
 const VEIN_STRAND_CONFIGS: StrandConfig[] = [
   {
-    amplitude: 5.5,
+    amplitude: 6.5,
     ampSwing: 0.3,
     ampWavelength: 600,
     ampPhase: 0.4,
@@ -276,12 +289,13 @@ const VEIN_STRAND_CONFIGS: StrandConfig[] = [
     wavelength2: 110,
     phase2: 1.7,
     weight2: 0.4,
+    baseline: -1.4,
     drift: 0.014,
     stroke: 'rgba(196,168,138,0.55)',
     width: 0.55,
   },
   {
-    amplitude: 3.8,
+    amplitude: 4.6,
     ampSwing: 0.25,
     ampWavelength: 720,
     ampPhase: 2.6,
@@ -290,6 +304,7 @@ const VEIN_STRAND_CONFIGS: StrandConfig[] = [
     wavelength2: 140,
     phase2: 4.1,
     weight2: 0.45,
+    baseline: 1.6,
     drift: -0.011,
     stroke: 'rgba(245,232,210,0.50)',
     width: 0.45,
@@ -344,6 +359,16 @@ function LightThread({ anchorsRef, version, segments }: RendererProps) {
       { length: MAX_SEGMENTS },
       () => ['', '']
     )
+
+    // INERTIA — the lines lag the page by ~180ms, then catch up.
+    // We exponentially lerp each spine point toward its measured target
+    // every frame. Time-constant formulation (1 - exp(-dt/tau)) keeps the
+    // feel identical at 60Hz and 120Hz. Larger tau = heavier drag.
+    const SMOOTH_TAU = 0.18
+    const smoothedPoints: (Point[] | null)[] = new Array(MAX_SEGMENTS).fill(
+      null
+    )
+    let lastDrawTime = 0
 
     // Pre-compute angular frequencies and drift rates per strand so the
     // inner loops only do adds + sin().
@@ -522,7 +547,10 @@ function LightThread({ anchorsRef, version, segments }: RendererProps) {
             w1 * Math.sin(len * veinOmega[s] + cfg.phase + drift) +
             w2 *
               Math.sin(len * veinOmega2[s] + cfg.phase2 + drift * 1.5)
-          const offset = localAmp * wave
+          // Baseline pushes each strand to one side — but enveloped, so the
+          // vein still passes exactly through the connection point at
+          // center and through the surface border at both ends.
+          const offset = localAmp * wave + cfg.baseline * envelope
 
           const x = (p.x + nx * offset).toFixed(1)
           const y = (p.y + ny * offset).toFixed(1)
@@ -620,7 +648,9 @@ function LightThread({ anchorsRef, version, segments }: RendererProps) {
               Math.sin(
                 len * strandOmega2[s] + cfg.phase2 + drift * 1.6
               )
-          const offset = localAmp * wave
+          // Baseline parks each strand on one side of the spine — enveloped,
+          // so both still collapse into the surface border points exactly.
+          const offset = localAmp * wave + cfg.baseline * envelope
 
           const x = (p.x + nx * offset).toFixed(1)
           const y = (p.y + ny * offset).toFixed(1)
@@ -642,6 +672,11 @@ function LightThread({ anchorsRef, version, segments }: RendererProps) {
       if (!map) return
       const elapsed = reducedMotion ? 0 : (now - startedAt) / 1000
 
+      // dt → lerp factor. First frame falls back to ~16ms.
+      const dtSec = lastDrawTime > 0 ? Math.min(0.05, (now - lastDrawTime) / 1000) : 0.016
+      lastDrawTime = now
+      const k = reducedMotion ? 1 : 1 - Math.exp(-dtSec / SMOOTH_TAU)
+
       // Index anchors by `order` for fast lookup.
       const byOrder = new Map<number, ThreadAnchor>()
       for (const a of map.values()) byOrder.set(a.order, a)
@@ -650,6 +685,7 @@ function LightThread({ anchorsRef, version, segments }: RendererProps) {
         const orders = segments[segIdx]
         if (!orders || orders.length < 2) {
           drawSegment(segIdx, [], null, null, elapsed)
+          smoothedPoints[segIdx] = null
           continue
         }
 
@@ -661,6 +697,7 @@ function LightThread({ anchorsRef, version, segments }: RendererProps) {
         }
         if (anchorList.length < 2) {
           drawSegment(segIdx, [], null, null, elapsed)
+          smoothedPoints[segIdx] = null
           continue
         }
 
@@ -672,18 +709,44 @@ function LightThread({ anchorsRef, version, segments }: RendererProps) {
         )
         if (!firstGeo || !lastGeo) {
           drawSegment(segIdx, [], null, null, elapsed)
+          smoothedPoints[segIdx] = null
           continue
         }
 
-        // Spine: first border point → interior centers → last border point.
-        const points: Point[] = [firstGeo.point]
+        // Target spine: first border point → interior centers → last border.
+        const target: Point[] = [firstGeo.point]
         for (let i = 1; i < anchorList.length - 1; i++) {
           const p = interiorPoint(anchorList[i])
-          if (p) points.push(p)
+          if (p) target.push(p)
         }
-        points.push(lastGeo.point)
+        target.push(lastGeo.point)
 
-        drawSegment(segIdx, points, firstGeo, lastGeo, elapsed)
+        // Smooth each point toward target. On the first frame (or when the
+        // anchor count changes) we snap so the line never appears mid-flight.
+        let smoothed = smoothedPoints[segIdx]
+        if (!smoothed || smoothed.length !== target.length) {
+          smoothed = target.map((p) => ({ x: p.x, y: p.y }))
+        } else {
+          for (let i = 0; i < target.length; i++) {
+            smoothed[i].x += (target[i].x - smoothed[i].x) * k
+            smoothed[i].y += (target[i].y - smoothed[i].y) * k
+          }
+        }
+        smoothedPoints[segIdx] = smoothed
+
+        // Use the lagged endpoints for the veins too, so the vein that
+        // lives on the surface border drifts together with the spine
+        // instead of pinning rigidly to the rect.
+        const sFirstGeo: EndpointGeo = {
+          ...firstGeo,
+          point: smoothed[0],
+        }
+        const sLastGeo: EndpointGeo = {
+          ...lastGeo,
+          point: smoothed[smoothed.length - 1],
+        }
+
+        drawSegment(segIdx, smoothed, sFirstGeo, sLastGeo, elapsed)
       }
     }
 

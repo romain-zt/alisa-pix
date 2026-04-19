@@ -397,7 +397,7 @@ body {
   position: absolute;
   inset: 0;
   opacity: 0;
-  transition: opacity 1400ms var(--ease-emerge);
+  transition: opacity 700ms var(--ease-emerge);
   /* Lifted brightness + saturation so backgrounds feel like a lit room,
    * not a dim void. Still soft enough not to compete with the prints. */
   filter: blur(38px) saturate(1.18) brightness(0.72);
@@ -659,7 +659,7 @@ body {
   position: absolute;
   inset: 0;
   opacity: 0;
-  transition: opacity 1400ms var(--ease-emerge);
+  transition: opacity 700ms var(--ease-emerge);
 }
 .orbit-floor-reflection img {
   object-fit: cover;

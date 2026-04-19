@@ -34,13 +34,21 @@ const PERSPECTIVE_ORIGIN_Y = 50
 // to camera depth). Hide them to avoid CSS perspective math going negative.
 const VISIBILITY_CULL_DEG = 84
 
-// Wheel & drag sensitivity (degrees per pixel of input).
-const WHEEL_SENSITIVITY = 0.32
+// Drag sensitivity (degrees per pixel of pointer travel).
 const DRAG_SENSITIVITY = 0.42
-// Lerp factor — 0.075 reads as "settling into place", more pillow than snap.
-const LERP = 0.075
-// After wheel stops, snap target to a frame (scroll-snap–like).
-const WHEEL_SNAP_DEBOUNCE_MS = 140
+// Lerp factor — pulls the cylinder toward target each frame.
+// 0.14 reads as "weighted but committed" — lands in ~300–400ms per photo,
+// not drifty. Pair with discrete wheel stepping for the scroll-snap feel.
+const LERP = 0.14
+// Wheel: discrete step. Accumulate raw delta; once |accum| crosses this,
+// advance by exactly one photo. Trackpad inertia stays harmless because
+// the cooldown gates further advances.
+const WHEEL_STEP_THRESHOLD = 36
+const WHEEL_STEP_COOLDOWN_MS = 220
+// Drag fling: when release velocity exceeds this many deg/sec, carry
+// momentum so a quick flick traverses several frames before snapping.
+const FLING_VELOCITY_DEG_PER_S = 240
+const FLING_DECAY = 0.92
 // Below this much pointer movement, treat as a tap, not a drag.
 const TAP_THRESHOLD_PX = 6
 
@@ -144,9 +152,10 @@ export function OrbitGallery({ images }: OrbitGalleryProps) {
       const ad = Math.abs(diff)
       let lerp = reducedMotionRef.current ? 1 : LERP
       if (!reducedMotionRef.current) {
-        // Wider snap zone, gentler pull — lands with a sigh, not a click.
-        if (ad < 10) lerp = 0.16
-        if (ad < 3) lerp = 0.30
+        // Tight snap zone — once the cylinder is close, commit decisively.
+        // The earlier "drift then settle" feel came from too-soft landing.
+        if (ad < 6) lerp = 0.24
+        if (ad < 1.5) lerp = 0.42
         if (ad < 0.04) {
           currentAngleRef.current = targetAngleRef.current
           lerp = 0
@@ -260,25 +269,53 @@ export function OrbitGallery({ images }: OrbitGalleryProps) {
     }
   }, [layoutCylinder])
 
-  // Wheel: rotate the cylinder; preventDefault so the page doesn't scroll.
+  // Wheel: discrete, photo-by-photo. Each gesture advances exactly one
+  // frame; trackpad inertia is gated by a cooldown so a flick won't tear
+  // through several photos. This is the "scroll-sticked" behaviour —
+  // every input commits to a single frame.
   useEffect(() => {
     const stage = stageRef.current
     if (!stage) return
-    let wheelSnapTimer: ReturnType<typeof setTimeout> | null = null
+    let accum = 0
+    let lastStepAt = 0
+    let resetTimer: ReturnType<typeof setTimeout> | null = null
+
     const onWheel = (e: WheelEvent) => {
       if (fullViewIdxRef.current !== null) return
       e.preventDefault()
-      const delta = Math.abs(e.deltaY) > Math.abs(e.deltaX) ? e.deltaY : e.deltaX
-      targetAngleRef.current += delta * WHEEL_SENSITIVITY
-      if (wheelSnapTimer) clearTimeout(wheelSnapTimer)
-      wheelSnapTimer = setTimeout(() => {
-        wheelSnapTimer = null
-        snapOrbitRef.current()
-      }, WHEEL_SNAP_DEBOUNCE_MS)
+      const raw =
+        Math.abs(e.deltaY) > Math.abs(e.deltaX) ? e.deltaY : e.deltaX
+      accum += raw
+
+      const now = performance.now()
+      if (now - lastStepAt < WHEEL_STEP_COOLDOWN_MS) {
+        // Within cooldown: don't fire, but bleed the accumulator so the
+        // next gesture starts fresh rather than carrying inertia tail.
+        if (resetTimer) clearTimeout(resetTimer)
+        resetTimer = setTimeout(() => {
+          accum = 0
+          resetTimer = null
+        }, 120)
+        return
+      }
+
+      if (Math.abs(accum) >= WHEEL_STEP_THRESHOLD) {
+        const dir = accum > 0 ? 1 : -1
+        targetAngleRef.current += dir * angleStepRef.current
+        accum = 0
+        lastStepAt = now
+      }
+
+      if (resetTimer) clearTimeout(resetTimer)
+      resetTimer = setTimeout(() => {
+        accum = 0
+        resetTimer = null
+      }, 160)
     }
+
     stage.addEventListener('wheel', onWheel, { passive: false })
     return () => {
-      if (wheelSnapTimer) clearTimeout(wheelSnapTimer)
+      if (resetTimer) clearTimeout(resetTimer)
       stage.removeEventListener('wheel', onWheel)
     }
   }, [])
@@ -293,6 +330,10 @@ export function OrbitGallery({ images }: OrbitGalleryProps) {
     let startAngle = 0
     let pointerId: number | null = null
     let downTarget: HTMLElement | null = null
+    // Velocity tracking for fling (last few samples → deg/sec on release).
+    let lastMoveX = 0
+    let lastMoveT = 0
+    let velDegPerS = 0
 
     const onDown = (e: PointerEvent) => {
       if (e.button !== undefined && e.button !== 0) return
@@ -302,6 +343,9 @@ export function OrbitGallery({ images }: OrbitGalleryProps) {
       startAngle = targetAngleRef.current
       pointerId = e.pointerId
       downTarget = e.target as HTMLElement
+      lastMoveX = e.clientX
+      lastMoveT = performance.now()
+      velDegPerS = 0
       if (dragging) {
         try {
           stage.setPointerCapture(e.pointerId)
@@ -313,6 +357,16 @@ export function OrbitGallery({ images }: OrbitGalleryProps) {
       if (!dragging) return
       const dx = e.clientX - startX
       targetAngleRef.current = startAngle + dx * DRAG_SENSITIVITY
+      // Sample instantaneous velocity (deg/sec), low-pass filtered.
+      const now = performance.now()
+      const dt = now - lastMoveT
+      if (dt > 0) {
+        const stepDeg = (e.clientX - lastMoveX) * DRAG_SENSITIVITY
+        const instant = (stepDeg / dt) * 1000
+        velDegPerS = velDegPerS * 0.6 + instant * 0.4
+      }
+      lastMoveX = e.clientX
+      lastMoveT = now
     }
     const onUp = (e: PointerEvent) => {
       const dx = e.clientX - startX
@@ -327,7 +381,31 @@ export function OrbitGallery({ images }: OrbitGalleryProps) {
       stage.classList.remove('orbit-dragging')
 
       if (moved >= TAP_THRESHOLD_PX) {
-        snapOrbitRef.current()
+        // Fling: if released with velocity, simulate decaying inertia
+        // and only THEN snap. A flick traverses several frames; a slow
+        // release lands on the closest one immediately.
+        if (
+          !reducedMotionRef.current &&
+          Math.abs(velDegPerS) > FLING_VELOCITY_DEG_PER_S
+        ) {
+          let v = velDegPerS // deg/sec
+          const stepMs = 16
+          let elapsed = 0
+          const maxMs = 700
+          const flingTick = () => {
+            v *= FLING_DECAY
+            targetAngleRef.current += (v * stepMs) / 1000
+            elapsed += stepMs
+            if (Math.abs(v) > 30 && elapsed < maxMs) {
+              setTimeout(flingTick, stepMs)
+            } else {
+              snapOrbitRef.current()
+            }
+          }
+          flingTick()
+        } else {
+          snapOrbitRef.current()
+        }
         return
       }
       handleTap(downTarget)

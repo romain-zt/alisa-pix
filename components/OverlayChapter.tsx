@@ -23,6 +23,20 @@ interface Props {
   /** When set, the inner Surface registers as a LightThread anchor at this order. */
   threadOrder?: number
   threadSide?: 'left' | 'right' | 'center'
+  /**
+   * Direction the chapter drifts in from. Defaults to derive from `align`:
+   *   - align="left"   → enters from the left (slides in horizontally)
+   *   - align="right"  → enters from the right
+   *   - align="center" → rises from below
+   * Pass an explicit value to override.
+   */
+  enterFrom?: 'left' | 'right' | 'bottom'
+  /**
+   * Distance the chapter travels during its entrance, in pixels.
+   * Lateral entrances ride a longer distance than the vertical default,
+   * so the sideways arrival reads clearly.
+   */
+  enterDistance?: number
 }
 
 /**
@@ -45,8 +59,17 @@ export function OverlayChapter({
   maxWidth = '36rem',
   threadOrder,
   threadSide,
+  enterFrom,
+  enterDistance,
 }: Props) {
   const { ref, progress } = useSectionProgress<HTMLElement>()
+
+  // Default entrance direction derived from horizontal alignment so each
+  // chapter has its own gesture without the consumer having to think about
+  // it. left-aligned text drifts in from the left, right-aligned from the
+  // right, centered text rises from below.
+  const direction =
+    enterFrom ?? (align === 'left' ? 'left' : align === 'right' ? 'right' : 'bottom')
 
   // Smooth fade-in 12-32%, hold 32-66%, fade-out 66-92%
   const opacity = (() => {
@@ -57,10 +80,23 @@ export function OverlayChapter({
     return 0
   })()
 
-  // Subtle drift — content rises into place, then drifts away
-  const enterY = progress < 0.32 ? (1 - progress / 0.32) * 18 : 0
+  // Easing for the entrance. progress within [0, 0.32] → 0..1, eased so the
+  // last 30% of the travel slows to a settle (cubic ease-out feel).
+  const enterT = progress < 0.32 ? progress / 0.32 : 1
+  const easedEnter = 1 - Math.pow(1 - enterT, 3)
+  const enterDist = enterDistance ?? (direction === 'bottom' ? 18 : 64)
+  const remaining = (1 - easedEnter) * enterDist
+
+  // Exit always drifts upward — a gentle release, not a re-trip across the
+  // viewport. Keeps the horizontal entrance from feeling like a slideshow.
   const exitY = progress > 0.66 ? (progress - 0.66) * 50 : 0
-  const y = enterY - exitY
+
+  let translateX = 0
+  let translateY = 0
+  if (direction === 'left') translateX = -remaining
+  else if (direction === 'right') translateX = remaining
+  else translateY = remaining
+  translateY -= exitY
 
   const alignClasses =
     align === 'left'
@@ -100,7 +136,7 @@ export function OverlayChapter({
       <div
         style={{
           opacity,
-          transform: `translate3d(0, ${y}px, 0)`,
+          transform: `translate3d(${translateX}px, ${translateY}px, 0)`,
           willChange: 'transform, opacity',
           maxWidth,
           width: '100%',
