@@ -20,6 +20,9 @@ interface Props {
   surfacePadding?: 'tight' | 'normal' | 'loose'
   /** Max-width override for the inner content. */
   maxWidth?: string
+  /** When set, the inner Surface registers as a LightThread anchor at this order. */
+  threadOrder?: number
+  threadSide?: 'left' | 'right' | 'center'
 }
 
 /**
@@ -40,6 +43,8 @@ export function OverlayChapter({
   surface = false,
   surfacePadding = 'normal',
   maxWidth = '36rem',
+  threadOrder,
+  threadSide,
 }: Props) {
   const { ref, progress } = useSectionProgress<HTMLElement>()
 
@@ -72,7 +77,14 @@ export function OverlayChapter({
         : 'items-center'
 
   const inner = surface ? (
-    <Surface weight={surface} padding={surfacePadding} radius="lg" className={className}>
+    <Surface
+      weight={surface}
+      padding={surfacePadding}
+      radius="lg"
+      className={className}
+      threadOrder={threadOrder}
+      threadSide={threadSide}
+    >
       {children}
     </Surface>
   ) : (

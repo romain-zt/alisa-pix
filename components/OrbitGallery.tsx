@@ -37,8 +37,8 @@ const VISIBILITY_CULL_DEG = 84
 // Wheel & drag sensitivity (degrees per pixel of input).
 const WHEEL_SENSITIVITY = 0.32
 const DRAG_SENSITIVITY = 0.42
-// Lerp factor — 0.08 is silky, 0.18 responsive.
-const LERP = 0.09
+// Lerp factor — 0.075 reads as "settling into place", more pillow than snap.
+const LERP = 0.075
 // After wheel stops, snap target to a frame (scroll-snap–like).
 const WHEEL_SNAP_DEBOUNCE_MS = 140
 // Below this much pointer movement, treat as a tap, not a drag.
@@ -144,8 +144,9 @@ export function OrbitGallery({ images }: OrbitGalleryProps) {
       const ad = Math.abs(diff)
       let lerp = reducedMotionRef.current ? 1 : LERP
       if (!reducedMotionRef.current) {
-        if (ad < 8) lerp = 0.2
-        if (ad < 2.5) lerp = 0.38
+        // Wider snap zone, gentler pull — lands with a sigh, not a click.
+        if (ad < 10) lerp = 0.16
+        if (ad < 3) lerp = 0.30
         if (ad < 0.04) {
           currentAngleRef.current = targetAngleRef.current
           lerp = 0
@@ -213,6 +214,11 @@ export function OrbitGallery({ images }: OrbitGalleryProps) {
         el.style.filter = `blur(${(blur + velBlur).toFixed(2)}px) brightness(${(1 - tint * 0.5).toFixed(2)})`
         // Past the FOV the item sits at/behind the camera depth — hide it.
         el.style.visibility = abs > VISIBILITY_CULL_DEG ? 'hidden' : 'visible'
+
+        // Halo glow — peaks at dead-center, fades by ±18°. Only the
+        // settled print gets the full lamplight; neighbours stay quiet.
+        const glow = Math.max(0, 1 - abs / 18)
+        el.style.setProperty('--orbit-frame-glow', glow.toFixed(3))
 
         if (abs < bestAbs) {
           bestAbs = abs

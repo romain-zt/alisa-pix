@@ -267,11 +267,11 @@ body {
     transform: translate3d(-110%, -110%, 0) rotate(8deg);
     opacity: 0;
   }
-  18% {
-    opacity: 1;
+  35% {
+    opacity: 0.7;
   }
-  82% {
-    opacity: 1;
+  65% {
+    opacity: 0.7;
   }
   100% {
     transform: translate3d(110%, 110%, 0) rotate(8deg);
@@ -289,6 +289,13 @@ body {
   animation: surfaceSheen 18s cubic-bezier(0.65, 0, 0.35, 1) infinite;
   pointer-events: none;
   will-change: transform, opacity;
+}
+
+/* Slower, even more restrained sheen for solid surfaces (long-form copy /
+   CTAs) — closer to a passing cloud than a luxury-ad highlight. */
+.surface-sheen--slow {
+  animation-duration: 32s;
+  animation-timing-function: cubic-bezier(0.5, 0, 0.5, 1);
 }
 
 /* ── Flash Effect ── */
@@ -353,11 +360,13 @@ body {
   inset: 0;
   /* Contain wheel/trackpad so the page doesn’t keep scrolling behind the gallery */
   overscroll-behavior: none;
+  /* Twilight living room — warm browns instead of pure void.
+   * Slight blush in the upper register reads as ambient lamplight. */
   background: radial-gradient(
       ellipse at 50% 55%,
-      #0f0d0a 0%,
-      #0a0908 60%,
-      #070605 100%
+      #1a140e 0%,
+      #15110c 55%,
+      #0d0907 100%
     );
   overflow: hidden;
   cursor: grab;
@@ -389,7 +398,9 @@ body {
   inset: 0;
   opacity: 0;
   transition: opacity 1400ms var(--ease-emerge);
-  filter: blur(38px) saturate(1.05) brightness(0.55);
+  /* Lifted brightness + saturation so backgrounds feel like a lit room,
+   * not a dim void. Still soft enough not to compete with the prints. */
+  filter: blur(38px) saturate(1.18) brightness(0.72);
   transform: scale(1.18);
   will-change: opacity;
   animation: gasDrift 32s ease-in-out infinite;
@@ -425,7 +436,7 @@ body {
 .orbit-light-a {
   background: radial-gradient(
     ellipse 55% 45% at calc(18% + var(--orbit-light-w, 0.5) * 22%) calc(26% + var(--orbit-light-w, 0.5) * 12%),
-    rgba(255, 220, 180, 0.2),
+    rgba(255, 218, 178, 0.32),
     transparent 65%
   );
   animation: lightLeakWarm 18s ease-in-out infinite;
@@ -433,7 +444,7 @@ body {
 .orbit-light-b {
   background: radial-gradient(
     ellipse 50% 40% at calc(82% - var(--orbit-light-w, 0.5) * 18%) calc(72% - var(--orbit-light-w, 0.5) * 10%),
-    rgba(196, 168, 138, 0.15),
+    rgba(196, 160, 160, 0.22),
     transparent 70%
   );
   animation: lightLeakCold 24s ease-in-out infinite;
@@ -457,9 +468,12 @@ body {
   z-index: 3;
   display: grid;
   place-items: center;
-  /* Lift the cylinder — perspective + floor read bottom-heavy otherwise */
+  /* Lift the cylinder — perspective + floor read bottom-heavy otherwise.
+   * Slow breathing scale (1.0 ↔ 1.012) makes the room feel inhabited
+   * rather than freeze-framed. Animation overrides static transform. */
   transform: translate3d(0, -2.25vh, 0);
   transform-style: preserve-3d;
+  animation: orbitBreatheSm 9s ease-in-out infinite;
   /* Camera itself is not clickable; items below opt in. */
   pointer-events: none;
 }
@@ -467,7 +481,17 @@ body {
 @media (min-width: 769px) {
   .orbit-camera {
     transform: translate3d(0, -3vh, 0);
+    animation: orbitBreatheLg 9s ease-in-out infinite;
   }
+}
+
+@keyframes orbitBreatheSm {
+  0%, 100% { transform: translate3d(0, -2.25vh, 0) scale(1); }
+  50%      { transform: translate3d(0, -2.25vh, 0) scale(1.012); }
+}
+@keyframes orbitBreatheLg {
+  0%, 100% { transform: translate3d(0, -3vh, 0) scale(1); }
+  50%      { transform: translate3d(0, -3vh, 0) scale(1.012); }
 }
 .orbit-cylinder {
   position: relative;
@@ -507,17 +531,27 @@ body {
   inset: 0;
   overflow: hidden;
   background: var(--color-bg-deep);
-  /* Soft edges so frames dissolve into the atmosphere instead of cutting */
+  /* Rounded corners — prints feel like soft-edged keepsakes, not shards.
+   * Clamped so it scales gracefully from mobile to large desktop. */
+  border-radius: clamp(14px, 2vw, 28px);
+  /* Soft edges so frames dissolve into the atmosphere instead of cutting.
+   * Mask is gentler now (80% inner) so the rounded corner reads first. */
   -webkit-mask-image: radial-gradient(
-    ellipse 95% 95% at 50% 50%,
-    black 65%,
+    ellipse 96% 96% at 50% 50%,
+    black 80%,
     transparent 100%
   );
   mask-image: radial-gradient(
-    ellipse 95% 95% at 50% 50%,
-    black 65%,
+    ellipse 96% 96% at 50% 50%,
+    black 80%,
     transparent 100%
   );
+  /* Static halo — a faint blush light, as if lit by a nearby lamp. */
+  box-shadow:
+    0 18px 48px rgba(8, 6, 5, 0.45),
+    0 0 60px rgba(196, 160, 160, 0.10),
+    0 0 calc(80px * var(--orbit-frame-glow, 0)) rgba(255, 218, 178, calc(0.22 * var(--orbit-frame-glow, 0)));
+  transition: box-shadow 700ms var(--ease-emerge);
 }
 .orbit-frame img {
   object-fit: cover;
@@ -542,21 +576,28 @@ body {
   pointer-events: none;
   overflow: hidden;
 }
-/* Soft warm pool of light at the base — anchors the cylinder */
+/* Soft warm pool of light at the base — reads as a rug under lamplight,
+ * not a stage spotlight. Wider, softer, with blush warmth blended in. */
 .orbit-floor-glow {
   position: absolute;
   left: 50%;
   bottom: -22%;
-  width: 130vw;
-  height: 70vh;
+  width: 150vw;
+  height: 80vh;
   transform: translateX(-50%);
-  background: radial-gradient(
-    ellipse 50% 50% at 50% 50%,
-    rgba(196, 168, 138, 0.18) 0%,
-    rgba(196, 168, 138, 0.08) 35%,
-    transparent 70%
-  );
-  filter: blur(20px);
+  background:
+    radial-gradient(
+      ellipse 55% 55% at 50% 50%,
+      rgba(196, 160, 160, 0.18) 0%,
+      rgba(196, 168, 138, 0.10) 40%,
+      transparent 75%
+    ),
+    radial-gradient(
+      ellipse 80% 50% at 50% 60%,
+      rgba(255, 218, 178, 0.06) 0%,
+      transparent 70%
+    );
+  filter: blur(40px);
   mix-blend-mode: screen;
 }
 /* Faint elliptical ring — the cylinder's actual footprint, slowly turning.
@@ -569,10 +610,21 @@ body {
   width: clamp(720px, 110vw, 1700px);
   height: clamp(140px, 18vw, 260px);
   border-radius: 50%;
-  border: 1px solid rgba(240, 235, 227, 0.06);
+  border: 1px solid rgba(240, 220, 200, 0.035);
   box-shadow:
-    inset 0 0 80px rgba(240, 235, 227, 0.04),
-    0 0 60px rgba(196, 168, 138, 0.05);
+    inset 0 0 100px rgba(240, 220, 200, 0.025),
+    0 0 80px rgba(196, 160, 160, 0.05);
+  /* Dissolve the ring edges so it reads as a soft rug, not a turntable. */
+  -webkit-mask-image: radial-gradient(
+    ellipse 70% 70% at 50% 50%,
+    black 30%,
+    transparent 100%
+  );
+  mask-image: radial-gradient(
+    ellipse 70% 70% at 50% 50%,
+    black 30%,
+    transparent 100%
+  );
   /* JS sets transform: translate(-50%, 0) rotate(...) every frame */
   transform: translate(-50%, 0);
   will-change: transform;
@@ -591,15 +643,17 @@ body {
   /* Fade from sharp at top (touching the photo) to nothing at bottom */
   -webkit-mask-image: linear-gradient(
     to bottom,
-    rgba(0, 0, 0, 0.55) 0%,
-    transparent 75%
+    rgba(0, 0, 0, 0.45) 0%,
+    transparent 70%
   );
   mask-image: linear-gradient(
     to bottom,
-    rgba(0, 0, 0, 0.55) 0%,
-    transparent 75%
+    rgba(0, 0, 0, 0.45) 0%,
+    transparent 70%
   );
-  filter: blur(8px) brightness(0.7);
+  /* Softer, dimmer mirror — the rug absorbs more than it reflects. */
+  filter: blur(12px) brightness(0.55);
+  border-radius: clamp(14px, 2vw, 28px);
 }
 .orbit-floor-reflection {
   position: absolute;
@@ -626,16 +680,18 @@ body {
   }
 }
 
-/* INTERFERENCE — global vignette over everything */
+/* INTERFERENCE — global vignette over everything.
+ * Lifted from 0.85 → 0.55 and pushed start outward so the room reads
+ * as ambiently lit, not spotlit. */
 .orbit-vignette {
   position: absolute;
   inset: 0;
   z-index: 4;
   pointer-events: none;
   background: radial-gradient(
-    ellipse 75% 70% at 50% 55%,
-    transparent 45%,
-    rgba(7, 6, 5, 0.85) 100%
+    ellipse 80% 75% at 50% 55%,
+    transparent 55%,
+    rgba(13, 9, 7, 0.55) 100%
   );
 }
 
@@ -700,22 +756,23 @@ body {
   z-index: 10;
   display: inline-flex;
   align-items: baseline;
-  gap: 0.6em;
+  gap: 0.5em;
   font-size: var(--text-micro);
-  letter-spacing: 0.5em;
+  letter-spacing: 0.32em;
   font-variant-numeric: tabular-nums;
-  color: rgba(240, 235, 227, 0.5);
+  /* Warm cream instead of cool off-white — reads as candlelit. */
+  color: rgba(240, 220, 200, 0.5);
   pointer-events: none;
   user-select: none;
 }
 .orbit-counter-num {
-  color: rgba(240, 235, 227, 0.85);
+  color: rgba(240, 220, 200, 0.88);
 }
 .orbit-counter-sep {
-  color: rgba(240, 235, 227, 0.18);
+  color: rgba(240, 220, 200, 0.20);
 }
 .orbit-counter-tot {
-  color: rgba(240, 235, 227, 0.35);
+  color: rgba(240, 220, 200, 0.38);
 }
 
 .orbit-hint {
@@ -729,7 +786,7 @@ body {
   font-size: var(--text-micro);
   letter-spacing: 0.28em;
   text-transform: uppercase;
-  color: rgba(240, 235, 227, 0.32);
+  color: rgba(240, 220, 200, 0.34);
   pointer-events: none;
   user-select: none;
 }
@@ -737,8 +794,8 @@ body {
   width: 3px;
   height: 3px;
   border-radius: 50%;
-  background: currentColor;
-  opacity: 0.5;
+  background: var(--color-blush);
+  opacity: 0.45;
 }
 
 @media (max-width: 768px) {
@@ -748,6 +805,21 @@ body {
   .orbit-counter {
     bottom: clamp(1rem, 2vh, 1.5rem);
   }
+}
+
+/* ── Light Thread ──
+   The luminous filament that connects every Surface across the page.
+   The SVG itself is rendered by <LightThread/>; this stylesheet only
+   controls its slow opacity breath so the line feels alive while the
+   user is idle (no scroll, no resize). Reduced motion freezes it. */
+@keyframes light-thread-breathe {
+  0%, 100% { opacity: 0.78; }
+  50%      { opacity: 1; }
+}
+
+.light-thread {
+  animation: light-thread-breathe 11s ease-in-out infinite;
+  will-change: opacity;
 }
 
 /* ── Reduced Motion ── */
@@ -767,7 +839,9 @@ body {
   .orbit-light,
   .orbit-shimmer,
   .orbit-hint,
-  .orbit-floor-ring {
+  .orbit-floor-ring,
+  .orbit-camera,
+  .light-thread {
     animation: none !important;
   }
 }

@@ -1,4 +1,5 @@
 import { ReactNode, CSSProperties } from 'react'
+import { useLightThreadAnchor } from './LightThread'
 
 interface Props {
   children: ReactNode
@@ -10,6 +11,14 @@ interface Props {
   radius?: 'sm' | 'md' | 'lg' | 'xl'
   className?: string
   style?: CSSProperties
+  /**
+   * If set, this Surface registers as an anchor on the LightThread, at the
+   * given order. The cinematic filament will pass through the chosen edge
+   * (left | right | center) of this surface.
+   */
+  threadOrder?: number
+  threadSide?: 'left' | 'right' | 'center'
+  threadInset?: number
 }
 
 /**
@@ -31,7 +40,16 @@ export function Surface({
   radius = 'lg',
   className = '',
   style,
+  threadOrder,
+  threadSide,
+  threadInset,
 }: Props) {
+  const threadRef = useLightThreadAnchor<HTMLDivElement>({
+    order: threadOrder,
+    side: threadSide,
+    inset: threadInset,
+  })
+
   const weightStyles: Record<NonNullable<Props['weight']>, CSSProperties> = {
     whisper: {
       background: [
@@ -88,13 +106,40 @@ export function Surface({
 
   // Breath layer = a slow warm/cold pool that drifts inside the surface,
   // making the glass feel like it's holding light rather than sitting flat.
-  // Sheen layer = a very low-opacity diagonal swipe that crosses every ~18s.
-  // Both respect prefers-reduced-motion via the global override in globals.css.
-  const breatheOpacity = weight === 'whisper' ? 0.5 : weight === 'soft' ? 0.7 : 0.85
-  const sheenOpacity = weight === 'whisper' ? 0.05 : weight === 'soft' ? 0.07 : 0.09
+  // Sheen layer = a near-imperceptible diagonal swipe — closer to a passing
+  // breath than a watch-ad highlight. Both respect prefers-reduced-motion via
+  // the global override in globals.css.
+  // Solid surfaces (long-form copy / CTAs) get the most restrained values so
+  // they read as still glass, not as a glowing premium plaque.
+  const breatheOpacity = weight === 'whisper' ? 0.5 : weight === 'soft' ? 0.55 : 0.4
+  const sheenOpacity = weight === 'whisper' ? 0.05 : weight === 'soft' ? 0.05 : 0.025
+
+  // Soft, near-neutral light. Champagne tint kept on whisper/soft for warmth,
+  // but solid uses an almost-white veil so the surface doesn't read as gold.
+  const breatheGradient =
+    weight === 'solid'
+      ? `
+        radial-gradient(ellipse 55% 45% at 30% 30%, rgba(255,248,235,0.05) 0%, transparent 65%),
+        radial-gradient(ellipse 45% 50% at 75% 70%, rgba(220,210,195,0.04) 0%, transparent 65%)
+      `
+      : `
+        radial-gradient(ellipse 55% 45% at 30% 30%, rgba(255,232,200,0.10) 0%, transparent 60%),
+        radial-gradient(ellipse 45% 50% at 75% 70%, rgba(196,168,138,0.08) 0%, transparent 60%)
+      `
+
+  const sheenGradient =
+    weight === 'solid'
+      ? 'linear-gradient(115deg, transparent 42%, rgba(255,250,240,0.22) 50%, transparent 58%)'
+      : 'linear-gradient(115deg, transparent 38%, rgba(255,242,215,0.55) 50%, transparent 62%)'
+
+  // Slow the sheen down on solid surfaces so it feels like a passing cloud,
+  // not a sweep across a luxury-ad jewel.
+  const sheenAnimationClass =
+    weight === 'solid' ? 'surface-sheen surface-sheen--slow' : 'surface-sheen'
 
   return (
     <div
+      ref={threadRef}
       className={`relative overflow-hidden ${paddingClass} ${radiusClass} ${className}`}
       style={{ ...weightStyles[weight], ...style }}
     >
@@ -103,22 +148,18 @@ export function Surface({
         className="surface-breathe absolute -inset-[20%]"
         style={{
           opacity: breatheOpacity,
-          background: `
-            radial-gradient(ellipse 55% 45% at 30% 30%, rgba(255,232,200,0.10) 0%, transparent 60%),
-            radial-gradient(ellipse 45% 50% at 75% 70%, rgba(196,168,138,0.08) 0%, transparent 60%)
-          `,
+          background: breatheGradient,
           mixBlendMode: 'screen',
         }}
       />
 
       <div
         aria-hidden="true"
-        className="surface-sheen absolute -inset-[60%]"
+        className={`${sheenAnimationClass} absolute -inset-[60%]`}
         style={{
           opacity: sheenOpacity,
-          background:
-            'linear-gradient(115deg, transparent 38%, rgba(255,242,215,0.55) 50%, transparent 62%)',
-          mixBlendMode: 'screen',
+          background: sheenGradient,
+          mixBlendMode: 'overlay',
         }}
       />
 

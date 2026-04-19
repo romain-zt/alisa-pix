@@ -72,7 +72,12 @@ function reveal(p: number, dy = 18, ease = easeOutCubic): RevealStyle {
   }
 }
 
-export function Threshold({ src }: { src: string }) {
+interface ThresholdProps {
+  src: string
+  threadOrder?: number
+}
+
+export function Threshold({ src, threadOrder }: ThresholdProps) {
   const { ref, progress: sectionProgress } = useSectionProgress<HTMLElement>()
 
   // Map the global section progress to the sticky window.
@@ -169,7 +174,15 @@ export function Threshold({ src }: { src: string }) {
               willChange: 'transform, opacity',
             }}
           >
-            <Surface weight="soft" padding="loose" radius="lg" className="pointer-events-auto">
+            <Surface
+              weight="soft"
+              padding="loose"
+              radius="lg"
+              className="pointer-events-auto"
+              threadOrder={threadOrder}
+              threadSide="left"
+              threadInset={20}
+            >
               <p
                 className="text-[var(--text-micro)] tracking-[0.4em] uppercase text-text-muted/60 mb-6"
                 style={{

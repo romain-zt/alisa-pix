@@ -11,7 +11,11 @@ import { Surface } from './Surface'
  * inside a "solid" glass surface so the call-to-action reads clearly while the
  * picture remains the visual constant of the page.
  */
-export function SessionGate() {
+interface SessionGateProps {
+  threadOrder?: number
+}
+
+export function SessionGate({ threadOrder }: SessionGateProps = {}) {
   const { ref, progress } = useSectionProgress<HTMLElement>()
 
   const cardOpacity =
@@ -34,7 +38,13 @@ export function SessionGate() {
           willChange: 'transform, opacity',
         }}
       >
-        <Surface weight="solid" padding="loose" radius="lg">
+        <Surface
+          weight="solid"
+          padding="loose"
+          radius="lg"
+          threadOrder={threadOrder}
+          threadSide="center"
+        >
           <p className="text-[var(--text-micro)] tracking-[0.4em] uppercase text-text-primary/70 mb-10">
             Private sessions · Paris
           </p>
