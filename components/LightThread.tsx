@@ -398,25 +398,11 @@ function LightThread({ anchorsRef, version }: RendererProps) {
       viewBox={`0 0 ${size.w} ${size.h}`}
       preserveAspectRatio="none"
       aria-hidden="true"
-      style={{ mixBlendMode: 'screen' }}
     >
-      <defs>
-        <filter
-          id="lt-soft"
-          x="-50%"
-          y="-50%"
-          width="200%"
-          height="200%"
-          colorInterpolationFilters="sRGB"
-        >
-          <feGaussianBlur stdDeviation="0.9" />
-        </filter>
-      </defs>
-
       {/* Hidden spine — only used as a measurement source for the strands. */}
       <path ref={measureRef} d="" fill="none" stroke="none" />
 
-      {/* Three warm strands, each on its own rhythm. */}
+      {/* Three hairline strands, each on its own rhythm. No glow, no blur. */}
       <path
         ref={strand0Ref}
         d=""
@@ -424,7 +410,7 @@ function LightThread({ anchorsRef, version }: RendererProps) {
         stroke={STRAND_CONFIGS[0].stroke}
         strokeWidth={STRAND_CONFIGS[0].width}
         strokeLinecap="round"
-        filter="url(#lt-soft)"
+        vectorEffect="non-scaling-stroke"
       />
       <path
         ref={strand1Ref}
@@ -433,7 +419,7 @@ function LightThread({ anchorsRef, version }: RendererProps) {
         stroke={STRAND_CONFIGS[1].stroke}
         strokeWidth={STRAND_CONFIGS[1].width}
         strokeLinecap="round"
-        filter="url(#lt-soft)"
+        vectorEffect="non-scaling-stroke"
       />
       <path
         ref={strand2Ref}
@@ -442,7 +428,7 @@ function LightThread({ anchorsRef, version }: RendererProps) {
         stroke={STRAND_CONFIGS[2].stroke}
         strokeWidth={STRAND_CONFIGS[2].width}
         strokeLinecap="round"
-        filter="url(#lt-soft)"
+        vectorEffect="non-scaling-stroke"
       />
     </svg>
   )
