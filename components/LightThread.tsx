@@ -17,27 +17,36 @@ import {
  * LightThread — short, intimate filaments that connect *some* surface
  * borders to others. Not a single page-spanning helix.
  *
+ * Each segment is rendered as three coupled elements:
+ *   - A main spine running between two surface BORDERS (not centers): the
+ *     edge of each surface facing its neighbor. The strands taper to zero
+ *     amplitude at both endpoints, so they emerge cleanly from the borders
+ *     themselves.
+ *   - A "vein" along each endpoint's surface border — a short, gentle wave
+ *     running ALONG the border axis, pinned to the connection point so it
+ *     also passes through it with zero offset. Together with the main
+ *     strand's tapered endpoint, this makes the surface border look as if
+ *     it has come alive at the connection — the border *follows* the line.
+ *
  * Architecture:
  *   - <LightThreadProvider segments=[[1,2], [5,6,7]]> wraps the page.
  *     Each segment is an ordered list of anchor `order` values; only those
- *     anchors are connected, and each segment is its own braid.
- *   - Surfaces register via useLightThreadAnchor({order, side}). An anchor
- *     whose order does not appear in any segment is silently ignored.
+ *     anchors are connected, and each segment is its own braid + veins.
+ *   - Surfaces register via useLightThreadAnchor({order}). The endpoint
+ *     edge is auto-detected per frame from the direction to the neighbor.
  *
- * Each frame, for every segment we:
- *   1. Resolve the segment's anchors in order.
- *   2. Build a smooth Catmull-Rom spine through them (no off-screen ghost
- *      endpoints — segments are short and finite, so they begin and end
- *      *at* the surface borders themselves).
- *   3. Sample the spine and offset each sample perpendicular to the tangent
- *      by amplitude · sin(arcLength · ω + phaseₛ + timeDrift), once per
- *      strand. Three strands form a slow braid that crosses along the path.
- *   4. Taper amplitude in the first/last ~12% of the spine so the strands
- *      collapse cleanly into the surface borders they connect.
+ * Each frame, per segment:
+ *   1. Resolve the first/last anchors' BORDER points (edge facing neighbor).
+ *   2. Build a smooth Catmull-Rom spine [first.point, …interior, last.point].
+ *   3. Sample the spine; each strand offset = sum of two incommensurate
+ *      sines × envelope. Envelope tapers at both ends so strands collapse
+ *      into the border points exactly.
+ *   4. For each endpoint, build a vein spine — a straight line through the
+ *      border point along the border axis. Sample it with the same wave
+ *      engine but use a TWO-HUMP envelope (|sin(2πt)|): zero at both ends
+ *      AND at center, so the vein passes cleanly through the connection.
  *
- * Result: discrete, contemplative filaments — a thread between *those two
- * thoughts*, not a continuous river through the page. Reduced motion freezes
- * the drift and renders the static braid.
+ * Reduced motion freezes drift and renders the static composition.
  */
 
 type ThreadSide = 'left' | 'right' | 'center'
@@ -252,17 +261,59 @@ const STRAND_CONFIGS: StrandConfig[] = [
 ]
 const STRAND_COUNT = STRAND_CONFIGS.length
 
+// Vein strands — same DNA as the main strands but at a smaller scale,
+// because the vein lives on a short border (~120–200px). Wavelengths are
+// pulled in so we get visible curvature over that distance, amplitudes are
+// tiny so the vein still reads as a piece of the surface border itself.
+const VEIN_STRAND_CONFIGS: StrandConfig[] = [
+  {
+    amplitude: 5.5,
+    ampSwing: 0.3,
+    ampWavelength: 600,
+    ampPhase: 0.4,
+    wavelength: 320,
+    phase: 0.2,
+    wavelength2: 110,
+    phase2: 1.7,
+    weight2: 0.4,
+    drift: 0.014,
+    stroke: 'rgba(196,168,138,0.55)',
+    width: 0.55,
+  },
+  {
+    amplitude: 3.8,
+    ampSwing: 0.25,
+    ampWavelength: 720,
+    ampPhase: 2.6,
+    wavelength: 380,
+    phase: 2.4,
+    wavelength2: 140,
+    phase2: 4.1,
+    weight2: 0.45,
+    drift: -0.011,
+    stroke: 'rgba(245,232,210,0.50)',
+    width: 0.45,
+  },
+]
+const VEIN_STRAND_COUNT = VEIN_STRAND_CONFIGS.length
+
 const SAMPLE_STEP_PX = 8
 const SAMPLE_MIN = 32
 const SAMPLE_MAX = 220
+const VEIN_SAMPLE_STEP_PX = 3
+const VEIN_SAMPLE_MIN = 28
+const VEIN_SAMPLE_MAX = 90
 
 function LightThread({ anchorsRef, version, segments }: RendererProps) {
-  // One <g> per segment. Each group has 3 strand paths + 1 hidden measure
-  // path. We allocate up to MAX_SEGMENTS groups and only draw into the ones
-  // that have a corresponding segment this frame.
+  // One <g> per segment slot. Each slot has:
+  //   - main spine: 1 hidden measure path + STRAND_COUNT visible strands
+  //   - 2 endpoint veins: each with 1 measure path + VEIN_STRAND_COUNT strands
+  // Allocated up to MAX_SEGMENTS slots; unused slots stay invisible.
   const MAX_SEGMENTS = 6
   const measureRefs = useRef<(SVGPathElement | null)[]>([])
   const strandRefs = useRef<(SVGPathElement | null)[][]>([])
+  const veinMeasureRefs = useRef<(SVGPathElement | null)[][]>([])
+  const veinStrandRefs = useRef<(SVGPathElement | null)[][][]>([])
   const [size, setSize] = useState({ w: 0, h: 0 })
   const [reducedMotion, setReducedMotion] = useState(false)
 
@@ -289,9 +340,13 @@ function LightThread({ anchorsRef, version, segments }: RendererProps) {
       typeof performance !== 'undefined' ? performance.now() : Date.now()
     let frameId = 0
     const lastSpineD: string[] = new Array(MAX_SEGMENTS).fill('')
+    const lastVeinD: string[][] = Array.from(
+      { length: MAX_SEGMENTS },
+      () => ['', '']
+    )
 
-    // Pre-compute angular frequencies and drift rates so the inner loop only
-    // does adds + sin().
+    // Pre-compute angular frequencies and drift rates per strand so the
+    // inner loops only do adds + sin().
     const strandOmega = STRAND_CONFIGS.map(
       (c) => (2 * Math.PI) / c.wavelength
     )
@@ -303,7 +358,29 @@ function LightThread({ anchorsRef, version, segments }: RendererProps) {
     )
     const strandDriftRate = STRAND_CONFIGS.map((c) => c.drift * Math.PI * 2)
 
-    function anchorPoint(anchor: ThreadAnchor): Point | null {
+    const veinOmega = VEIN_STRAND_CONFIGS.map(
+      (c) => (2 * Math.PI) / c.wavelength
+    )
+    const veinOmega2 = VEIN_STRAND_CONFIGS.map(
+      (c) => (2 * Math.PI) / c.wavelength2
+    )
+    const veinAmpOmega = VEIN_STRAND_CONFIGS.map(
+      (c) => (2 * Math.PI) / c.ampWavelength
+    )
+    const veinDriftRate = VEIN_STRAND_CONFIGS.map(
+      (c) => c.drift * Math.PI * 2
+    )
+
+    interface EndpointGeo {
+      point: Point
+      // Unit vector along the surface border at the connection point.
+      axisX: number
+      axisY: number
+      // Length of the surface border along that axis (clamps the vein).
+      borderLength: number
+    }
+
+    function interiorPoint(anchor: ThreadAnchor): Point | null {
       const el = anchor.ref.current
       if (!el) return null
       const r = el.getBoundingClientRect()
@@ -317,27 +394,172 @@ function LightThread({ anchorsRef, version, segments }: RendererProps) {
       return { x, y }
     }
 
+    /**
+     * Endpoint geometry: pick the surface edge that faces the neighbor.
+     * Dominant axis (vertical vs horizontal) decides whether we attach to
+     * top/bottom or left/right. Returns the midpoint of that edge plus the
+     * unit vector running ALONG the edge — that's the vein's spine.
+     */
+    function endpointGeometry(
+      anchor: ThreadAnchor,
+      neighbor: ThreadAnchor
+    ): EndpointGeo | null {
+      const el = anchor.ref.current
+      const nel = neighbor.ref.current
+      if (!el || !nel) return null
+      const r = el.getBoundingClientRect()
+      if (r.width === 0 && r.height === 0) return null
+      const nr = nel.getBoundingClientRect()
+
+      const cx = (r.left + r.right) / 2
+      const cy = (r.top + r.bottom) / 2
+      const ncx = (nr.left + nr.right) / 2
+      const ncy = (nr.top + nr.bottom) / 2
+      const dx = ncx - cx
+      const dy = ncy - cy
+
+      if (Math.abs(dy) >= Math.abs(dx)) {
+        return {
+          point: { x: cx, y: dy > 0 ? r.bottom : r.top },
+          axisX: 1,
+          axisY: 0,
+          borderLength: r.width,
+        }
+      }
+      return {
+        point: { x: dx > 0 ? r.right : r.left, y: cy },
+        axisX: 0,
+        axisY: 1,
+        borderLength: r.height,
+      }
+    }
+
+    const clearVein = (segIdx: number, endIdx: number) => {
+      const measure = veinMeasureRefs.current[segIdx]?.[endIdx]
+      const strandSet = veinStrandRefs.current[segIdx]?.[endIdx]
+      if (lastVeinD[segIdx][endIdx] === '') return
+      measure?.setAttribute('d', '')
+      if (strandSet) {
+        for (let s = 0; s < VEIN_STRAND_COUNT; s++) {
+          strandSet[s]?.setAttribute('d', '')
+        }
+      }
+      lastVeinD[segIdx][endIdx] = ''
+    }
+
+    const drawVein = (
+      segIdx: number,
+      endIdx: number,
+      geo: EndpointGeo,
+      elapsed: number
+    ) => {
+      const measure = veinMeasureRefs.current[segIdx]?.[endIdx]
+      const strandSet = veinStrandRefs.current[segIdx]?.[endIdx]
+      if (!measure || !strandSet) return
+
+      // Vein length: a fraction of the surface border, capped so it never
+      // takes over the whole edge. Centered on the connection point.
+      const length = Math.min(180, Math.max(60, geo.borderLength * 0.36))
+      const halfLen = length / 2
+      const x1 = geo.point.x - geo.axisX * halfLen
+      const y1 = geo.point.y - geo.axisY * halfLen
+      const x2 = geo.point.x + geo.axisX * halfLen
+      const y2 = geo.point.y + geo.axisY * halfLen
+      const spineD =
+        `M ${x1.toFixed(1)} ${y1.toFixed(1)} ` +
+        `L ${x2.toFixed(1)} ${y2.toFixed(1)}`
+
+      if (spineD !== lastVeinD[segIdx][endIdx]) {
+        measure.setAttribute('d', spineD)
+        lastVeinD[segIdx][endIdx] = spineD
+      }
+
+      const totalLen = measure.getTotalLength()
+      if (!Number.isFinite(totalLen) || totalLen <= 0) return
+
+      const sampleCount = Math.max(
+        VEIN_SAMPLE_MIN,
+        Math.min(VEIN_SAMPLE_MAX, Math.floor(totalLen / VEIN_SAMPLE_STEP_PX))
+      )
+
+      const strandParts: string[][] = []
+      for (let s = 0; s < VEIN_STRAND_COUNT; s++) strandParts.push([])
+
+      for (let i = 0; i < sampleCount; i++) {
+        const t = i / (sampleCount - 1)
+        const len = t * totalLen
+        const p = measure.getPointAtLength(len)
+
+        const step = 0.5
+        const lookAhead = len + step <= totalLen ? len + step : len - step
+        const pNext = measure.getPointAtLength(lookAhead)
+        const tx = (pNext.x - p.x) * (lookAhead > len ? 1 : -1)
+        const ty = (pNext.y - p.y) * (lookAhead > len ? 1 : -1)
+        const tlen = Math.hypot(tx, ty) || 1
+        const nx = -ty / tlen
+        const ny = tx / tlen
+
+        // TWO-HUMP envelope: zero at both ends AND at the center of the
+        // vein. Center of the vein = the connection point, where the main
+        // strand also arrives with zero offset. The two converge there and
+        // visually become one line passing through the surface border.
+        const envelope = Math.abs(Math.sin(2 * Math.PI * t))
+
+        for (let s = 0; s < VEIN_STRAND_COUNT; s++) {
+          const cfg = VEIN_STRAND_CONFIGS[s]
+          const drift = elapsed * veinDriftRate[s]
+          const ampMul =
+            1 +
+            cfg.ampSwing *
+              0.5 *
+              (1 +
+                Math.sin(len * veinAmpOmega[s] + cfg.ampPhase + drift * 0.4))
+          const localAmp = cfg.amplitude * envelope * ampMul
+
+          const w1 = 1 - cfg.weight2
+          const w2 = cfg.weight2
+          const wave =
+            w1 * Math.sin(len * veinOmega[s] + cfg.phase + drift) +
+            w2 *
+              Math.sin(len * veinOmega2[s] + cfg.phase2 + drift * 1.5)
+          const offset = localAmp * wave
+
+          const x = (p.x + nx * offset).toFixed(1)
+          const y = (p.y + ny * offset).toFixed(1)
+          strandParts[s].push(i === 0 ? `M ${x} ${y}` : `L ${x} ${y}`)
+        }
+      }
+
+      for (let s = 0; s < VEIN_STRAND_COUNT; s++) {
+        strandSet[s]?.setAttribute('d', strandParts[s].join(' '))
+      }
+    }
+
     const drawSegment = (
       segIdx: number,
       points: Point[],
+      firstGeo: EndpointGeo | null,
+      lastGeo: EndpointGeo | null,
       elapsed: number
     ) => {
       const measure = measureRefs.current[segIdx]
       const strandSet = strandRefs.current[segIdx]
       if (!measure || !strandSet) return
-      if (points.length < 2) {
-        // Empty / not enough anchors — clear the slot.
+
+      if (points.length < 2 || !firstGeo || !lastGeo) {
+        // Empty / not enough anchors — clear everything in this slot.
         if (lastSpineD[segIdx] !== '') {
           for (let s = 0; s < STRAND_COUNT; s++)
             strandSet[s]?.setAttribute('d', '')
           measure.setAttribute('d', '')
           lastSpineD[segIdx] = ''
         }
+        clearVein(segIdx, 0)
+        clearVein(segIdx, 1)
         return
       }
 
-      // Short, finite spine — no ghost extension. The braid begins and ends
-      // exactly at the first and last surface borders.
+      // Short, finite spine — begins/ends exactly at surface border points.
       const spineD = catmullRomPath(points, 0.35)
       if (spineD !== lastSpineD[segIdx]) {
         measure.setAttribute('d', spineD)
@@ -380,8 +602,6 @@ function LightThread({ anchorsRef, version, segments }: RendererProps) {
         for (let s = 0; s < STRAND_COUNT; s++) {
           const cfg = STRAND_CONFIGS[s]
           const drift = elapsed * strandDriftRate[s]
-          // Gentle amplitude breath (≤ 1 + ampSwing) — never enough to
-          // lose the strand off-screen.
           const ampMul =
             1 +
             cfg.ampSwing *
@@ -392,10 +612,6 @@ function LightThread({ anchorsRef, version, segments }: RendererProps) {
                 ))
           const localAmp = cfg.amplitude * envelope * ampMul
 
-          // Two superimposed harmonics, normalized so the peak combined
-          // offset stays at ~localAmp. The secondary harmonic drifts at
-          // a different rate, so the line never quite repeats — what
-          // makes it read as natural rather than mechanical.
           const w1 = 1 - cfg.weight2
           const w2 = cfg.weight2
           const wave =
@@ -415,6 +631,10 @@ function LightThread({ anchorsRef, version, segments }: RendererProps) {
       for (let s = 0; s < STRAND_COUNT; s++) {
         strandSet[s]?.setAttribute('d', strandParts[s].join(' '))
       }
+
+      // Border veins at both endpoints.
+      drawVein(segIdx, 0, firstGeo, elapsed)
+      drawVein(segIdx, 1, lastGeo, elapsed)
     }
 
     const draw = (now: number) => {
@@ -429,17 +649,41 @@ function LightThread({ anchorsRef, version, segments }: RendererProps) {
       for (let segIdx = 0; segIdx < MAX_SEGMENTS; segIdx++) {
         const orders = segments[segIdx]
         if (!orders || orders.length < 2) {
-          drawSegment(segIdx, [], elapsed)
+          drawSegment(segIdx, [], null, null, elapsed)
           continue
         }
-        const points: Point[] = []
+
+        // Resolve anchors in segment order.
+        const anchorList: ThreadAnchor[] = []
         for (const order of orders) {
           const anchor = byOrder.get(order)
-          if (!anchor) continue
-          const p = anchorPoint(anchor)
+          if (anchor) anchorList.push(anchor)
+        }
+        if (anchorList.length < 2) {
+          drawSegment(segIdx, [], null, null, elapsed)
+          continue
+        }
+
+        // Endpoint geometry: edge facing the neighbor.
+        const firstGeo = endpointGeometry(anchorList[0], anchorList[1])
+        const lastGeo = endpointGeometry(
+          anchorList[anchorList.length - 1],
+          anchorList[anchorList.length - 2]
+        )
+        if (!firstGeo || !lastGeo) {
+          drawSegment(segIdx, [], null, null, elapsed)
+          continue
+        }
+
+        // Spine: first border point → interior centers → last border point.
+        const points: Point[] = [firstGeo.point]
+        for (let i = 1; i < anchorList.length - 1; i++) {
+          const p = interiorPoint(anchorList[i])
           if (p) points.push(p)
         }
-        drawSegment(segIdx, points, elapsed)
+        points.push(lastGeo.point)
+
+        drawSegment(segIdx, points, firstGeo, lastGeo, elapsed)
       }
     }
 
@@ -493,7 +737,7 @@ function LightThread({ anchorsRef, version, segments }: RendererProps) {
     >
       {slots.map((segIdx) => (
         <g key={segIdx}>
-          {/* Hidden spine — only a measurement source for the strands. */}
+          {/* Main spine — hidden measurement source. */}
           <path
             ref={(el) => {
               measureRefs.current[segIdx] = el
@@ -504,7 +748,7 @@ function LightThread({ anchorsRef, version, segments }: RendererProps) {
           />
           {STRAND_CONFIGS.map((cfg, s) => (
             <path
-              key={s}
+              key={`s-${s}`}
               ref={(el) => {
                 if (!strandRefs.current[segIdx]) {
                   strandRefs.current[segIdx] = []
@@ -518,6 +762,45 @@ function LightThread({ anchorsRef, version, segments }: RendererProps) {
               strokeLinecap="round"
               vectorEffect="non-scaling-stroke"
             />
+          ))}
+
+          {/* Border veins — one per endpoint. Each vein passes through the
+              connection point with zero offset, so it joins the main strand
+              cleanly there and reads as the surface border come alive. */}
+          {[0, 1].map((endIdx) => (
+            <g key={`v-${endIdx}`}>
+              <path
+                ref={(el) => {
+                  if (!veinMeasureRefs.current[segIdx]) {
+                    veinMeasureRefs.current[segIdx] = []
+                  }
+                  veinMeasureRefs.current[segIdx][endIdx] = el
+                }}
+                d=""
+                fill="none"
+                stroke="none"
+              />
+              {VEIN_STRAND_CONFIGS.map((cfg, s) => (
+                <path
+                  key={`vs-${s}`}
+                  ref={(el) => {
+                    if (!veinStrandRefs.current[segIdx]) {
+                      veinStrandRefs.current[segIdx] = []
+                    }
+                    if (!veinStrandRefs.current[segIdx][endIdx]) {
+                      veinStrandRefs.current[segIdx][endIdx] = []
+                    }
+                    veinStrandRefs.current[segIdx][endIdx][s] = el
+                  }}
+                  d=""
+                  fill="none"
+                  stroke={cfg.stroke}
+                  strokeWidth={cfg.width}
+                  strokeLinecap="round"
+                  vectorEffect="non-scaling-stroke"
+                />
+              ))}
+            </g>
           ))}
         </g>
       ))}
