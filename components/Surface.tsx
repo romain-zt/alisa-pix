@@ -86,12 +86,43 @@ export function Surface({
           ? 'rounded-[2rem]'
           : 'rounded-3xl'
 
+  // Breath layer = a slow warm/cold pool that drifts inside the surface,
+  // making the glass feel like it's holding light rather than sitting flat.
+  // Sheen layer = a very low-opacity diagonal swipe that crosses every ~18s.
+  // Both respect prefers-reduced-motion via the global override in globals.css.
+  const breatheOpacity = weight === 'whisper' ? 0.5 : weight === 'soft' ? 0.7 : 0.85
+  const sheenOpacity = weight === 'whisper' ? 0.05 : weight === 'soft' ? 0.07 : 0.09
+
   return (
     <div
       className={`relative overflow-hidden ${paddingClass} ${radiusClass} ${className}`}
       style={{ ...weightStyles[weight], ...style }}
     >
-      {children}
+      <div
+        aria-hidden="true"
+        className="surface-breathe absolute -inset-[20%]"
+        style={{
+          opacity: breatheOpacity,
+          background: `
+            radial-gradient(ellipse 55% 45% at 30% 30%, rgba(255,232,200,0.10) 0%, transparent 60%),
+            radial-gradient(ellipse 45% 50% at 75% 70%, rgba(196,168,138,0.08) 0%, transparent 60%)
+          `,
+          mixBlendMode: 'screen',
+        }}
+      />
+
+      <div
+        aria-hidden="true"
+        className="surface-sheen absolute -inset-[60%]"
+        style={{
+          opacity: sheenOpacity,
+          background:
+            'linear-gradient(115deg, transparent 38%, rgba(255,242,215,0.55) 50%, transparent 62%)',
+          mixBlendMode: 'screen',
+        }}
+      />
+
+      <div className="relative">{children}</div>
     </div>
   )
 }

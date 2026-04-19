@@ -25,7 +25,7 @@ import { OverlayChapter } from './OverlayChapter'
 
 const Threshold = dynamic(
   () => import('./Threshold').then((m) => ({ default: m.Threshold })),
-  { loading: () => <div className="min-h-[260vh]" /> }
+  { loading: () => <div className="min-h-[500vh]" /> }
 )
 
 const MicroStory = dynamic(

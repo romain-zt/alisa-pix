@@ -53,13 +53,18 @@ interface SceneState {
 
 type SceneVars = Record<`--${string}`, string>
 
+// Camera choreography:
+//   1) Open zoomed-in on the upper-left of the scene (more intimate framing).
+//   2) Fast pan to the right edge while holding the same elevation and zoom.
+//   3) Fast descent to the lower-right while easing the zoom out a touch.
+//   4) Final dezoom recenters the frame so the full image is revealed.
 const KEYFRAMES = [
-  { t: 0.0, posX: 16, posY: 18, scale: 1.0 },
-  { t: 0.07, posX: 26, posY: 22, scale: 1.14 },
-  { t: 0.2, posX: 48, posY: 38, scale: 1.3 },
-  { t: 0.42, posX: 82, posY: 72, scale: 1.38 },
-  { t: 0.68, posX: 80, posY: 68, scale: 1.22 },
-  { t: 1.0, posX: 74, posY: 60, scale: 1.0 },
+  { t: 0.0, posX: 18, posY: 28, scale: 1.42 },
+  { t: 0.18, posX: 50, posY: 30, scale: 1.44 },
+  { t: 0.36, posX: 88, posY: 32, scale: 1.42 },
+  { t: 0.54, posX: 90, posY: 70, scale: 1.36 },
+  { t: 0.7, posX: 86, posY: 86, scale: 1.28 },
+  { t: 1.0, posX: 50, posY: 50, scale: 1.0 },
 ] as const
 
 function clamp01(value: number): number {
