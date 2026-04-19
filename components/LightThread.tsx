@@ -165,22 +165,42 @@ interface RendererProps {
 // spring. Wavelengths are deliberately non-commensurate so they almost never
 // realign exactly.
 interface StrandConfig {
+  /** Base perpendicular amplitude in px. */
   amplitude: number
+  /**
+   * Slow modulation envelope on top of the base amplitude. The actual
+   * amplitude swings between `amplitude` and `amplitude * (1 + ampSwing)`
+   * over a wavelength of `ampWavelength`. With ampSwing > ~3 the strand will
+   * occasionally fly off the left/right edge of the viewport and disappear,
+   * naturally re-entering when the modulation cycles down.
+   */
+  ampSwing: number
+  ampWavelength: number
+  ampPhase: number
+  /** Wavelength of the strand's main perpendicular sine, in px. */
   wavelength: number
   phase: number
+  /** Time drift in Hz — how fast the wave slides along the spine. */
   drift: number
   stroke: string
   width: number
 }
 
-// Long soft sweeping S-curves: each wavelength spans roughly one to two
-// viewports, so the visible strands look like slow, calligraphic strokes —
-// not springs. Drift speeds are slowed so the gentle curves never whip.
+// Long soft sweeping S-curves: each main wavelength spans roughly one to two
+// viewports, so the visible strands look like slow, calligraphic strokes.
+// On top of that, each strand has its own *amplitude modulation* with a much
+// longer wavelength (multiple viewports). At its peak the line swings far past
+// the viewport edge and disappears for a while; at its trough it hugs the
+// spine. The two modulations are deliberately incommensurate per strand and
+// across strands, so the disappearance/return rhythm always feels organic.
 const STRAND_CONFIGS: StrandConfig[] = [
   // Black — only visible against the brighter regions of the cinematic
   // background; "appears and disappears" with the light naturally.
   {
     amplitude: 110,
+    ampSwing: 4.2,
+    ampWavelength: 2900,
+    ampPhase: 0.4,
     wavelength: 820,
     phase: 0,
     drift: 0.018,
@@ -190,6 +210,9 @@ const STRAND_CONFIGS: StrandConfig[] = [
   // White — the brightest line, the most visible thread.
   {
     amplitude: 90,
+    ampSwing: 5.0,
+    ampWavelength: 3700,
+    ampPhase: 2.1,
     wavelength: 1180,
     phase: 1.7,
     drift: -0.013,
@@ -199,6 +222,9 @@ const STRAND_CONFIGS: StrandConfig[] = [
   // Silver — cool neutral, sits between the two.
   {
     amplitude: 140,
+    ampSwing: 3.4,
+    ampWavelength: 2300,
+    ampPhase: 4.7,
     wavelength: 680,
     phase: 3.4,
     drift: 0.024,
@@ -251,6 +277,9 @@ function LightThread({ anchorsRef, version }: RendererProps) {
     // does adds + sin().
     const strandOmega = STRAND_CONFIGS.map(
       (c) => (2 * Math.PI) / c.wavelength
+    )
+    const strandAmpOmega = STRAND_CONFIGS.map(
+      (c) => (2 * Math.PI) / c.ampWavelength
     )
     const strandDriftRate = STRAND_CONFIGS.map((c) => c.drift * Math.PI * 2)
 
@@ -344,10 +373,20 @@ function LightThread({ anchorsRef, version }: RendererProps) {
         for (let s = 0; s < 3; s++) {
           const cfg = STRAND_CONFIGS[s]
           const drift = elapsed * strandDriftRate[s]
+          // Slow amplitude modulation, in [1, 1 + ampSwing]. Drifts ~⅓ as
+          // fast as the main wave so the "wide swing" moments don't lock
+          // step with the strand's own crossing rhythm.
+          const ampMul =
+            1 +
+            cfg.ampSwing *
+              0.5 *
+              (1 +
+                Math.sin(
+                  len * strandAmpOmega[s] + cfg.ampPhase + drift * 0.35
+                ))
+          const localAmp = cfg.amplitude * envelope * ampMul
           const offset =
-            cfg.amplitude *
-            envelope *
-            Math.sin(len * strandOmega[s] + cfg.phase + drift)
+            localAmp * Math.sin(len * strandOmega[s] + cfg.phase + drift)
           const x = (p.x + nx * offset).toFixed(1)
           const y = (p.y + ny * offset).toFixed(1)
           strandParts[s].push(i === 0 ? `M ${x} ${y}` : `L ${x} ${y}`)
