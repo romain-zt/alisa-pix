@@ -236,6 +236,20 @@ body {
   pointer-events: none;
 }
 
+/* ── Threshold portrait drift ── */
+/* The portrait scales down + drifts to make room for the card during the
+   sticky reveal. On mobile the card is below, so we shift up. On desktop
+   the card is on the right, so we shift left. JS sets --th-shift / --th-scale. */
+.threshold-picture {
+  transform: translate3d(0, calc(var(--th-shift, 0%) * -1), 0) scale(var(--th-scale, 1));
+}
+
+@media (min-width: 768px) {
+  .threshold-picture {
+    transform: translate3d(calc(var(--th-shift, 0%) * -1), 0, 0) scale(var(--th-scale, 1));
+  }
+}
+
 /* ── Surface breathing ── */
 @keyframes surfaceBreathe {
   0%, 100% {

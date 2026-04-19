@@ -102,10 +102,16 @@ export function Threshold({ src }: { src: string }) {
   const divider = reveal(progressIn(stuck, STAGE_DIVIDER), 8)
   const body = reveal(progressIn(stuck, STAGE_BODY), 18)
 
-  // The portrait does one tiny bit of choreography: a barely-perceptible
-  // breath (1.0 → 1.02 → 1.0) tied to the staged reveal. It still reads
-  // as "pinned and still" but the frame doesn't feel dead.
-  const breath = 1 + Math.sin(stuck * Math.PI) * 0.02
+  // Portrait choreography during the pin: as the card reveals, the picture
+  // scales down a touch and drifts to the side to make room for it. We
+  // expose `--th-shift` and `--th-scale` and let CSS decide whether to spend
+  // the shift on translateX (desktop, card sits on the right) or translateY
+  // (mobile, card sits below). Mapped to the card-reveal window so the
+  // picture has fully settled by the time the staged reveal completes.
+  const pictureProgress = clamp01(stuck / 0.6)
+  const pictureEase = easeInOutCubic(pictureProgress)
+  const pictureScale = lerp(1, 0.86, pictureEase)
+  const pictureShift = lerp(0, 12, pictureEase) // in %, applied as -shift in CSS
 
   return (
     <section
@@ -121,11 +127,11 @@ export function Threshold({ src }: { src: string }) {
             can sit perfectly centered. */}
         <div className="absolute inset-0 flex items-start md:items-center justify-center px-6 pt-[8svh] md:pt-0">
           <div
-            className="relative h-[74svh] aspect-[3/4] overflow-hidden rounded-[1.5rem]"
+            className="threshold-picture relative h-[52svh] sm:h-[60svh] md:h-[68svh] aspect-[3/4] overflow-hidden rounded-[1.5rem]"
             style={{
-              transform: `scale(${breath})`,
+              ['--th-shift' as string]: `${pictureShift}%`,
+              ['--th-scale' as string]: pictureScale.toFixed(4),
               transformOrigin: '50% 50%',
-              transition: 'transform 600ms cubic-bezier(0.45, 0, 0.55, 1)',
               boxShadow:
                 '0 60px 120px -30px rgba(0,0,0,0.7), 0 0 0 1px rgba(196,168,138,0.08)',
               willChange: 'transform',
@@ -151,11 +157,12 @@ export function Threshold({ src }: { src: string }) {
           </div>
         </div>
 
-        {/* CARD — slides in from the right (desktop) / from below (mobile).
-            Content reveals stage by stage during the pin. */}
-        <div className="absolute inset-0 flex items-end md:items-center justify-center md:justify-end pointer-events-none">
+        {/* CARD — slides up from below as the picture drifts out of its way.
+            Mobile: anchored to the lower-third (not the bottom edge).
+            Desktop: vertically centered, parked on the right side. */}
+        <div className="absolute inset-0 flex items-end md:items-center justify-center md:justify-end pointer-events-none pb-[18svh] md:pb-0">
           <div
-            className="px-6 pb-[6svh] md:pb-0 md:pr-[5vw] lg:pr-[8vw] w-full max-w-md md:max-w-[30rem]"
+            className="px-6 md:pr-[5vw] lg:pr-[8vw] w-full max-w-md md:max-w-[30rem]"
             style={{
               transform: `translate3d(0, ${cardY}px, 0)`,
               opacity: cardOpacity,
