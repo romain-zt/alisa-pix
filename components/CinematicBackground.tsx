@@ -54,16 +54,17 @@ interface SceneState {
 type SceneVars = Record<`--${string}`, string>
 
 // Camera choreography:
-//   1) Open zoomed-in on the upper-left of the scene (intimate framing).
-//   2) Fast pan to the right edge while holding the same elevation/zoom.
-//   3) Fast descent to the lower-right while easing the zoom out a touch.
+//   1) Open zoomed-in on the figure: 1/3 from the left, 1/2 from the top —
+//      intimate, mid-height framing on the focal subject.
+//   2) Pan right across the middle band (eye-line altitude held).
+//   3) Descent to the lower-right while easing the zoom out a touch.
 //   4) Hold the bottom-right framing through the middle sections.
 //   5) Slow dezoom to the full image, only during the final section
 //      (SessionGate). The window starts at FIT_START and ends at 1.0.
 const KEYFRAMES = [
-  { t: 0.0, posX: 18, posY: 28, scale: 1.42 },
-  { t: 0.18, posX: 50, posY: 30, scale: 1.44 },
-  { t: 0.36, posX: 88, posY: 32, scale: 1.42 },
+  { t: 0.0, posX: 33, posY: 50, scale: 1.42 },
+  { t: 0.18, posX: 55, posY: 48, scale: 1.44 },
+  { t: 0.36, posX: 82, posY: 52, scale: 1.42 },
   { t: 0.54, posX: 90, posY: 70, scale: 1.4 },
   { t: 0.78, posX: 88, posY: 86, scale: 1.38 },
   { t: 1.0, posX: 50, posY: 50, scale: 1.0 },
