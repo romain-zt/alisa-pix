@@ -213,6 +213,7 @@ export function Threshold({ src }: ThresholdProps) {
               padding="loose"
               radius="lg"
               className="pointer-events-auto"
+              lag={false}
             >
               <p
                 className="text-[var(--text-micro)] tracking-[0.4em] uppercase text-text-muted/60 mb-6"

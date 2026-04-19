@@ -21,14 +21,20 @@ import { useEffect } from 'react'
  * `prefers-reduced-motion: reduce` is honored — the variable stays at 0px.
  *
  *   Tuning knobs:
- *     SMOOTH_TAU — heavier value = heavier drag. 0.18s feels intimate; bump
- *                   towards 0.30s for a more cinematic delay.
- *     CLAMP_PX   — caps the maximum apparent lag so a fast flick doesn't
- *                   shove surfaces off-screen.
+ *     SMOOTH_TAU — heavier value = heavier drag. 0.14s feels intimate; bump
+ *                   towards 0.25s for a more cinematic delay.
+ *     CLAMP_PX   — caps the maximum apparent lag. Kept small (≤ 32px) so
+ *                   surfaces never displace far enough to break the layout
+ *                   on a fast flick — the drift should be a whisper, not a
+ *                   slide.
+ *
+ * The lag is rounded to whole pixels before being written to CSS. GPU
+ * compositing of `backdrop-filter` at fractional positions otherwise
+ * shimmers as the value decays.
  */
 
-const SMOOTH_TAU = 0.18
-const CLAMP_PX = 140
+const SMOOTH_TAU = 0.14
+const CLAMP_PX = 24
 
 let initialized = false
 
@@ -61,13 +67,18 @@ function initScrollLag() {
   }
   window.addEventListener('scroll', resetIfTeleported, { passive: true })
 
+  let lastWrittenPx = 0
+
   const loop = (now: number) => {
     const dt = Math.min(0.05, (now - lastTime) / 1000)
     lastTime = now
 
     if (reducedMotion) {
       smoothed = window.scrollY
-      root.style.setProperty('--scroll-lag', '0px')
+      if (lastWrittenPx !== 0) {
+        root.style.setProperty('--scroll-lag', '0px')
+        lastWrittenPx = 0
+      }
     } else {
       const target = window.scrollY
       const k = 1 - Math.exp(-dt / SMOOTH_TAU)
@@ -75,7 +86,14 @@ function initScrollLag() {
       let lag = target - smoothed
       if (lag > CLAMP_PX) lag = CLAMP_PX
       else if (lag < -CLAMP_PX) lag = -CLAMP_PX
-      root.style.setProperty('--scroll-lag', `${lag.toFixed(2)}px`)
+      // Whole-pixel quantisation — kills the sub-pixel shimmer that
+      // backdrop-filter exhibits when an element composites at fractional
+      // offsets. Skip the DOM write when the value hasn't changed.
+      const rounded = Math.round(lag)
+      if (rounded !== lastWrittenPx) {
+        root.style.setProperty('--scroll-lag', `${rounded}px`)
+        lastWrittenPx = rounded
+      }
     }
 
     requestAnimationFrame(loop)
