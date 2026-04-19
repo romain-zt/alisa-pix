@@ -14,31 +14,30 @@ import {
 } from 'react'
 
 /**
- * LightThread — a luminous braid of warm strands that weaves through every
- * registered surface like a DNA helix flowing across the entire page.
+ * LightThread — short, intimate filaments that connect *some* surface
+ * borders to others. Not a single page-spanning helix.
  *
  * Architecture:
- *   - <LightThreadProvider> wraps the page and renders one fixed-position SVG
- *     overlay sitting between the cinematic background (z-0) and content (z-10).
- *   - Each surface that wants to be threaded calls useLightThreadAnchor({order,
- *     side}) and attaches the returned ref to its outer DOM node.
+ *   - <LightThreadProvider segments=[[1,2], [5,6,7]]> wraps the page.
+ *     Each segment is an ordered list of anchor `order` values; only those
+ *     anchors are connected, and each segment is its own braid.
+ *   - Surfaces register via useLightThreadAnchor({order, side}). An anchor
+ *     whose order does not appear in any segment is silently ignored.
  *
- * Each frame we:
- *   1. Measure every anchor's bounding rect in viewport coordinates.
- *   2. Build a smooth, low-tension Catmull-Rom curve through them — this is
- *      the *spine* (never drawn).
- *   3. Sample the spine at fine intervals via getPointAtLength + tangent.
- *   4. Offset each sample perpendicular to the tangent by
- *      amplitude · sin(arcLength · ω + phaseₛ + timeDrift) — one phase per
- *      strand. Three strands at phases 0, 2π/3, 4π/3 form an equilateral
- *      braid that crosses itself rhythmically along the path.
- *   5. The amplitude is enveloped (sin(πt)) so the strands converge to a
- *      single point at the ghost endpoints — the braid "ties off" off-screen.
+ * Each frame, for every segment we:
+ *   1. Resolve the segment's anchors in order.
+ *   2. Build a smooth Catmull-Rom spine through them (no off-screen ghost
+ *      endpoints — segments are short and finite, so they begin and end
+ *      *at* the surface borders themselves).
+ *   3. Sample the spine and offset each sample perpendicular to the tangent
+ *      by amplitude · sin(arcLength · ω + phaseₛ + timeDrift), once per
+ *      strand. Three strands form a slow braid that crosses along the path.
+ *   4. Taper amplitude in the first/last ~12% of the spine so the strands
+ *      collapse cleanly into the surface borders they connect.
  *
- * The result is three warm threads (gold / champagne / rose-gold) softly
- * weaving around an invisible spine, breathing slowly thanks to a gentle
- * time-driven phase drift. Reduced motion freezes the drift and just renders
- * the static braid.
+ * Result: discrete, contemplative filaments — a thread between *those two
+ * thoughts*, not a continuous river through the page. Reduced motion freezes
+ * the drift and renders the static braid.
  */
 
 type ThreadSide = 'left' | 'right' | 'center'
@@ -89,9 +88,21 @@ export function useLightThreadAnchor<T extends HTMLElement>(
 
 interface ProviderProps {
   children: ReactNode
+  /**
+   * Each segment is an ordered list of anchor `order` values that should
+   * be connected by a single short braid. Anchors not present in any
+   * segment are ignored by the renderer. Defaults to no segments — i.e.
+   * nothing is drawn until the consumer opts in.
+   */
+  segments?: ReadonlyArray<ReadonlyArray<number>>
 }
 
-export function LightThreadProvider({ children }: ProviderProps) {
+const DEFAULT_SEGMENTS: ReadonlyArray<ReadonlyArray<number>> = []
+
+export function LightThreadProvider({
+  children,
+  segments = DEFAULT_SEGMENTS,
+}: ProviderProps) {
   const anchorsRef = useRef<Map<string, ThreadAnchor>>(new Map())
   const [version, setVersion] = useState(0)
 
@@ -113,7 +124,11 @@ export function LightThreadProvider({ children }: ProviderProps) {
   return (
     <ThreadContext.Provider value={value}>
       {children}
-      <LightThread anchorsRef={anchorsRef} version={version} />
+      <LightThread
+        anchorsRef={anchorsRef}
+        version={version}
+        segments={segments}
+      />
     </ThreadContext.Provider>
   )
 }
@@ -156,6 +171,7 @@ function catmullRomPath(points: Point[], tension = 0.35): string {
 interface RendererProps {
   anchorsRef: RefObject<Map<string, ThreadAnchor>>
   version: number
+  segments: ReadonlyArray<ReadonlyArray<number>>
 }
 
 // Each strand has its own amplitude, wavelength, phase and drift speed so the
@@ -234,14 +250,16 @@ const STRAND_CONFIGS: StrandConfig[] = [
 ]
 
 const SAMPLE_STEP_PX = 8
-const SAMPLE_MIN = 50
-const SAMPLE_MAX = 280
+const SAMPLE_MIN = 32
+const SAMPLE_MAX = 220
 
-function LightThread({ anchorsRef, version }: RendererProps) {
-  const measureRef = useRef<SVGPathElement>(null)
-  const strand0Ref = useRef<SVGPathElement>(null)
-  const strand1Ref = useRef<SVGPathElement>(null)
-  const strand2Ref = useRef<SVGPathElement>(null)
+function LightThread({ anchorsRef, version, segments }: RendererProps) {
+  // One <g> per segment. Each group has 3 strand paths + 1 hidden measure
+  // path. We allocate up to MAX_SEGMENTS groups and only draw into the ones
+  // that have a corresponding segment this frame.
+  const MAX_SEGMENTS = 6
+  const measureRefs = useRef<(SVGPathElement | null)[]>([])
+  const strandRefs = useRef<(SVGPathElement | null)[][]>([])
   const [size, setSize] = useState({ w: 0, h: 0 })
   const [reducedMotion, setReducedMotion] = useState(false)
 
@@ -262,17 +280,13 @@ function LightThread({ anchorsRef, version }: RendererProps) {
 
   useEffect(() => {
     if (size.w === 0) return
-
-    const measure = measureRef.current
-    if (!measure) return
-
-    const strands = [strand0Ref.current, strand1Ref.current, strand2Ref.current]
-    if (strands.some((s) => !s)) return
+    if (segments.length === 0) return
 
     const startedAt =
       typeof performance !== 'undefined' ? performance.now() : Date.now()
     let frameId = 0
-    let lastSpineD = ''
+    const lastSpineD: string[] = new Array(MAX_SEGMENTS).fill('')
+
     // Pre-compute angular frequencies and drift rates so the inner loop only
     // does adds + sin().
     const strandOmega = STRAND_CONFIGS.map(
@@ -283,65 +297,53 @@ function LightThread({ anchorsRef, version }: RendererProps) {
     )
     const strandDriftRate = STRAND_CONFIGS.map((c) => c.drift * Math.PI * 2)
 
-    const draw = (now: number) => {
-      const map = anchorsRef.current
-      if (!map) return
-      const anchors = Array.from(map.values()).sort((a, b) => a.order - b.order)
-      if (anchors.length < 2) return
+    function anchorPoint(anchor: ThreadAnchor): Point | null {
+      const el = anchor.ref.current
+      if (!el) return null
+      const r = el.getBoundingClientRect()
+      if (r.width === 0 && r.height === 0) return null
+      const inset = anchor.inset
+      let x: number
+      if (anchor.side === 'left') x = r.left + inset
+      else if (anchor.side === 'right') x = r.right - inset
+      else x = (r.left + r.right) / 2
+      const y = (r.top + r.bottom) / 2
+      return { x, y }
+    }
 
-      // 1. Spine control points from anchor positions.
-      const points: Point[] = []
-      for (const anchor of anchors) {
-        const el = anchor.ref.current
-        if (!el) continue
-        const r = el.getBoundingClientRect()
-        if (r.width === 0 && r.height === 0) continue
-
-        const inset = anchor.inset
-        let x: number
-        if (anchor.side === 'left') x = r.left + inset
-        else if (anchor.side === 'right') x = r.right - inset
-        else x = (r.left + r.right) / 2
-
-        const y = (r.top + r.bottom) / 2
-        points.push({ x, y })
-      }
-      if (points.length < 2) return
-
-      // Ghost endpoints: braid converges to a point off-screen at both ends.
-      // Pushed at least 1.6× viewport beyond the first/last anchor so the
-      // amplitude envelope's taper is always well outside what the user can
-      // actually see — the strands stay at full amplitude all the way to the
-      // top and bottom edges of the viewport, including when scrolled to the
-      // very end of the page.
-      const first = points[0]
-      const last = points[points.length - 1]
-      const ghostExtend = Math.max(900, size.h * 1.6)
-      const ghostFirst: Point = {
-        x: first.x + (first.x < size.w / 2 ? -90 : 90),
-        y: first.y - ghostExtend,
-      }
-      const ghostLast: Point = {
-        x: last.x + (last.x < size.w / 2 ? -90 : 90),
-        y: last.y + ghostExtend,
+    const drawSegment = (
+      segIdx: number,
+      points: Point[],
+      elapsed: number
+    ) => {
+      const measure = measureRefs.current[segIdx]
+      const strandSet = strandRefs.current[segIdx]
+      if (!measure || !strandSet) return
+      if (points.length < 2) {
+        // Empty / not enough anchors — clear the slot.
+        if (lastSpineD[segIdx] !== '') {
+          for (let s = 0; s < 3; s++) strandSet[s]?.setAttribute('d', '')
+          measure.setAttribute('d', '')
+          lastSpineD[segIdx] = ''
+        }
+        return
       }
 
-      const spineD = catmullRomPath([ghostFirst, ...points, ghostLast], 0.35)
-
-      if (spineD !== lastSpineD) {
+      // Short, finite spine — no ghost extension. The braid begins and ends
+      // exactly at the first and last surface borders.
+      const spineD = catmullRomPath(points, 0.35)
+      if (spineD !== lastSpineD[segIdx]) {
         measure.setAttribute('d', spineD)
-        lastSpineD = spineD
+        lastSpineD[segIdx] = spineD
       }
 
-      // 2. Sample the spine.
       const totalLen = measure.getTotalLength()
       if (!Number.isFinite(totalLen) || totalLen <= 0) return
+
       const sampleCount = Math.max(
         SAMPLE_MIN,
         Math.min(SAMPLE_MAX, Math.floor(totalLen / SAMPLE_STEP_PX))
       )
-
-      const elapsed = reducedMotion ? 0 : (now - startedAt) / 1000
 
       const strandParts: string[][] = [[], [], []]
 
@@ -350,7 +352,6 @@ function LightThread({ anchorsRef, version }: RendererProps) {
         const len = t * totalLen
         const p = measure.getPointAtLength(len)
 
-        // Tangent via a tiny forward step (or backward at the very end).
         const step = 1
         const lookAhead = len + step <= totalLen ? len + step : len - step
         const pNext = measure.getPointAtLength(lookAhead)
@@ -360,11 +361,9 @@ function LightThread({ anchorsRef, version }: RendererProps) {
         const nx = -ty / tlen
         const ny = tx / tlen
 
-        // Flat envelope: amplitude is 1 across the whole path and only tapers
-        // to 0 within the final ~6% at each end. Combined with the long
-        // ghost extension above, this guarantees the visible strands always
-        // run at full thickness from top to bottom of viewport.
-        const TAPER = 0.06
+        // Wider taper (~12% each end) so the strands collapse cleanly into
+        // the surface borders themselves — no off-screen ghost endpoints.
+        const TAPER = 0.12
         let envelope = 1
         if (t < TAPER) envelope = Math.sin((t / TAPER) * (Math.PI / 2))
         else if (t > 1 - TAPER)
@@ -373,9 +372,6 @@ function LightThread({ anchorsRef, version }: RendererProps) {
         for (let s = 0; s < 3; s++) {
           const cfg = STRAND_CONFIGS[s]
           const drift = elapsed * strandDriftRate[s]
-          // Slow amplitude modulation, in [1, 1 + ampSwing]. Drifts ~⅓ as
-          // fast as the main wave so the "wide swing" moments don't lock
-          // step with the strand's own crossing rhythm.
           const ampMul =
             1 +
             cfg.ampSwing *
@@ -394,7 +390,33 @@ function LightThread({ anchorsRef, version }: RendererProps) {
       }
 
       for (let s = 0; s < 3; s++) {
-        strands[s]!.setAttribute('d', strandParts[s].join(' '))
+        strandSet[s]?.setAttribute('d', strandParts[s].join(' '))
+      }
+    }
+
+    const draw = (now: number) => {
+      const map = anchorsRef.current
+      if (!map) return
+      const elapsed = reducedMotion ? 0 : (now - startedAt) / 1000
+
+      // Index anchors by `order` for fast lookup.
+      const byOrder = new Map<number, ThreadAnchor>()
+      for (const a of map.values()) byOrder.set(a.order, a)
+
+      for (let segIdx = 0; segIdx < MAX_SEGMENTS; segIdx++) {
+        const orders = segments[segIdx]
+        if (!orders || orders.length < 2) {
+          drawSegment(segIdx, [], elapsed)
+          continue
+        }
+        const points: Point[] = []
+        for (const order of orders) {
+          const anchor = byOrder.get(order)
+          if (!anchor) continue
+          const p = anchorPoint(anchor)
+          if (p) points.push(p)
+        }
+        drawSegment(segIdx, points, elapsed)
       }
     }
 
@@ -428,9 +450,14 @@ function LightThread({ anchorsRef, version }: RendererProps) {
     }
     frameId = requestAnimationFrame(loop)
     return () => cancelAnimationFrame(frameId)
-  }, [version, reducedMotion, size.w, size.h, anchorsRef])
+  }, [version, reducedMotion, size.w, size.h, anchorsRef, segments])
 
   if (size.w === 0) return null
+  if (segments.length === 0) return null
+
+  // Render one <g> per allocated segment slot. Empty slots stay invisible
+  // because their paths have d="".
+  const slots = Array.from({ length: MAX_SEGMENTS }, (_, i) => i)
 
   return (
     <svg
@@ -441,37 +468,36 @@ function LightThread({ anchorsRef, version }: RendererProps) {
       preserveAspectRatio="none"
       aria-hidden="true"
     >
-      {/* Hidden spine — only used as a measurement source for the strands. */}
-      <path ref={measureRef} d="" fill="none" stroke="none" />
-
-      {/* Three hairline strands, each on its own rhythm. No glow, no blur. */}
-      <path
-        ref={strand0Ref}
-        d=""
-        fill="none"
-        stroke={STRAND_CONFIGS[0].stroke}
-        strokeWidth={STRAND_CONFIGS[0].width}
-        strokeLinecap="round"
-        vectorEffect="non-scaling-stroke"
-      />
-      <path
-        ref={strand1Ref}
-        d=""
-        fill="none"
-        stroke={STRAND_CONFIGS[1].stroke}
-        strokeWidth={STRAND_CONFIGS[1].width}
-        strokeLinecap="round"
-        vectorEffect="non-scaling-stroke"
-      />
-      <path
-        ref={strand2Ref}
-        d=""
-        fill="none"
-        stroke={STRAND_CONFIGS[2].stroke}
-        strokeWidth={STRAND_CONFIGS[2].width}
-        strokeLinecap="round"
-        vectorEffect="non-scaling-stroke"
-      />
+      {slots.map((segIdx) => (
+        <g key={segIdx}>
+          {/* Hidden spine — only a measurement source for the strands. */}
+          <path
+            ref={(el) => {
+              measureRefs.current[segIdx] = el
+            }}
+            d=""
+            fill="none"
+            stroke="none"
+          />
+          {STRAND_CONFIGS.map((cfg, s) => (
+            <path
+              key={s}
+              ref={(el) => {
+                if (!strandRefs.current[segIdx]) {
+                  strandRefs.current[segIdx] = []
+                }
+                strandRefs.current[segIdx][s] = el
+              }}
+              d=""
+              fill="none"
+              stroke={cfg.stroke}
+              strokeWidth={cfg.width}
+              strokeLinecap="round"
+              vectorEffect="non-scaling-stroke"
+            />
+          ))}
+        </g>
+      ))}
     </svg>
   )
 }

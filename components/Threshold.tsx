@@ -131,34 +131,69 @@ export function Threshold({ src, threadOrder }: ThresholdProps) {
             On desktop the card lives off to the right, so the portrait
             can sit perfectly centered. */}
         <div className="absolute inset-0 flex items-start md:items-center justify-center px-6 pt-[8svh] md:pt-0">
+          {/* POLAROID — paper border with a heavier bottom lip, soft cream
+              tint, gentle tilt. The image inside keeps its b/w treatment.
+              Box-shadow is warm to anchor the photograph in the room. */}
           <div
-            className="threshold-picture relative h-[52svh] sm:h-[60svh] md:h-[68svh] aspect-[3/4] overflow-hidden rounded-[1.5rem]"
+            className="threshold-picture relative h-[52svh] sm:h-[60svh] md:h-[68svh] aspect-[3/4]"
             style={{
               ['--th-shift' as string]: `${pictureShift}%`,
               ['--th-scale' as string]: pictureScale.toFixed(4),
               transformOrigin: '50% 50%',
-              boxShadow:
-                '0 60px 120px -30px rgba(0,0,0,0.7), 0 0 0 1px rgba(196,168,138,0.08)',
               willChange: 'transform',
             }}
           >
-            <Image
-              src={src}
-              alt="A boudoir portrait — quiet, composed, intimate"
-              fill
-              // sizes="(max-width: 768px) 80vw, (max-width: 1024px) 50vw, 38vw"
-              className="object-cover"
-              style={{
-                filter: 'grayscale(1) contrast(1.04) brightness(0.96)',
-              }}
-            />
             <div
-              className="absolute inset-0 pointer-events-none"
+              className="threshold-polaroid relative h-full w-full"
               style={{
+                padding: '4.5% 4.5% 14% 4.5%',
                 background:
-                  'radial-gradient(ellipse 90% 90% at 50% 50%, transparent 55%, rgba(8,7,6,0.55) 100%)',
+                  'linear-gradient(180deg, #f3ead8 0%, #ece1c8 55%, #e3d6ba 100%)',
+                borderRadius: '4px',
+                boxShadow: [
+                  '0 60px 120px -30px rgba(0,0,0,0.72)',
+                  '0 18px 40px -16px rgba(0,0,0,0.55)',
+                  '0 0 0 1px rgba(120,95,70,0.18)',
+                  'inset 0 1px 0 rgba(255,248,235,0.6)',
+                ].join(', '),
+                transform: 'rotate(-1.4deg)',
               }}
-            />
+            >
+              <div className="relative h-full w-full overflow-hidden">
+                <Image
+                  src={src}
+                  alt="A boudoir portrait — quiet, composed, intimate"
+                  fill
+                  className="object-cover"
+                  style={{
+                    filter: 'grayscale(1) contrast(1.04) brightness(0.94)',
+                  }}
+                />
+                {/* Subtle inner shadow on the photo aperture — paper lip */}
+                <div
+                  className="absolute inset-0 pointer-events-none"
+                  style={{
+                    boxShadow: 'inset 0 0 0 1px rgba(0,0,0,0.35), inset 0 6px 18px -6px rgba(0,0,0,0.55)',
+                  }}
+                />
+                <div
+                  className="absolute inset-0 pointer-events-none"
+                  style={{
+                    background:
+                      'radial-gradient(ellipse 95% 95% at 50% 45%, transparent 58%, rgba(8,7,6,0.5) 100%)',
+                  }}
+                />
+              </div>
+              {/* Paper grain on the polaroid border */}
+              <div
+                className="absolute inset-0 pointer-events-none rounded-[4px]"
+                style={{
+                  background:
+                    'radial-gradient(ellipse 120% 60% at 50% 0%, rgba(255,248,235,0.35) 0%, transparent 55%), radial-gradient(ellipse 80% 40% at 50% 100%, rgba(120,90,55,0.18) 0%, transparent 60%)',
+                  mixBlendMode: 'overlay',
+                }}
+              />
+            </div>
           </div>
         </div>
 

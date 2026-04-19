@@ -40,13 +40,24 @@ const SessionGate = dynamic(
 )
 
 export function HomeContent() {
-  // LightThread orders — shared sequence across the whole page so the
-  // luminous filament threads through every surface in the right zigzag.
-  // Each order index is a "bead" on the string. `side` is set per surface
-  // to attach on the inner edge (the one facing the page interior), which
-  // gives the curve its natural serpentine shape.
+  // LightThread segments — short, intimate filaments between *some* surfaces.
+  // Not a continuous river through the page. Each sub-array lists the anchor
+  // `order` values that one braid connects, in order. Anchors not listed are
+  // simply not threaded — those sections breathe on their own.
+  //
+  //   [2, 3]      — Whisper I to the Manifesto: the question reaches the answer.
+  //   [5, 6]      — Threshold to the first MicroStory line: the portrait
+  //                  hands the thread to her story.
+  //   [8, 9]      — Last MicroStory line to SessionGate: the story closes
+  //                  by inviting the visitor in.
+  const threadSegments: ReadonlyArray<ReadonlyArray<number>> = [
+    [2, 3],
+    [5, 6],
+    [8, 9],
+  ]
+
   return (
-    <LightThreadProvider>
+    <LightThreadProvider segments={threadSegments}>
       <Navigation />
 
       {/* Pinned cinematic stage — visible for the entire page. */}

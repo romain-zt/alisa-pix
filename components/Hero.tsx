@@ -48,6 +48,8 @@ export function Hero({ threadOrder }: HeroProps = {}) {
     hasPlayed.current = true
 
     const el = rootRef.current
+    const aperture = el.querySelector('.hero-aperture') as HTMLElement
+    const flash = el.querySelector('.hero-flash') as HTMLElement
     const eyebrow = el.querySelector('.hero-eyebrow') as HTMLElement
     const letters = el.querySelectorAll('.hero-letter')
     const rule = el.querySelector('.hero-tag-rule') as HTMLElement
@@ -59,6 +61,8 @@ export function Hero({ threadOrder }: HeroProps = {}) {
     ).matches
 
     if (reduce) {
+      if (aperture) aperture.style.opacity = '0'
+      if (flash) flash.style.opacity = '0'
       ;[eyebrow, rule, tagline, cue].forEach((n) => {
         if (n) n.style.opacity = '1'
       })
@@ -71,10 +75,48 @@ export function Hero({ threadOrder }: HeroProps = {}) {
 
     const easeDefault = cubicBezier(0.87, 0, 0.13, 1)
     const easeOutExpo = cubicBezier(0.16, 1, 0.3, 1)
+    const easeAperture = cubicBezier(0.7, 0, 0.2, 1)
 
     const tl = createTimeline({
       defaults: { ease: easeDefault },
     })
+
+    // OPENING — the lens iris pulls open from the center.
+    // Mask radius grows from a closed pinhole to fully open. The black
+    // surround tapers off as the aperture clears the viewport, with a warm
+    // halo lingering at its leading edge.
+    tl.add(
+      aperture,
+      {
+        // 0 = closed pinhole, 75 = fully open & invisible (unit applied in CSS)
+        ['--aperture-r' as 'opacity']: [0, 75],
+        duration: 1800,
+        ease: easeAperture,
+      },
+      0
+    )
+      .add(
+        aperture,
+        {
+          opacity: [1, 0],
+          duration: 700,
+          ease: easeOutExpo,
+        },
+        1300
+      )
+      // FLASH — strobe firing into the room. Bright at the moment the iris
+      // clears, then exhaling away as the wordmark begins to assemble.
+      .add(
+        flash,
+        {
+          opacity: [
+            { to: 0, duration: 1, ease: 'linear' },
+            { to: 0.85, duration: 380, ease: easeOutExpo },
+            { to: 0, duration: 1400, ease: easeAperture },
+          ],
+        },
+        1000
+      )
 
     // Eyebrow first — quiet annunciation
     tl.add(
@@ -237,6 +279,34 @@ export function Hero({ threadOrder }: HeroProps = {}) {
         </span>
         <span className="block w-px h-10 bg-gradient-to-b from-text-muted/50 to-transparent" />
       </div>
+
+      {/* WARM FLASH — the strobe firing as the iris clears.
+          Sits below the aperture so the iris cuts a clean disc through it. */}
+      <div
+        className="hero-flash absolute inset-0 z-[40] pointer-events-none opacity-0"
+        style={{
+          background:
+            'radial-gradient(ellipse 70% 55% at 50% 50%, rgba(255,243,220,0.95) 0%, rgba(248,225,180,0.7) 22%, rgba(196,168,138,0.18) 55%, transparent 78%)',
+          mixBlendMode: 'screen',
+          willChange: 'opacity',
+        }}
+        aria-hidden="true"
+      />
+
+      {/* APERTURE — black surround with a warm-edged circular hole that opens
+          from a closed pinhole. The hole radius is driven by the
+          --aperture-r CSS variable (0% → 75%, viewport diagonal).
+          Sits on top of everything during the opening, then fades. */}
+      <div
+        className="hero-aperture absolute inset-0 z-[50] pointer-events-none"
+        style={{
+          ['--aperture-r' as string]: '0',
+          background:
+            'radial-gradient(circle at 50% 50%, transparent calc((var(--aperture-r) - 0.4) * 1%), rgba(196,168,138,0.55) calc(var(--aperture-r) * 1%), rgba(8,7,6,1) calc((var(--aperture-r) + 0.6) * 1%))',
+          willChange: 'opacity, background',
+        }}
+        aria-hidden="true"
+      />
     </section>
   )
 }
