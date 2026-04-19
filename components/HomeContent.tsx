@@ -61,7 +61,13 @@ export function HomeContent() {
       <Navigation />
 
       {/* Pinned cinematic stage — visible for the entire page. */}
-      <CinematicBackground src="/assets/images/bg-home.jpg" rangeVH={7.25} />
+      <CinematicBackground
+        src="/assets/images/bg-home.jpg"
+        rangeVH={7.25}
+        dezoomAnchorId="sessions"
+        dezoomEndVisibility={0.3}
+        dezoomLeadVH={1}
+      />
 
       {/* 1. HERO — wordmark, no card */}
       <Hero threadOrder={1} />

@@ -6,6 +6,17 @@ import { useEffect, useRef, useState, type CSSProperties } from 'react'
 interface Props {
   src: string
   rangeVH?: number
+  // Element id whose position in the viewport drives the final dezoom.
+  // When set, the dezoom (FIT_START → FIT_END) is mapped to the scroll
+  // window during which this element travels from "just entering the
+  // viewport" to `dezoomEndVisibility` of the viewport filled by it.
+  dezoomAnchorId?: string
+  // 0..1 — fraction of the viewport that should be filled by the anchor
+  // element when the dezoom is fully complete. Default 0.3 (30%).
+  dezoomEndVisibility?: number
+  // How many viewport heights of scroll the dezoom takes. Default 1.0
+  // — relaxed, "settling" feel. Lower = snappier, higher = slower.
+  dezoomLeadVH?: number
 }
 
 interface CameraState {
@@ -393,7 +404,13 @@ const INITIAL_STYLE = {
   '--frame-top': '0px',
 } as CSSProperties
 
-export function CinematicBackground({ src, rangeVH }: Props) {
+export function CinematicBackground({
+  src,
+  rangeVH,
+  dezoomAnchorId,
+  dezoomEndVisibility = 0.3,
+  dezoomLeadVH = 1,
+}: Props) {
   const rootRef = useRef<HTMLDivElement>(null)
   const [revealed, setRevealed] = useState(false)
   const [reducedMotion, setReducedMotion] = useState(false)
@@ -436,6 +453,7 @@ export function CinematicBackground({ src, rangeVH }: Props) {
     if (!rootElement) return
 
     let range = 1
+    let gateTop = Number.POSITIVE_INFINITY
     let frameId = 0
     let ticking = false
     let lastProgress = -1
@@ -443,22 +461,57 @@ export function CinematicBackground({ src, rangeVH }: Props) {
     function updateRange() {
       if (rangeVH != null) {
         range = Math.max(1, window.innerHeight * rangeVH)
-        return
+      } else {
+        const doc = document.documentElement
+        const docHeight = Math.max(
+          doc.scrollHeight,
+          doc.offsetHeight,
+          document.body.scrollHeight,
+          document.body.offsetHeight
+        )
+
+        range = Math.max(1, docHeight - window.innerHeight)
       }
 
-      const doc = document.documentElement
-      const docHeight = Math.max(
-        doc.scrollHeight,
-        doc.offsetHeight,
-        document.body.scrollHeight,
-        document.body.offsetHeight
-      )
-
-      range = Math.max(1, docHeight - window.innerHeight)
+      if (dezoomAnchorId) {
+        const gateEl = document.getElementById(dezoomAnchorId)
+        if (gateEl) {
+          const rect = gateEl.getBoundingClientRect()
+          gateTop = rect.top + window.scrollY
+        } else {
+          gateTop = Number.POSITIVE_INFINITY
+        }
+      } else {
+        gateTop = Number.POSITIVE_INFINITY
+      }
     }
 
+    // When a dezoom anchor is provided, scroll progress is split into two
+    // phases so the slow zoom-out only plays while the anchor section is
+    // sliding into the viewport:
+    //   • before the gate enters → progress travels 0 → FIT_START
+    //   • from gate-enters to gate-`dezoomEndVisibility` → FIT_START → 1
+    // Beyond that, progress is pinned at 1.
     function getProgress() {
-      return reducedMotion ? 0 : clamp01(window.scrollY / range)
+      if (reducedMotion) return 0
+      const scrollY = window.scrollY
+
+      if (!Number.isFinite(gateTop)) {
+        return clamp01(scrollY / range)
+      }
+
+      const vh = window.innerHeight
+      const dezoomEnd = gateTop - (1 - dezoomEndVisibility) * vh
+      const dezoomStart = dezoomEnd - dezoomLeadVH * vh
+
+      if (scrollY <= dezoomStart) {
+        const denom = Math.max(1, dezoomStart)
+        return clamp01(scrollY / denom) * FIT_START
+      }
+
+      const span = Math.max(1, dezoomEnd - dezoomStart)
+      const u = clamp01((scrollY - dezoomStart) / span)
+      return FIT_START + u * (1 - FIT_START)
     }
 
     function applyProgress(force = false) {
@@ -511,12 +564,26 @@ export function CinematicBackground({ src, rangeVH }: Props) {
     window.addEventListener('scroll', onScroll, { passive: true })
     window.addEventListener('resize', onResize, { passive: true })
 
+    // The dezoom anchor often lives inside a dynamic import — its position
+    // changes when its chunk hydrates and it grows the body. Watch the
+    // document for layout changes so the dezoom window re-anchors itself
+    // without requiring a manual scroll/resize.
+    let resizeObserver: ResizeObserver | null = null
+    if (typeof ResizeObserver !== 'undefined') {
+      resizeObserver = new ResizeObserver(() => {
+        updateRange()
+        schedule(true)
+      })
+      resizeObserver.observe(document.body)
+    }
+
     return () => {
       cancelAnimationFrame(frameId)
       window.removeEventListener('scroll', onScroll)
       window.removeEventListener('resize', onResize)
+      resizeObserver?.disconnect()
     }
-  }, [imageSize, rangeVH, reducedMotion])
+  }, [imageSize, rangeVH, reducedMotion, dezoomAnchorId, dezoomEndVisibility, dezoomLeadVH])
 
   return (
     <div
